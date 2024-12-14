@@ -8,9 +8,12 @@ injectAnalytics({ mode: dev ? 'development' : 'production' });
 
 export async function load({ cookies, url }) {
   const session = cookies.get('session');
+  console.log('Session in load:', session); // Debug session value
+  console.log('All cookies:', cookies.getAll()); // Debug all cookies
   console.log('session is set: ', session);
   if (!session && url.pathname !== '/login') {
     // Redirect to login if not authenticated
+    console.log('redirecting to login');
     throw redirect(302, '/login');
   }
 

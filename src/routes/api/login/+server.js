@@ -24,6 +24,8 @@ export async function POST({ request, cookies }) {
       path: '/'
     });
 
+    console.log('Session cookie set with value:', cookies.get('session')); // Debug cookie value
+
     return json({ success: true });
   } catch (error) {
     console.error('Error:', error.message); // Log the error
