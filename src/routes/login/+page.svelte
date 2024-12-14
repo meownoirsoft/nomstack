@@ -2,6 +2,7 @@
     let username = '';
     let password = '';
     let errorMessage = '';
+    let successMessage = '';
   
     async function login() {
       const response = await fetch('/api/login', {
@@ -12,6 +13,7 @@
   
       if (response.ok) {
         // Redirect to the home page after successful login
+        successMessage = 'Login successful. Redirecting...';
         window.location.href = '/';
       } else {
         const error = await response.json();
@@ -22,6 +24,9 @@
 
   {#if errorMessage}
     <span class="text-error font-bold">{errorMessage}</span>
+  {/if}
+  {#if successMessage}
+    <span class="text-success font-bold">{successMessage}</span>
   {/if}
   <form on:submit|preventDefault={login} class="w-full max-w-xs">
     <small class="font-bold text-lg text-primary m-0 pb-0">Username:</small>
