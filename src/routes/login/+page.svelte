@@ -21,6 +21,9 @@
       } else {
         const error = await response.json();
         errorMessage = error.error;
+        setTimeout(() => {
+          errorMessage = '';
+        }, 3000);
       }
     }
   </script>
