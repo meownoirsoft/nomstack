@@ -1,0 +1,14 @@
+[
+  {
+    "id": "all",
+    "meals": []
+  },
+  {
+    "id": "lunch",
+    "meals": []
+  },
+  {
+    "id": "dinner",
+    "meals": []
+  }
+]

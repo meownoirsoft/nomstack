@@ -1,0 +1,7 @@
+[
+    {"name": "Instagram", "abbrev": "ig"},
+    {"name": "Pinterest", "abbrev": "pin"},
+    {"name": "Google Drive", "abbrev": "gdrive"},
+    {"name": "Facebook", "abbrev": "fb"},
+    {"name": "Link", "abbrev": "link"}
+]

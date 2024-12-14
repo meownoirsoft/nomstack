@@ -1,0 +1,38 @@
+[
+  {
+    "id": 2,
+    "name": "Chicken"
+  },
+  {
+    "id": 3,
+    "name": "Ground Beef"
+  },
+  {
+    "id": 4,
+    "name": "Ground Chicken"
+  },
+  {
+    "id": 5,
+    "name": "Ground Turkey"
+  },
+  {
+    "id": 6,
+    "name": "Ham"
+  },
+  {
+    "id": 7,
+    "name": "Pork"
+  },
+  {
+    "id": 7,
+    "name": "Beef"
+  },
+  {
+    "id": 8,
+    "name": "Turkey"
+  },
+  {
+    "id": 9,
+    "name": "Sausage"
+  }
+]

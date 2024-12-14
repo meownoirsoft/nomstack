@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+html,body{background-color: #E6E6FA;}
+.checkbox{
+   appearance: auto;
+}
+input[type=checkbox] {
+    border-color: #663399;
+}
+input[type=checkbox]:checked {
+    /* background-color: #663399 !important; */
+    border-color: #663399 !important;
+    color: #FFFFFF;
+}
+
+.chklbl {
+    display: block;
+    position: relative;
+    margin-top: 5px;
+    padding-left: 15px;
+    margin-bottom: 5px;
+    margin-right: -10px;
+    cursor: pointer;
+    height: 25px;
+}
+
+.chklbl .modal-chk{
+    border: 0px solid blue;
+    display: block;
+    position: relative;
+    padding-left: 20px;
+    cursor: pointer;
+}
+
+.chklbl input[type=checkbox] {
+    visibility: hidden;
+}
+.checkbox-override {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: transparent;
+    border: 1px solid #663399;
+    border-radius: 5px;
+}
+
+/* Hover effect */
+.chklbl:hover input~.checkbox-override {
+    background-color: transparent;
+}
+
+/* Active effect */
+.chklbl input:active~.checkbox-override {
+    background-color: transparent;
+}
+
+/* Checked effect */
+.chklbl input:checked~.checkbox-override {
+    background-color: #663399;
+}
+
+/* Checkmark */
+.checkbox-override::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 8px;
+    top: 3px;
+    width: 8px;
+    height: 14px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+/* Display checkmark when checked */
+.chklbl input:checked~.checkbox-override::after {
+    display: block;
+}
+
+.collapse{
+    border: 1px solid blue;
+}
+
+.collapse input[type=radio]{
+    display: none;
+}
+.collapse-title{
+    border: 1px solid green;
+    min-height: 2em;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
