@@ -1,5 +1,26 @@
 {
-    "rewrites": [
-      { "source": "/(.*)", "destination": "/" }
+    "redirects": [
+      {
+        "source": "/(lunch|dinner|categories|print)", // Protected routes
+        "has": [
+          {
+            "type": "cookie",
+            "key": "session" // Check for session cookie
+          }
+        ],
+        "destination": "/login", // Redirect to login if no session
+        "statusCode": 302
+      },
+      {
+        "source": "/api/(.*)", // Exclude all /api routes
+        "destination": "/api/:1", // Pass through to API endpoints
+        "statusCode": 200
+      },
+      {
+        "source": "/(.*)", // Match all other routes
+        "destination": "/", // Route everything else to the SvelteKit app
+        "statusCode": 200
+      }
     ]
-}
+  }
+  
