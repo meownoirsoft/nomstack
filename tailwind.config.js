@@ -2,15 +2,7 @@
 export default {
     content: ['./src/**/*.{html,js,svelte,ts}'],
     theme: {
-      extend: {
-        colors: {
-          'nomstack': {
-            'primary': '#663399',
-            'secondary': '#E6E6FA',
-            'accent': '#EE82EE',
-          },
-        },
-      },
+      extend: {},
     },
     plugins: [require("@tailwindcss/typography"),require('daisyui')],
     daisyui: {
