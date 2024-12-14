@@ -1,24 +1,24 @@
 {
     "redirects": [
       {
-        "source": "/(lunch|dinner|categories|print)", // Protected routes
+        "source": "/(lunch|dinner|categories|print)",
         "has": [
           {
             "type": "cookie",
-            "key": "session" // Check for session cookie
+            "key": "session"
           }
         ],
-        "destination": "/login", // Redirect to login if no session
+        "destination": "/login",
         "statusCode": 302
       },
       {
-        "source": "/api/(.*)", // Exclude all /api routes
-        "destination": "/api/:1", // Pass through to API endpoints
+        "source": "/api/(.*)",
+        "destination": "/api/:1",
         "statusCode": 200
       },
       {
-        "source": "/(.*)", // Match all other routes
-        "destination": "/", // Route everything else to the SvelteKit app
+        "source": "/(.*)",
+        "destination": "/",
         "statusCode": 200
       }
     ]
