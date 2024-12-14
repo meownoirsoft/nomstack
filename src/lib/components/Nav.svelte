@@ -1,6 +1,6 @@
 <script>
     import Search from './Search.svelte';
-    import { Bars3, Cake, Sun, Sparkles, Funnel, NoSymbol } from 'svelte-heros-v2';
+    import { Bars3, Cake, Sun, Sparkles, Funnel, Printer, NoSymbol } from 'svelte-heros-v2';
     let menuOpen = false;
     export let page;
 
@@ -13,7 +13,7 @@
         window.location.href = '/login';
     }
 </script>
-{#if !['/login'].includes(page)}
+{#if !['/login','/print'].includes(page)}
 <nav class="navbar bg-secondary my-0 py-0 m-h-8 pb-0">
     <Search />
     <!-- Mobile Menu Icon -->
@@ -28,6 +28,7 @@
                     <li><a href="/lunch" class="text-primary"><Sun /> Lunch</a></li>
                     <li><a href="/dinner" class="text-primary"><Sparkles /> Dinner</a></li>
                     <li><a href="/categories" class="text-primary"><Funnel /> Categories</a></li>
+                    <li><a href="/print" class="text-primary"><Printer /> Print</a></li>
                     <li><a href="/logout" class="text-primary" on:click={logout}><NoSymbol /> Logout</a></li>
                 </ul>
             </button>

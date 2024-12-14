@@ -5,10 +5,16 @@
   },
   {
     "id": "lunch",
-    "meals": []
+    "meals": [
+      2,
+      4
+    ]
   },
   {
     "id": "dinner",
-    "meals": []
+    "meals": [
+      2,
+      1
+    ]
   }
 ]

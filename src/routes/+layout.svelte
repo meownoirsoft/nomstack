@@ -4,7 +4,6 @@
   import Header from '$lib/components/Header.svelte';
   import Footer from '$lib/components/Footer.svelte';
   export let data;
-  export let session; // Comes from +layout.server.js
   export let error; // Captures errors from the load function
   let currentPage;
 
