@@ -14,7 +14,7 @@
 <div class="print-view">
     <button class="btn btn-sm mr-2" style="position: absolute; top: 10px; right: 80px;" on:click={() => window.location.href = '/'}>&laquo; Back</button>
     <button class="btn btn-sm mr-2" style="position: absolute; top: 10px; right: 10px;" on:click={() => window.print()}>Print</button>
-    <h3 style="font-size: 1.5em; margin: 0">Mobile view may look weird, Printed one should look good.</h3>
+    <h3 style="font-size: 1.5em; margin: 0">Mobile view may look weird, Printed one should look fine.</h3>
     <div class="container">
         <div class="list">
             <h2 style="font-size: 1.6em; font-weight: bold; color: #663399;">Lunch</h2>
