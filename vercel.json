@@ -12,7 +12,7 @@
         "statusCode": 302
       },
       {
-        "source": "/api/(.*)",
+        "source": "/api/:1",
         "destination": "/api/:1",
         "statusCode": 200
       },
