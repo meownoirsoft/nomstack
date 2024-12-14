@@ -3,13 +3,8 @@
     export let lunchSels;
     export let dinnerSels;
 
-    console.log(meals)
-    console.log(lunchSels)
-    console.log(dinnerSels)
-
     let lunchMeals = meals.filter(meal => lunchSels.includes(meal.id));
     let dinnerMeals = meals.filter(meal => dinnerSels.includes(meal.id));
-
 </script>
 <div class="print-view">
     <button class="btn btn-sm mr-2" style="position: absolute; top: 10px; right: 80px;" on:click={() => window.location.href = '/'}>&laquo; Back</button>
