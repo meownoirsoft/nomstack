@@ -5,7 +5,7 @@ import { redirect } from '@sveltejs/kit';
 
 export async function load({ cookies, url }) {
   const session = cookies.get('session');
-
+  console.log(session)
   if (!session && url.pathname !== '/login') {
     // Redirect to login if not authenticated
     throw redirect(302, '/login');
