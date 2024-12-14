@@ -4,6 +4,7 @@
     let errorMessage = '';
     let successMessage = '';
     import { goto } from '$app/navigation';
+    
     async function login() {
       const usr = document.querySelector('.usr').value;
       const pwd = document.querySelector('.pwd').value;
