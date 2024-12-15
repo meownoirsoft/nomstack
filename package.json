@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"postbuild": "mkdir -p build/src/lib && cp -r src/lib/data build/src/lib",
 		"preview": "vite preview"
 	},
 	"devDependencies": {

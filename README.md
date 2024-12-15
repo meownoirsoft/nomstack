@@ -12,3 +12,7 @@ Tailwind & DaisyUI
 Svelte Hero Icons v2
 
 -- assisted by ChatGPT 4o --
+
+```
+mkdir -p build/src/lib && cp -r src/lib/data build/src/lib
+```
