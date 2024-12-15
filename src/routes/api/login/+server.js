@@ -2,8 +2,6 @@ import { json } from '@sveltejs/kit';
 import { AUTH_USERNAME, AUTH_PASSWORD } from '$env/static/private';
 
 export async function POST({ request, cookies }) {
-  console.log('Request received:', request.body);
-  console.log('Cookies:', cookies.getAll());
 
   try {
     const { username, password } = await request.json();
@@ -23,8 +21,6 @@ export async function POST({ request, cookies }) {
       maxAge: 60 * 60,
       path: '/'
     });
-
-    console.log('Session cookie set with value:', cookies.get('session')); // Debug cookie value
 
     return json({ success: true });
   } catch (error) {
