@@ -12,7 +12,7 @@ export async function DELETE({ request }) {
       console.log('File exists:', filePath);
       const deleteData = deleteRowInJson(filePath, delRow);
       // Respond with the updated data
-      return json({ success: true, data: updatedData });
+      return json({ success: true, data: deleteData });
     } else {
         console.error('File does not exist:', filePath);
         return json({ success: false, data: 'File does not exist' });

@@ -1,20 +1,21 @@
 [
   {
     "id": "all",
-    "meals": []
+    "meals": [
+      3,
+      1
+    ]
   },
   {
     "id": "lunch",
     "meals": [
-      2,
       4
     ]
   },
   {
     "id": "dinner",
     "meals": [
-      2,
-      1
+      2
     ]
   }
 ]

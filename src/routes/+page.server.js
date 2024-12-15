@@ -13,7 +13,7 @@ export async function load({url}) {
     );
   }
   let filteredMeals = meals.sort((a, b) => a.name.localeCompare(b.name));
-  const selsFilePath = path.resolve(__dirname,'../src/lib/data/selected.json');
+  const selsFilePath = path.resolve('src/lib/data/selected.json');
   const sels = JSON.parse(readFileSync(selsFilePath, 'utf-8'));
   const filteredSels = sels.filter((sel) => sel.id === "all");
   const pathname = url.pathname;
