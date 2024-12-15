@@ -1,11 +1,9 @@
-# Handle API routes
-/api/* /.netlify/functions/:splat 200
-# /api/cat-add /.netlify/functions/api_cat-add 200
-# /api/cat-del /.netlify/functions/api_cat-del 200
-# /api/cat-upd /.netlify/functions/api_cat-upd 200
-# /api/login /.netlify/functions/api_login 200
-# /api/logout /.netlify/functions/api_logout 200
-# /api/meal-add /.netlify/functions/api_meal-add 200
-# /api/meal-del /.netlify/functions/api_meal-del 200
-# /api/meal-upd /.netlify/functions/api_meal-upd 200
-# /api/sels-upd /.netlify/functions/api_sels-upd 200
+# Frontend routes handled by SvelteKit
+/*    /.netlify/functions/render    200
+
+# Redirect /login and /logout explicitly if needed
+/login    /.netlify/functions/render    200
+/logout   /.netlify/functions/render    200
+
+# API routes
+/api/*    /.netlify/functions/:splat    200
