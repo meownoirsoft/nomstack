@@ -4,11 +4,13 @@ import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+console.log(__filename)
+console.log(__dirname)
 export async function load({url}) {
   const search = url.searchParams.get('search') || '';
   const filePath = path.resolve(__dirname,'../../src/lib/data/meals.json');
   let meals = JSON.parse(readFileSync(filePath, 'utf-8'));
+  console.log(meals.length+ ' meals in JSON')
   if (search) {
     meals = meals.filter(meal =>
       meal.cats?.toLowerCase().includes(search.toLowerCase())
