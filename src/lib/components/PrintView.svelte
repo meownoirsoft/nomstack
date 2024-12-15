@@ -32,7 +32,7 @@
 <style>
     /* Hide everything except the print view when printing */
     @media print {
-      body * {
+      body * :global {
         visibility: hidden;
       }
   
