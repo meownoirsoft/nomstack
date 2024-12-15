@@ -1,5 +1,8 @@
 # Force LF for all text files
 * text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.svelte text eol=lf
 
 # Binary files (preserve native endings)
 *.png binary
