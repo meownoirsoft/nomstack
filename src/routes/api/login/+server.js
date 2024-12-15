@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 import { AUTH_USERNAME, AUTH_PASSWORD } from '$env/static/private';
 
 export async function POST({ request, cookies }) {
 
-  try {
     const { username, password } = await request.json();
 
     if (!username || !password) {
@@ -14,18 +14,15 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    cookies.set('session', crypto.randomUUID(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60,
-      path: '/'
-    });
+    if (username === AUTH_USERNAME && password === AUTH_PASSWORD) {
+      console.log('set session cookie');
+      cookies.set('session', crypto.randomUUID(), {
+        httpOnly: true,
+        secure: true,
+        maxAge: 24 * 60 * 60,
+        path: '/'
+      });
 
-    return json({ success: true });
-  } catch (error) {
-    console.error('Error:', error.message); // Log the error
-    return json({ error: 'Internal Server Error' }, { status: 500 });
-  }
+      throw redirect(302, '/');
+    }
 }
-

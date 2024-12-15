@@ -18,7 +18,7 @@
         // Redirect to the home page after successful login
         successMessage = 'Login successful. Redirecting...';
         await new Promise((resolve) => setTimeout(resolve, 500)); // Add a short delay
-        goto(`${window.location.origin}/`);
+        goto('/');
       } else {
         const error = await response.json();
         errorMessage = error.error;
