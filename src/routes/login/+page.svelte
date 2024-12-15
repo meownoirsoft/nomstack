@@ -3,7 +3,7 @@
     let password = '';
     let errorMessage = '';
     let successMessage = '';
-    import { goto } from '$app/navigation';
+    import { redirect } from '@sveltejs/kit';
     
     async function login() {
       const usr = document.querySelector('.usr').value;
@@ -18,7 +18,7 @@
         // Redirect to the home page after successful login
         successMessage = 'Login successful. Redirecting...';
         await new Promise((resolve) => setTimeout(resolve, 500)); // Add a short delay
-        goto('/');
+        redirect(302,'/');
       } else {
         const error = await response.json();
         errorMessage = error.error;
