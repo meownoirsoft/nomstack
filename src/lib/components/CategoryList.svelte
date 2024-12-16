@@ -16,7 +16,7 @@
 
   async function addCat() {
       const newCat = document.querySelector('.cat-add input').value;
-      const newData = { id: cats.length + 1, name: newCat };
+      const newData = { name: newCat };
       const response = await fetch('/api/cat-add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,12 +63,13 @@
 
   async function deleteCat(catId){
       const response = await fetch('/api/cat-del', {
-          method: 'DELETE',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(catId)
       });
 
       const result = await response.json();
+      console.log(result);
       if (result.success) {
           saveUpdSuccessClass = '';
         setTimeout(() => {
@@ -107,10 +108,12 @@
       </button>
       <ul class="mx-0 mt-2 text-primary"> 
         {#each cats as cat}
-          <li class="mx-0 w-full flex h-10">
-            <input type="text" id={cat.id} class="cat-input flex-7 input input-bordered input-sm w-full max-w-xs focus:outline-none focus:ring-0" placeholder="Category Name" value={cat.name} />
-            <button class="ml-auto btn btn-sm btn-ghost text-primary pr-0" on:click={() => confirmDelete(cat.id,cat.name)}><XMark /></button>
-          </li>
+          {#if cat.id !== 12 && cat.id !== 13}
+            <li class="mx-0 w-full flex h-10">
+              <input type="text" id={cat.id} class="cat-input flex-7 input input-bordered input-sm w-full max-w-xs focus:outline-none focus:ring-0" placeholder="Category Name" value={cat.name} />
+              <button class="ml-auto btn btn-sm btn-ghost text-primary pr-0" on:click={() => confirmDelete(cat.id,cat.name)}><XMark /></button>
+            </li>
+          {/if}
         {/each}
       </ul>
     </div>

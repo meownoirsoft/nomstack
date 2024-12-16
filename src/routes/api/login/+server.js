@@ -15,11 +15,10 @@ export async function POST({ request, cookies }) {
     }
 
     if (username === AUTH_USERNAME && password === AUTH_PASSWORD) {
-      console.log('set session cookie');
       cookies.set('session', crypto.randomUUID(), {
         httpOnly: true,
         secure: true,
-        maxAge: 24 * 60 * 60,
+        maxAge: 30 * 24 * 60 * 60,
         path: '/'
       });
 

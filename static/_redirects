@@ -1,9 +1,0 @@
-# Frontend routes handled by SvelteKit
-# /*    /.netlify/functions/render    200
-
-# Redirect /login and /logout explicitly if needed
-# /login    /.netlify/functions/render    200
-# /logout   /.netlify/functions/render    200
-
-# API routes
-/api/*    /.netlify/functions/:splat    200

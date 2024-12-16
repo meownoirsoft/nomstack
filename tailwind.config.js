@@ -8,6 +8,7 @@ export default {
     },
     plugins: [typography,daisyui],
     daisyui: {
+      logs: false,
       styled: true,
       base: false,
       themes: [

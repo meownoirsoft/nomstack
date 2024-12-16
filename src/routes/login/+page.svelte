@@ -3,12 +3,15 @@
     let password = '';
     let errorMessage = '';
     let successMessage = '';
-    import { redirect } from '@sveltejs/kit';
+    let showPassword = false;
+    import { goto } from '$app/navigation';
+    import { Eye, EyeSlash } from 'svelte-heros-v2';
     
     async function login() {
       const usr = document.querySelector('.usr').value;
       const pwd = document.querySelector('.pwd').value;
-      const response = await fetch('/api/login', {
+      const apiUrl = `${import.meta.env.VITE_BASE_URL}/api/login`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: usr, password: pwd })
@@ -18,7 +21,7 @@
         // Redirect to the home page after successful login
         successMessage = 'Login successful. Redirecting...';
         await new Promise((resolve) => setTimeout(resolve, 500)); // Add a short delay
-        redirect(302,'/');
+        goto('/');
       } else {
         const error = await response.json();
         errorMessage = error.error;
@@ -39,6 +42,15 @@
     <small class="font-bold text-lg text-primary m-0 pb-0">Username:</small>
     <input type="text" class="usr input input-bordered w-full text-primary px-2 my-2 focus:outline-none focus:ring-0" placeholder="type username..." bind:value={username} /><br />
     <small class="font-bold text-lg text-primary m-0 pb-0">Password:</small>
-    <input type="password" class="pwd input input-bordered w-full text-primary px-2 my-2 focus:outline-none focus:ring-0" placeholder="type password..." bind:value={password} /><br />
+    <span class="flex justify-end">
+      <input type={showPassword ? 'text' : 'password'} class="pwd flex-1 input input-bordered w-full text-primary px-2 my-2 focus:outline-none focus:ring-0" placeholder="type password..." bind:value={password} /><br />
+      <button class="btn btn-ghost text-right py-0 flex-1" style="position: absolute; margin-right: -10px; z-index: 999" on:click={() => showPassword = !showPassword}>
+        {#if showPassword}
+          <Eye class="text-primary mt-5"  />
+        {:else}
+          <EyeSlash class="text-primary mt-5" />
+        {/if}
+      </button>
+    </span>
     <button class="btn btn-block btn-primary text-white text-lg my-2" on:click={login}>Login</button>
   </div>

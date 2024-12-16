@@ -4,18 +4,18 @@
     export let value;
     export let page;
     export let lblClass;
-    export let selectedItems = [];
+    export let selectedItems;
 
     let isChecked = false;
     $: isChecked = selectedItems?.includes(value);
 
     async function updateSelections(items) {
-      let newData = { id: page, meals: items };
-      const response = await fetch('/api/sels-upd', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newData)
-      });
+        let newData = { type: page, meals: items.join(',').toString() };
+        const response = await fetch('/api/sels-upd', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newData)
+        });
     }
 
     function toggleCheckbox() {

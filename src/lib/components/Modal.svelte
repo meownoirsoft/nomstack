@@ -3,13 +3,14 @@
     import Checkbox from './Checkbox.svelte';
     import sources from '../data/sources.json';
     import categories from '../data/cats.json';
-    import { XMark, CheckCircle, ChevronDown, ChevronUp } from 'svelte-heros-v2';
+    import { XMark, XCircle, CheckCircle, ChevronDown, ChevronUp } from 'svelte-heros-v2';
     import { createEventDispatcher } from 'svelte';
     const dispatch = createEventDispatcher();
     const catsSorted = categories.sort((a, b) => a.name.localeCompare(b.name));
     // Vars
     let selectedItems = [];
     let saveSuccess = false;
+    let saveError = false;
     let showCats = false;
     let showNotes = false;
 
@@ -33,7 +34,8 @@
         const source = document.querySelector('#meal_source').value;
         const notes = document.querySelector('#meal_notes').value;
         const cats = document.querySelectorAll('.collapse-content input[type="checkbox"]');
-        const newData = { name, source, notes, cats: cats};
+        const selectedCats = Array.from(cats).filter(cat => cat.checked).map(cat => cat.value);
+        const newData = { name, source, cats: selectedCats.join(','), notes};
         const response = await fetch('/api/meal-add', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -45,8 +47,10 @@
             saveSuccess = true;
             setTimeout(() => {
                 saveSuccess = false;
+                closeModal();
             }, 2000);
         } else {
+            saveError = true;
             console.error('Error adding row:', result.error);
         }
     }
@@ -113,6 +117,11 @@
                 {#if saveSuccess}
                     <div class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-50">
                         <CheckCircle class="h-16 w-16 mt-8 text-green-500" />
+                    </div>
+                {/if}
+                {#if saveError}
+                    <div class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-50">
+                        <CheckCircle class="h-16 w-16 mt-8 text-red-600" />
                     </div>
                 {/if}
             </div>

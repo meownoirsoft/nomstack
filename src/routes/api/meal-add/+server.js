@@ -1,20 +1,13 @@
 import { json } from '@sveltejs/kit';
-import { addRowToJson } from '$lib/helpers/jsonHelper.js';
+import { addMeal } from '$lib/db';
 
 export async function POST({ request }) {
-  try {
-    // Parse the request body
     const newRow = await request.json();
-
-    // Path to the JSON file
-    const filePath = 'src/lib/data/meals.json';
-
-    // Add the new row
-    const updatedData = addRowToJson(filePath, newRow);
-
-    // Respond with the updated data
-    return json({ success: true, data: updatedData });
-  } catch (error) {
-    return json({ success: false, error: error.message }, { status: 500 });
-  }
+    try {
+      const updatedData = await addMeal(newRow.name, newRow.source, newRow.cats, newRow.notes);
+      return json({ success: true, data: updatedData });
+    } catch (error) {
+      console.error(error);
+      return json({ success: false, data: 'Error adding meal' });
+    }
 }

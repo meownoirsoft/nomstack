@@ -3,18 +3,33 @@
     import EditModal from '$lib/components/EditModal.svelte';
     import SocialIcon from '$lib/components/SocialIcon.svelte';
     import { PencilSquare, Check } from 'svelte-heros-v2';
-    export let filteredMeals;
+    export let meals;
     export let sels;
+    export let cats;
+    export let srcs;
     export let page;
     let selectedItems = sels;
+    let selectedCats = [];
     let searchParams = '';
   
     let showModal = false;
     let editMode = false;
     let mealToEdit = {};
+
+    function setupCats(meal){
+      if(meal.cats){
+        meal.cats.split(",").map(mealcat => cats.find(cat => {
+         if( cat.id === parseInt(mealcat,10)){
+           selectedCats.push(cat.id);
+         }
+        }))
+      }
+      cats = cats.filter(cat => ![12,13].includes(cat.id));
+    }
   
     function openModal(meal) {
       mealToEdit = meal;
+      setupCats(meal);
       editMode = true;
       showModal = true;
     }
@@ -49,29 +64,28 @@
     </div>
     <div class="scroller flex-grow overflow-y-auto pr-4 min-h-60 max-h-screen">
       <ul class="mx-0 mt-2 text-primary"> 
-        {#each filteredMeals as meal}
+        {#each meals as meal}
           <li class="mx-0 w-full">
               <label class="flex items-left justify-between h-10">
                   <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="flex-5 ml-5 mr-0" />
                   <span class="flex-1 w-6 ml-0 mt-1">
                     <div class="flex">
                       <span><SocialIcon icon={meal.source} /></span>
-                      {#if meal.cats?.includes('Lunch')}
+                      {#if meal.cats?.includes(12)}
                         <span class="ml-2 font-bold" style="color: #C0C0C0">L</span>
                       {/if}
-                      {#if meal.cats?.includes('Dinner')}
+                      {#if meal.cats?.includes(13)}
                         <span class="ml-2 font-bold" style="color: #C0C0C0">D</span>
                       {/if}
                     </div>
                   </span>
                   <button class="btn btn-ghost mx-0 px-0" style="margin-top: -10px;" on:click={() => openModal(meal)}><PencilSquare class="ml-auto mr-0" /></button>
               </label>
-              <div class="ml-8 my-0 flex-1">
-                  
-              </div>
           </li>
         {/each}
       </ul>
     </div>
-    <EditModal {showModal} meal={mealToEdit} on:close={handleModalClose} />
+    {#if showModal}
+      <EditModal {showModal} meal={mealToEdit} {selectedCats} {cats} {srcs} {meals} {updateSelections} on:close={handleModalClose} />
+    {/if}
   </main>
