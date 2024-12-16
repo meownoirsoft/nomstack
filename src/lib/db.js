@@ -1,17 +1,13 @@
 import Database from 'better-sqlite3';
 
-const dbPath = process.env.DB_PATH;
+const dbPath = import.meta.env.VITE_DB_PATH;
+console.log('DB Path: ',dbPath)
 const db = new Database(dbPath);
 
 try {
     // Test the connection by executing a simple query
-    const result = db.prepare('SELECT 1 as test').get();
-
-    if (result.test === 1) {
-        console.log('Database is successfully connected!');
-    } else {
-        throw new Error('Unexpected result from test query.');
-    }
+    const rows = db.prepare('SELECT count(*) FROM meals').all();
+    console.log(rows,' meals in db');
 
 } catch (error) {
     // Catch any connection errors or query issues
