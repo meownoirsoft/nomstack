@@ -1,7 +1,9 @@
 import Database from 'better-sqlite3';
 
 const dbPath = import.meta.env.VITE_DB_PATH;
+const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 console.log('DB Path: ',dbPath)
+console.log('API Base URL: ',apiBaseUrl)
 const db = new Database(dbPath);
 
 try {
