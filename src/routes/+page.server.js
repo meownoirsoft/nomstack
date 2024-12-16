@@ -1,4 +1,5 @@
 export async function load({url}) {
+  console.log(import.meta.env.VITE_BASE_URL)
   const search = url.searchParams.get('search') || '';
   const res = await fetch(`${import.meta.env.VITE_BASE_URL}/api/meal-get`);
   const meals = await res.json();
