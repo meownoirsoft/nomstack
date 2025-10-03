@@ -1,20 +1,14 @@
 [
   {
-    "id": "all",
-    "meals": [
-      1
-    ]
+    "type": "all",
+    "meals": [1, 2, 3, 4, 5, 6, 7, 8]
   },
   {
-    "id": "lunch",
-    "meals": [
-      4
-    ]
+    "type": "lunch",
+    "meals": [1, 4, 5, 7]
   },
   {
-    "id": "dinner",
-    "meals": [
-      2
-    ]
+    "type": "dinner",
+    "meals": [2, 3, 6, 8]
   }
 ]

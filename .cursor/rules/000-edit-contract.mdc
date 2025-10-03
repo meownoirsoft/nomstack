@@ -1,0 +1,11 @@
+---
+description: Global Edit Contract (diff-only, safe edits)
+alwaysApply: true
+---
+
+When you modify code:
+- Output a single unified diff (git-apply compatible). Do not rewrite whole files.
+- Make the smallest change that satisfies the request.
+- If anchors don’t match, STOP and say “Patch failed – anchors not found.”
+- Do not delete HTML/CSS/markup unless explicitly asked; if you must, include a short **Deletions Rationale** list.
+- Run Prettier assumptions; keep existing imports, ordering, and file headers.

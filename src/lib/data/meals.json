@@ -1,30 +1,58 @@
 [
   {
     "id": 1,
-    "name": "Chicken Cordon Bleu",
+    "name": "Weeknight Chicken Tacos",
     "source": "pin",
-    "cats": "Chicken,Dinner",
-    "notes": ""
+    "cats": [12, 2, 7, 11],
+    "notes": "Rotisserie chicken keeps this fast."
   },
   {
     "id": 2,
-    "name": "Orange Chicken",
+    "name": "Slow Cooker Pot Roast",
     "source": "fb",
-    "cats": "Dinner,Beef2,Lunch",
-    "notes": ""
+    "cats": [13, 1, 6],
+    "notes": "Serve with mashed potatoes."
   },
   {
     "id": 3,
-    "name": "Assassin Chicken",
-    "source": "link",
-    "cats": "",
-    "notes": "blah"
+    "name": "Lemon Garlic Salmon",
+    "source": "ig",
+    "cats": [13, 3, 9],
+    "notes": "Sheet-pan dinner ready in 25 minutes."
   },
   {
     "id": 4,
-    "name": "Beef Stroganoff",
+    "name": "Vegetable Stir Fry",
+    "source": "link",
+    "cats": [12, 4, 7],
+    "notes": "Use whatever veggies are in the fridge."
+  },
+  {
+    "id": 5,
+    "name": "Creamy Tomato Basil Soup",
     "source": "gdrive",
-    "cats": "Lunch",
-    "notes": "yay"
+    "cats": [12, 8, 11],
+    "notes": "Pairs well with grilled cheese."
+  },
+  {
+    "id": 6,
+    "name": "BBQ Pulled Pork Sandwiches",
+    "source": "pin",
+    "cats": [13, 7, 11],
+    "notes": "Cook pork shoulder low and slow."
+  },
+  {
+    "id": 7,
+    "name": "Breakfast Burritos",
+    "source": "fb",
+    "cats": [12, 10, 11],
+    "notes": "Freeze extras for busy mornings."
+  },
+  {
+    "id": 8,
+    "name": "Mushroom Risotto",
+    "source": "link",
+    "cats": [13, 4, 5],
+    "notes": "Stir in parmesan just before serving."
   }
 ]

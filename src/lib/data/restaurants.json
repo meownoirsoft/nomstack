@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "name": "Mario's Pizza",
+    "cuisine": "Italian",
+    "address": "123 Main St, Downtown",
+    "phone": "(555) 123-4567",
+    "notes": "Great thin crust pizza, family owned",
+    "rating": 4.5,
+    "price_range": "$$"
+  },
+  {
+    "id": 2,
+    "name": "Sushi Zen",
+    "cuisine": "Japanese",
+    "address": "456 Oak Ave, Midtown",
+    "phone": "(555) 987-6543",
+    "notes": "Fresh sushi, excellent service",
+    "rating": 4.8,
+    "price_range": "$$$"
+  },
+  {
+    "id": 3,
+    "name": "Burger Palace",
+    "cuisine": "American",
+    "address": "789 Pine St, Uptown",
+    "phone": "(555) 456-7890",
+    "notes": "Best burgers in town, casual dining",
+    "rating": 4.2,
+    "price_range": "$"
+  }
+]
+
+

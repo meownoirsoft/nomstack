@@ -1,7 +1,7 @@
 [
-    {"name": "Instagram", "abbrev": "ig"},
-    {"name": "Pinterest", "abbrev": "pin"},
-    {"name": "Google Drive", "abbrev": "gdrive"},
-    {"name": "Facebook", "abbrev": "fb"},
-    {"name": "Link", "abbrev": "link"}
+  { "id": 1, "name": "Instagram", "abbrev": "ig" },
+  { "id": 2, "name": "Pinterest", "abbrev": "pin" },
+  { "id": 3, "name": "Google Drive", "abbrev": "gdrive" },
+  { "id": 4, "name": "Facebook", "abbrev": "fb" },
+  { "id": 5, "name": "Saved Link", "abbrev": "link" }
 ]

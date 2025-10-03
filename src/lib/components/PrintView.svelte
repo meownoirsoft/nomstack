@@ -1,10 +1,15 @@
 <script>
-    export let meals;
-    export let lunchSels;
-    export let dinnerSels;
+    export let meals = [];
+    export let lunchSels = [];
+    export let dinnerSels = [];
 
-    let lunchMeals = meals.filter(meal => lunchSels.includes(meal.id));
-    let dinnerMeals = meals.filter(meal => dinnerSels.includes(meal.id));
+    // Ensure meals is always an array and selections are arrays
+    $: safeMeals = Array.isArray(meals) ? meals : [];
+    $: safeLunchSels = Array.isArray(lunchSels) ? lunchSels : [];
+    $: safeDinnerSels = Array.isArray(dinnerSels) ? dinnerSels : [];
+
+    $: lunchMeals = safeMeals.filter(meal => safeLunchSels.includes(meal.id));
+    $: dinnerMeals = safeMeals.filter(meal => safeDinnerSels.includes(meal.id));
 </script>
 <div class="print-view">
     <button class="btn btn-sm mr-2" style="position: absolute; top: 10px; right: 80px;" on:click={() => window.location.href = '/'}>&laquo; Back</button>

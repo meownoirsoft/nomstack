@@ -1,42 +1,15 @@
 [
-  {
-    "id": 2,
-    "name": "Chicken"
-  },
-  {
-    "id": 3,
-    "name": "Ground Beef"
-  },
-  {
-    "id": 4,
-    "name": "Ground Chicken"
-  },
-  {
-    "id": 5,
-    "name": "Ground Turkey"
-  },
-  {
-    "id": 6,
-    "name": "Ham"
-  },
-  {
-    "id": 7,
-    "name": "Pork"
-  },
-  {
-    "id": 7,
-    "name": "Beef"
-  },
-  {
-    "id": 8,
-    "name": "Turkey"
-  },
-  {
-    "id": 9,
-    "name": "Sausage"
-  },
-  {
-    "id": 10,
-    "name": "wefwegfwegweg"
-  }
+  { "id": 1, "name": "Beef" },
+  { "id": 2, "name": "Chicken" },
+  { "id": 3, "name": "Seafood" },
+  { "id": 4, "name": "Vegetarian" },
+  { "id": 5, "name": "Pasta" },
+  { "id": 6, "name": "Slow Cooker" },
+  { "id": 7, "name": "Quick Prep" },
+  { "id": 8, "name": "Soup" },
+  { "id": 9, "name": "Salad" },
+  { "id": 10, "name": "Breakfast" },
+  { "id": 11, "name": "Kid Friendly" },
+  { "id": 12, "name": "Lunch" },
+  { "id": 13, "name": "Dinner" }
 ]

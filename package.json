@@ -6,9 +6,11 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.49.0",
 		"@sveltejs/adapter-node": "^5.2.10",
 		"@sveltejs/kit": "^2.9.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
@@ -21,10 +23,12 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.48.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@vercel/analytics": "^1.4.1",
-		"better-sqlite3": "^11.7.0",
 		"dotenv": "^16.4.7",
+		"lucide-svelte": "^0.544.0",
+		"supabase": "^2.47.2",
 		"svelte-heros-v2": "^2.0.1"
 	}
 }
