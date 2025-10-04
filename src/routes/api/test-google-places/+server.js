@@ -7,7 +7,7 @@ export async function GET() {
         
         if (!GOOGLE_PLACES_API_KEY) {
             return json({ 
-                error: 'Google Places API key not found in environment variables',
+                error: 'API key not found in environment variables',
                 status: 'missing_key'
             }, { status: 500 });
         }

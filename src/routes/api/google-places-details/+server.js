@@ -30,7 +30,7 @@ export async function POST({ request }) {
         const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
         
         if (!GOOGLE_PLACES_API_KEY) {
-            return json({ error: 'Google Places API key not configured' }, { status: 500 });
+            return json({ error: 'API key not configured' }, { status: 500 });
         }
 
         // Use the new Places API (New) - Place Details
