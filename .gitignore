@@ -8,7 +8,7 @@ node_modules
 /.svelte-kit
 /build
 /scripts
-/supabase/migrations
+/supabase
 
 # OS
 .DS_Store
