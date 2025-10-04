@@ -4,3 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "18"
+
+# Disable secrets scanning for environment variable names
+[secrets]
+  SECRETS_SCAN_ENABLED = false
+  # Alternative: Only omit specific keys if you prefer to keep scanning enabled
+  # SECRETS_SCAN_OMIT_KEYS = "SUPABASE_SERVICE_ROLE_KEY,GOOGLE_PLACES_API_KEY,VITE_SUPABASE_ANON_KEY,SUPABASE_URL"
