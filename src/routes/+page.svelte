@@ -146,6 +146,8 @@
   {#if $eatingMode === 'home'}
     <MealList {meals} {sels} {cats} {srcs} page={pageType} />
   {:else}
-    <RestaurantList />
+    <div class="h-full">
+      <RestaurantList />
+    </div>
   {/if}
 {/if}

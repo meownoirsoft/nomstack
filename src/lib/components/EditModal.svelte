@@ -1,9 +1,12 @@
 <script>
     import Checkbox from './Checkbox.svelte';
-    import { XMark, XCircle, CheckCircle, ChevronDown, ChevronUp } from 'svelte-heros-v2';
+    import { X, XCircle, CheckCircle, ChevronDown, ChevronUp, ChefHat } from 'lucide-svelte';
     import { createEventDispatcher } from 'svelte';
     import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
     import { api } from '$lib/api.js';
+    import { settings } from '$lib/stores/settings.js';
+    import RecipeEditor from './RecipeEditor.svelte';
+    import RecipeViewer from './RecipeViewer.svelte';
     const dispatch = createEventDispatcher();
 
     const LUNCH_FLAG = 'lunch';
@@ -30,6 +33,11 @@
     let nameTouched = false;
     let nameError = '';
     let nameIsValid = false;
+    
+    // Recipe-related state
+    let showRecipeEditor = false;
+    let showRecipeViewer = false;
+    let currentRecipe = null;
 
     function normalizeSelection(values) {
         if (!Array.isArray(values)) {
@@ -90,10 +98,6 @@
     }
 
     async function updateMeal(){
-        if (!meal) {
-            return;
-        }
-
         nameTouched = true;
         if (!nameIsValid) {
             nameError = 'Enter a meal name.';
@@ -101,33 +105,44 @@
         }
 
         const payload = {
-            id: meal.id,
             name: name.trim(),
             source,
             cats: buildCatsArray(selectedItems),
             notes: notes.trim()
         };
 
+        // Add meal ID if editing existing meal
+        if (meal && meal.id) {
+            payload.id = meal.id;
+        }
+
         try {
-            const result = await api.updateMeal(payload);
+            let result;
+            if (meal && meal.id) {
+                // Update existing meal
+                result = await api.updateMeal(payload);
+            } else {
+                // Add new meal
+                result = await api.addMeal(payload);
+            }
             
             if (result.success) {
                 saveSuccessClass = '';
-                dispatch('save', { meal: payload });
-                notifySuccess('Meal updated successfully.');
+                dispatch('save', { meal: result.meal || payload });
+                notifySuccess(meal && meal.id ? 'Meal updated successfully.' : 'Meal added successfully.');
                 setTimeout(() => {
                     saveSuccessClass = 'hidden';
                     closeModal();
                 }, 1200);
             } else {
-                const message = result.error || 'Unable to update meal.';
-                console.error('Error updating row:', message);
+                const message = result.error || (meal && meal.id ? 'Unable to update meal.' : 'Unable to add meal.');
+                console.error('Error saving meal:', message);
                 notifyError(message);
                 showError();
             }
         } catch (error) {
-            console.error('Failed to update meal:', error);
-            notifyError('Unable to update meal. Please try again.');
+            console.error('Failed to save meal:', error);
+            notifyError(meal && meal.id ? 'Unable to update meal. Please try again.' : 'Unable to add meal. Please try again.');
             showError();
         }
     }
@@ -167,14 +182,58 @@
             showError();
         }
     }
+
+    // Recipe functions
+    async function openRecipeViewer() {
+        try {
+            const result = await api.getRecipe(meal.id);
+            currentRecipe = result.recipe;
+            showRecipeViewer = true;
+        } catch (error) {
+            console.error('Error loading recipe:', error);
+            notifyError('Failed to load recipe');
+        }
+    }
+
+    async function openRecipeEditor(recipe = null) {
+        currentRecipe = recipe;
+        showRecipeEditor = true;
+    }
+
+    function closeRecipeEditor() {
+        showRecipeEditor = false;
+        currentRecipe = null;
+    }
+
+    function closeRecipeViewer() {
+        showRecipeViewer = false;
+        currentRecipe = null;
+    }
+
+    function handleRecipeSaved(event) {
+        currentRecipe = event.detail.recipe;
+        closeRecipeEditor();
+        notifySuccess('Recipe saved!');
+    }
+
+    function handleRecipeDeleted(event) {
+        currentRecipe = null;
+        closeRecipeViewer();
+        notifySuccess('Recipe deleted');
+    }
+
+    function handleEditRecipe() {
+        showRecipeViewer = false;
+        openRecipeEditor(currentRecipe);
+    }
 </script>
 {#if showModal}
   <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6 sm:py-10">
-    <div class="relative mt-24 sm:mt-28 w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+    <div class="relative mt-12 sm:mt-16 w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-4 py-4">
             <div class="flex items-center m-0 h-8">
-                <h3 class="flex-1 font-bold text-lg">Edit Meal</h3>
+                <h3 class="flex-1 font-bold text-lg">{meal && meal.id ? 'Edit Meal' : 'Add Meal'}</h3>
                 <div class="ml-auto modal-action mt-0">
-                    <button on:click={closeModal} class="btn btn-ghost pr-0"><XMark /></button>
+                    <button on:click={closeModal} class="btn btn-ghost pr-0"><X /></button>
                 </div>
             </div>
             <!-- NAME -->
@@ -250,7 +309,17 @@
                   class="btn btn-xs btn-ghost text-error underline"
                   on:click={confirmDelete}
                 >Delete meal</button>
-                <button class="btn btn-sm btn-primary text-white" on:click={updateMeal} disabled={!nameIsValid}>Update</button>
+                {#if $settings.recipesEnabled && meal && meal.id}
+                    <button
+                        class="btn btn-sm btn-ghost text-primary underline pl-1"
+                        on:click={openRecipeViewer}
+                        title="View recipe"
+                    >
+                        <ChefHat class="h-5 w-5 -ml-1" />
+                        Recipe
+                    </button>
+                {/if}
+                <button class="btn btn-sm btn-outline btn-primary" on:click={updateMeal} disabled={!nameIsValid}>Save</button>
             </div>
     </div>
   </div>
@@ -266,4 +335,27 @@
   <div class="fixed inset-0 z-[110] flex items-center justify-center bg-white/70">
     <XCircle class="h-16 w-16 mt-8 text-red-600 animate-fade-in-out" />
   </div>
+{/if}
+
+<!-- Recipe Components -->
+{#if showRecipeEditor && meal}
+  <RecipeEditor
+    mealId={meal.id}
+    mealName={meal.name}
+    recipe={currentRecipe}
+    on:close={closeRecipeEditor}
+    on:saved={handleRecipeSaved}
+    on:deleted={handleRecipeDeleted}
+  />
+{/if}
+
+{#if showRecipeViewer && meal}
+  <RecipeViewer
+    mealId={meal.id}
+    mealName={meal.name}
+    recipe={currentRecipe}
+    on:close={closeRecipeViewer}
+    on:edit={handleEditRecipe}
+    on:deleted={handleRecipeDeleted}
+  />
 {/if}

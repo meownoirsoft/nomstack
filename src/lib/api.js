@@ -22,6 +22,7 @@ async function apiRequest(endpoint, options = {}) {
   const token = await getAuthToken();
   
   if (!token) {
+    console.error('No authentication token available for endpoint:', endpoint);
     throw new Error('No authentication token available');
   }
 
@@ -163,6 +164,20 @@ export const api = {
     return apiRequest('/api/recipe-del', {
       method: 'POST',
       body: JSON.stringify({ recipeId })
+    });
+  },
+
+  async parseRecipe(recipeText) {
+    return apiRequest('/api/parse-recipe', {
+      method: 'POST',
+      body: JSON.stringify({ recipeText })
+    });
+  },
+
+  async adjustRecipeServings(data) {
+    return apiRequest('/api/adjust-recipe-servings', {
+      method: 'POST',
+      body: JSON.stringify(data)
     });
   }
 };

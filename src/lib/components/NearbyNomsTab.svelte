@@ -151,7 +151,7 @@
   </div>
   
   <!-- Scrollable Content Area -->
-  <div class="flex-1 overflow-y-auto">
+  <div class="flex-1 overflow-y-auto pb-6">
     {#if loading}
       <div class="flex items-center justify-center py-8">
         <div class="text-center">

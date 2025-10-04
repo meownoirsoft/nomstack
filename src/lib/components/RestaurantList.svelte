@@ -262,7 +262,7 @@
 
 </script>
 
-<div class="restaurant-list">
+<div class="restaurant-list h-full flex flex-col">
   <!-- Tab Navigation -->
   <div class="flex border-b border-gray-200">
     <button
@@ -280,7 +280,7 @@
   </div>
 
   <!-- Tab Content -->
-  <div class="mt-1">
+  <div class="mt-1 flex-1 flex flex-col min-h-0">
     {#if activeTab === 'decider'}
        <!-- Decider Tab -->
        <DeciderTab 

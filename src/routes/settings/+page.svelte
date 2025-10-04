@@ -25,13 +25,11 @@
 
 <div class="max-w-2xl mx-auto">
   <!-- Header -->
-  <div class="flex items-center gap-3 mb-8">
-    <Settings class="h-8 w-8 text-primary" />
-    <h1 class="text-3xl font-bold text-primary">Settings</h1>
+  <div class="mb-8">
   </div>
 
   <!-- Recipe Settings -->
-  <div class="card bg-base-100 shadow-lg border border-base-200 mb-6">
+  <div class="card bg-base-100 shadow-lg border border-purple-300 mb-6">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <ChefHat class="h-6 w-6 text-primary" />
@@ -110,7 +108,7 @@
   </div>
 
   <!-- App Info -->
-  <div class="card bg-base-100 shadow-lg border border-base-200 mb-6">
+  <div class="card bg-base-100 shadow-lg border border-purple-300 mb-6">
     <div class="card-body">
       <h2 class="text-xl font-bold text-primary mb-4">About nomStack</h2>
       <div class="space-y-3 text-gray-600">
@@ -122,7 +120,7 @@
   </div>
 
   <!-- Reset Settings -->
-  <div class="card bg-base-100 shadow-lg border border-base-200">
+  <div class="card bg-base-100 shadow-lg border border-purple-300">
     <div class="card-body">
       <h2 class="text-xl font-bold text-primary mb-4">Reset Settings</h2>
       <p class="text-gray-600 mb-4">Reset all settings back to their defaults.</p>

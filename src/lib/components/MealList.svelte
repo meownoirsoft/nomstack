@@ -28,7 +28,7 @@
     
     // Filter state
     let activeFilter = 'All';
-    const filters = ['All', 'Lunch', 'Dinner', 'Quick', 'Healthy'];
+    const filters = ['All', 'Lunch', 'Dinner', 'Quick'];
     
     // Recipe-related state
     let showRecipeEditor = false;
@@ -171,9 +171,18 @@
         return;
       }
 
-      meals = meals.map((meal) =>
-        meal.id === updatedMeal.id ? { ...meal, ...updatedMeal } : meal
-      );
+      // Check if this is a new meal (no ID in the original meals array)
+      const existingMealIndex = meals.findIndex(meal => meal.id === updatedMeal.id);
+      
+      if (existingMealIndex >= 0) {
+        // Update existing meal
+        meals = meals.map((meal) =>
+          meal.id === updatedMeal.id ? { ...meal, ...updatedMeal } : meal
+        );
+      } else {
+        // Add new meal to the beginning of the array
+        meals = [updatedMeal, ...meals];
+      }
     }
 
     async function handleMealDelete(event) {
@@ -238,9 +247,21 @@
   </script>
     
   <main class="flex flex-col min-h-auto gap-2">
+    <!-- Filters -->
+    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mt-2 mb-1">
+      {#each filters as filter}
+        <button 
+          class="text-sm py-0 m-0 {activeFilter === filter ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
+          on:click={() => setFilter(filter)}
+        >
+          {filter}
+        </button>
+      {/each}
+    </div>
+    
     <div class="flex items-center gap-3 -ml-2">
       <button class="btn btn-xs sm:btn-sm btn-ghost text-primary font-normal" on:click={clearAll}>
-        <Check class="h-4 w-4" /> Clear checks
+        Clear ✓
       </button>
       <div class="flex-1 flex justify-center">
         <p class="text-xs text-primary/70">checked = meal plan</p>
@@ -252,23 +273,11 @@
       </button>
     </div>
     
-    <!-- Filters -->
-    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mb-2">
-      {#each filters as filter}
-        <button 
-          class="text-sm py-0 m-0 {activeFilter === filter ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
-          on:click={() => setFilter(filter)}
-        >
-          {filter}
-        </button>
-      {/each}
-    </div>
-    
     <div class="scroller flex-grow overflow-y-auto pr-1 min-h-[15rem]">
       <ul class="space-y-3">
         {#each displayMeals as meal}
           <li class="w-full">
-            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-4 pr-3 py-3 shadow-sm border border-base-200">
+            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-2 pr-2 py-3 shadow-sm border border-purple-300">
               <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="font-medium text-primary" />
               <div class="ml-auto flex items-center gap-1 text-sm text-primary/70">
                 <SocialIcon icon={meal.source} />
@@ -280,15 +289,6 @@
                   class="w-3 text-center font-semibold"
                   class:opacity-0={!hasFlag(meal, DINNER_FLAG)}
                 >D</span>
-                {#if $settings.recipesEnabled}
-                  <button
-                    class="text-primary hover:text-primary-focus focus:outline-none p-0 h-6 w-6 flex items-center justify-center"
-                    on:click={() => openRecipeViewer(meal)}
-                    title="View recipe"
-                  >
-                    <ChefHat class="h-4 w-4" />
-                  </button>
-                {/if}
                 <button
                   class="text-primary hover:text-primary-focus focus:outline-none p-0 h-6 w-6 flex items-center justify-center"
                   on:click={() => openModal(meal)}

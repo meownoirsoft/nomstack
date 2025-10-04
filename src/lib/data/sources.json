@@ -3,5 +3,6 @@
   { "id": 2, "name": "Pinterest", "abbrev": "pin" },
   { "id": 3, "name": "Google Drive", "abbrev": "gdrive" },
   { "id": 4, "name": "Facebook", "abbrev": "fb" },
-  { "id": 5, "name": "Saved Link", "abbrev": "link" }
+  { "id": 5, "name": "Saved Link", "abbrev": "link" },
+  { "id": 6, "name": "AllRecipes", "abbrev": "ar" }
 ]

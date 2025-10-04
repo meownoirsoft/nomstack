@@ -1,5 +1,5 @@
 <script>
-  import { Star } from 'lucide-svelte';
+  import { Star, Utensils } from 'lucide-svelte';
   
   export let restaurants = [];
   export let isDeciding = false;
@@ -9,7 +9,7 @@
 </script>
 
 <div class="text-center pt-6 pb-12">
-  <img src="/no-drama-dinner-decider300.png" alt="No Drama Dinner Decider" class="mx-auto mb-6 max-w-xs" />
+  <img src="/no-drama-dinner-decider300.png" alt="No Drama Dinner Decider" class="mx-auto mb-6 max-w-48" />
   
   {#if isDeciding}
     <!-- Roulette Wheel Animation -->
@@ -71,14 +71,19 @@
       </div>
     </div>
   {:else}
-    <p class="text-gray-600 mb-6">Let us decide for you!</p>
-    <button 
-      class="btn btn-primary btn-lg"
-      on:click={selectRandomRestaurant}
-      disabled={restaurants.length === 0}
-    >
-      Decide My Dinner
-    </button>
+    <div class="flex justify-center">
+      <button 
+        class="btn btn-lg text-white font-bold transition-all duration-300 transform hover:scale-105 flex items-center gap-3"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); border: 3px solid white; box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4), 0 10px 20px rgba(118, 75, 162, 0.3), 0 0 0 1px rgba(240, 147, 251, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 255, 255, 0.6); text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(240, 147, 251, 0.3); letter-spacing: 2px; font-family: 'Bebas Neue', 'Oswald', 'Arial Black', 'Impact', sans-serif; font-size: 1.2em; text-transform: uppercase; font-weight: 900; padding-left: 1rem; padding-right: 1rem;"
+        on:click={selectRandomRestaurant}
+        disabled={restaurants.length === 0}
+      >
+        <Utensils class="h-6 w-6" style="filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));" />
+        <span>DECIDE MY DINNER</span>
+        <Utensils class="h-6 w-6" style="filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));" />
+      </button>
+    </div>
+    <p class="text-sm text-gray-600 mt-3">also decides other meal types</p>
     {#if restaurants.length === 0}
       <p class="text-sm text-gray-500 mt-4">Add some restaurants first!</p>
     {/if}
