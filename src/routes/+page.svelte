@@ -4,7 +4,7 @@
   import { api } from '$lib/api.js';
   import { onMount } from 'svelte';
   import { searchTerm } from '$lib/stores/search.js';
-  import { eatingMode } from '$lib/stores/eatingMode.js';
+  import { eatingMode, setEatingMode } from '$lib/stores/eatingMode.js';
   import { user, loading as authLoading } from '$lib/stores/auth.js';
   import { goto } from '$app/navigation';
 
@@ -107,6 +107,9 @@
   }
 
   onMount(async () => {
+    // Set eating mode to 'home' for meals page
+    setEatingMode('home');
+    
     // Wait for authentication to complete before loading data
     const unsubscribe = user.subscribe(async (currentUser) => {
       if (currentUser === null && !$authLoading) {

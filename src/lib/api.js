@@ -1,7 +1,18 @@
 import { supabase } from '$lib/supabaseClient.js';
+import { get } from 'svelte/store';
+import { accessToken } from '$lib/stores/auth.js';
+
+// API helper functions
 
 // Helper function to get the current session token
 export async function getAuthToken() {
+  // First try to get from store (faster)
+  const storeToken = get(accessToken);
+  if (storeToken) {
+    return storeToken;
+  }
+  
+  // Fallback to getting from Supabase
   const { data: { session } } = await supabase.auth.getSession();
   return session?.access_token;
 }
@@ -126,6 +137,32 @@ export const api = {
     return apiRequest('/api/restaurants-del', {
       method: 'POST',
       body: JSON.stringify({ id })
+    });
+  },
+
+  // Recipes
+  async getRecipe(mealId) {
+    return apiRequest(`/api/recipe-get?mealId=${mealId}`);
+  },
+
+  async addRecipe(mealId, recipe) {
+    return apiRequest('/api/recipe-add', {
+      method: 'POST',
+      body: JSON.stringify({ mealId, recipe })
+    });
+  },
+
+  async updateRecipe(recipeId, recipe) {
+    return apiRequest('/api/recipe-upd', {
+      method: 'POST',
+      body: JSON.stringify({ recipeId, recipe })
+    });
+  },
+
+  async deleteRecipe(recipeId) {
+    return apiRequest('/api/recipe-del', {
+      method: 'POST',
+      body: JSON.stringify({ recipeId })
     });
   }
 };

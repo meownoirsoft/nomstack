@@ -216,12 +216,13 @@
 
             <!-- Custom Location Input (only when location is denied/error) -->
             {#if locationStatus !== 'granted' && locationStatus !== 'requesting'}
-                <div class="form-control">
+                <div class="form-control mt-2">
                     <div class="relative">
                         <input
                             type="text"
                             placeholder="Enter city or zip code"
                             class="input input-bordered w-full pr-20"
+                            style="padding-top: 4px; padding-bottom: 4px;"
                             bind:value={customLocation}
                             on:input={() => {
                                 // Set custom location mode
@@ -269,6 +270,7 @@
                     type="text"
                     placeholder="Search restaurants..."
                     class="input input-bordered w-full pl-10 pr-10"
+                    style="padding-top: 4px; padding-bottom: 4px;"
                     value={searchTerm}
                     on:input={updateSearch}
                     aria-label="Search restaurants"

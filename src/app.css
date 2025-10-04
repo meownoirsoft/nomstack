@@ -1,6 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Force mobile nav menu to appear above everything */
+.mobile-nav-portal {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  transform: translateZ(0) !important;
+  isolation: isolate !important;
+}
+
+/* Force mobile menu overlay and menu to appear above purple background */
+.fixed.inset-0.bg-black {
+  z-index: 2147483646 !important;
+}
+
+.fixed.inset-0.pointer-events-none {
+  z-index: 2147483647 !important;
+}
+
+.menu.menu-sm.p-3.shadow.bg-base-100.rounded-box.w-56 {
+  z-index: 2147483648 !important;
+  position: relative !important;
+}
+
+/* Prevent purple background from creating stacking context */
+.min-h-screen.bg-secondary {
+  isolation: auto !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Force settings page to not create stacking context */
+.max-w-2xl.mx-auto {
+  isolation: auto !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Force settings cards to not create stacking context */
+.card.bg-base-100 {
+  isolation: auto !important;
+  transform: none !important;
+  will-change: auto !important;
+}
 html,body{background-color: #E6E6FA;}
 html,body{background-color: #f5f3ff;}
 

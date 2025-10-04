@@ -498,3 +498,75 @@ export async function deleteRestaurant(userId, restaurantId) {
 
   return { success: true };
 }
+
+// Recipe functions
+export async function getRecipe(mealId) {
+  const { data, error } = await supabaseAdmin
+    .from('recipes')
+    .select('*')
+    .eq('meal_id', mealId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No recipe found, return null
+      return null;
+    }
+    throw new Error(`Failed to load recipe: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function addRecipe(mealId, recipe) {
+  const { data, error } = await supabaseAdmin
+    .from('recipes')
+    .insert([{
+      meal_id: mealId,
+      ingredients: recipe.ingredients || '',
+      instructions: recipe.instructions || '',
+      prep_time: recipe.prep_time || 0,
+      servings: recipe.servings || 1
+    }])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to add recipe: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function updateRecipe(recipeId, recipe) {
+  const { data, error } = await supabaseAdmin
+    .from('recipes')
+    .update({
+      ingredients: recipe.ingredients || '',
+      instructions: recipe.instructions || '',
+      prep_time: recipe.prep_time || 0,
+      servings: recipe.servings || 1
+    })
+    .eq('id', recipeId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update recipe: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteRecipe(recipeId) {
+  const { error } = await supabaseAdmin
+    .from('recipes')
+    .delete()
+    .eq('id', recipeId);
+
+  if (error) {
+    throw new Error(`Failed to delete recipe: ${error.message}`);
+  }
+
+  return { success: true };
+}

@@ -2,9 +2,12 @@
     import Checkbox from '$lib/components/Checkbox.svelte';
     import EditModal from '$lib/components/EditModal.svelte';
     import SocialIcon from '$lib/components/SocialIcon.svelte';
+    import RecipeEditor from '$lib/components/RecipeEditor.svelte';
+    import RecipeViewer from '$lib/components/RecipeViewer.svelte';
     import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
     import { api } from '$lib/api.js';
-    import { Edit, Check, Plus } from 'lucide-svelte';
+    import { settings } from '$lib/stores/settings.js';
+    import { Edit, Check, Plus, ChefHat } from 'lucide-svelte';
 
     const LUNCH_FLAG = 'lunch';
     const DINNER_FLAG = 'dinner';
@@ -22,6 +25,16 @@
     let modalCats = Array.isArray(cats) ? cats : [];
     let lastSelsSnapshot = Array.isArray(sels) ? sels.join(',') : String(sels ?? '');
     let displayMeals = [];
+    
+    // Filter state
+    let activeFilter = 'All';
+    const filters = ['All', 'Lunch', 'Dinner', 'Quick', 'Healthy'];
+    
+    // Recipe-related state
+    let showRecipeEditor = false;
+    let showRecipeViewer = false;
+    let currentMeal = null;
+    let currentRecipe = null;
 
     $: modalCats = Array.isArray(cats) ? cats : [];
 
@@ -32,8 +45,6 @@
         lastSelsSnapshot = signature;
       }
     }
-
-    $: displayMeals = filterMealsByPage(meals, page);
 
     function toIdList(items) {
       if (!Array.isArray(items)) {
@@ -57,6 +68,44 @@
       }
       return list;
     }
+
+    function filterMealsByPageAndFilter(list, currentPage, filter) {
+      let filtered = filterMealsByPage(list, currentPage);
+      
+      if (filter === 'All') {
+        return filtered;
+      }
+      
+      if (filter === 'Lunch') {
+        return filtered.filter((meal) => hasFlag(meal, LUNCH_FLAG));
+      }
+      
+      if (filter === 'Dinner') {
+        return filtered.filter((meal) => hasFlag(meal, DINNER_FLAG));
+      }
+      
+      if (filter === 'Quick') {
+        return filtered.filter((meal) => {
+          // Filter for quick meals (you can adjust this logic based on your data structure)
+          return meal.prep_time && meal.prep_time <= 30; // 30 minutes or less
+        });
+      }
+      
+      if (filter === 'Healthy') {
+        return filtered.filter((meal) => {
+          // Filter for healthy meals (you can adjust this logic based on your data structure)
+          return meal.notes && meal.notes.toLowerCase().includes('healthy');
+        });
+      }
+      
+      return filtered;
+    }
+
+    function setFilter(filter) {
+      activeFilter = filter;
+    }
+
+    $: displayMeals = filterMealsByPageAndFilter(meals, page, activeFilter);
 
     function parseIds(value) {
       if (!value) {
@@ -138,22 +187,83 @@
       selectedItems = selectedItems.filter((id) => id !== mealId);
       await updateSelections(selectedItems, previous, { successMessage: 'Meal removed from selection.' });
     }
+
+    // Recipe functions
+    async function openRecipeViewer(meal) {
+      currentMeal = meal;
+      try {
+        const result = await api.getRecipe(meal.id);
+        currentRecipe = result.recipe;
+        showRecipeViewer = true;
+      } catch (error) {
+        console.error('Error loading recipe:', error);
+        notifyError('Failed to load recipe');
+      }
+    }
+
+    async function openRecipeEditor(meal, recipe = null) {
+      currentMeal = meal;
+      currentRecipe = recipe;
+      showRecipeEditor = true;
+    }
+
+    function closeRecipeEditor() {
+      showRecipeEditor = false;
+      currentMeal = null;
+      currentRecipe = null;
+    }
+
+    function closeRecipeViewer() {
+      showRecipeViewer = false;
+      currentMeal = null;
+      currentRecipe = null;
+    }
+
+    function handleRecipeSaved(event) {
+      currentRecipe = event.detail.recipe;
+      closeRecipeEditor();
+      notifySuccess('Recipe saved!');
+    }
+
+    function handleRecipeDeleted(event) {
+      currentRecipe = null;
+      closeRecipeViewer();
+      notifySuccess('Recipe deleted');
+    }
+
+    function handleEditRecipe() {
+      showRecipeViewer = false;
+      openRecipeEditor(currentMeal, currentRecipe);
+    }
   </script>
     
-  <main class="flex flex-col min-h-auto gap-4">
-    <div class="flex items-center justify-between gap-3">
-      <p class="text-xs text-primary/70">checked = meal plan</p>
-      <div class="flex items-center gap-2">
-        <button class="btn btn-xs sm:btn-sm btn-ghost text-primary" on:click={clearAll}>
-          <Check class="h-4 w-4" /> Clear checks
-        </button>
-        <button class="btn btn-sm btn-primary text-white shadow-sm" on:click={() => showModal = true}>
-          <Plus class="h-4 w-4" />
-          <span class="hidden sm:inline">Add meal</span>
-          <span class="sm:hidden">New</span>
-        </button>
+  <main class="flex flex-col min-h-auto gap-2">
+    <div class="flex items-center gap-3 -ml-2">
+      <button class="btn btn-xs sm:btn-sm btn-ghost text-primary font-normal" on:click={clearAll}>
+        <Check class="h-4 w-4" /> Clear checks
+      </button>
+      <div class="flex-1 flex justify-center">
+        <p class="text-xs text-primary/70">checked = meal plan</p>
       </div>
+      <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={() => showModal = true}>
+        <Plus class="h-4 w-4" />
+        <span class="hidden sm:inline">Add meal</span>
+        <span class="sm:hidden">New</span>
+      </button>
     </div>
+    
+    <!-- Filters -->
+    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mb-2">
+      {#each filters as filter}
+        <button 
+          class="text-sm py-0 m-0 {activeFilter === filter ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
+          on:click={() => setFilter(filter)}
+        >
+          {filter}
+        </button>
+      {/each}
+    </div>
+    
     <div class="scroller flex-grow overflow-y-auto pr-1 min-h-[15rem]">
       <ul class="space-y-3">
         {#each displayMeals as meal}
@@ -170,9 +280,19 @@
                   class="w-3 text-center font-semibold"
                   class:opacity-0={!hasFlag(meal, DINNER_FLAG)}
                 >D</span>
+                {#if $settings.recipesEnabled}
+                  <button
+                    class="text-primary hover:text-primary-focus focus:outline-none p-0 h-6 w-6 flex items-center justify-center"
+                    on:click={() => openRecipeViewer(meal)}
+                    title="View recipe"
+                  >
+                    <ChefHat class="h-4 w-4" />
+                  </button>
+                {/if}
                 <button
                   class="text-primary hover:text-primary-focus focus:outline-none p-0 h-6 w-6 flex items-center justify-center"
                   on:click={() => openModal(meal)}
+                  title="Edit meal"
                 >
                   <Edit class="h-5 w-5" />
                 </button>
@@ -192,6 +312,28 @@
         on:close={handleModalClose}
         on:save={handleMealSave}
         on:delete={handleMealDelete}
+      />
+    {/if}
+
+    <!-- Recipe Components -->
+    {#if showRecipeEditor && currentMeal}
+      <RecipeEditor
+        mealId={currentMeal.id}
+        mealName={currentMeal.name}
+        recipe={currentRecipe}
+        on:close={closeRecipeEditor}
+        on:saved={handleRecipeSaved}
+      />
+    {/if}
+
+    {#if showRecipeViewer && currentMeal}
+      <RecipeViewer
+        mealId={currentMeal.id}
+        mealName={currentMeal.name}
+        recipe={currentRecipe}
+        on:close={closeRecipeViewer}
+        on:edit={handleEditRecipe}
+        on:deleted={handleRecipeDeleted}
       />
     {/if}
   </main>

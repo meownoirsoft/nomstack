@@ -5,6 +5,7 @@
   import Header from '$lib/components/Header.svelte';
   import Footer from '$lib/components/Footer.svelte';
   import Notifications from '$lib/components/Notifications.svelte';
+  import GlobalModal from '$lib/components/GlobalModal.svelte';
   import { user, loading } from '$lib/stores/auth.js';
   export let data;
   export let error;
@@ -39,10 +40,10 @@
     </div>
   </div>
 {:else}
-  <div class="min-h-screen bg-secondary flex flex-col">
+  <div class="min-h-screen bg-secondary" style="isolation: auto !important;">
     <Header page={currentPage} />
-    <main class="flex-1 w-full">
-      <div class="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-2">
+    <main class="w-full">
+      <div class="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-0">
         {#if error}
           <h1 class="text-2xl font-semibold text-error">Error: {error.message}</h1>
         {:else}
@@ -53,4 +54,7 @@
     <Footer />
     <Notifications />
   </div>
+  
+  <!-- Global Modal System -->
+  <GlobalModal />
 {/if}
