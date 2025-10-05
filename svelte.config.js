@@ -3,10 +3,7 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 export default {
 	kit: {
-	  adapter: adapter(),
-	  prerender: {
-		entries: ['*']
-	  }
+	  adapter: adapter()
 	},
 	onwarn: (warning, handler) => {
 		// Suppress all warnings for now (temporary)
