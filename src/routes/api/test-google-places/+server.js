@@ -24,7 +24,7 @@ export async function GET() {
         return json({
             status: 'success',
             api_key_present: true,
-            api_key_prefix: GOOGLE_PLACES_API_KEY.substring(0, 10) + '...',
+            api_key_configured: true,
             google_response_status: data.status,
             google_error_message: data.error_message || null,
             results_count: data.results ? data.results.length : 0

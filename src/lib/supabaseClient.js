@@ -2,8 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { browser } from '$app/environment';
 
 // For now, we'll use placeholder values. In production, these should be set as environment variables:
-// VITE_SUPABASE_URL=your_supabase_url
-// VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+// Configure your Supabase environment variables
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_key';
 

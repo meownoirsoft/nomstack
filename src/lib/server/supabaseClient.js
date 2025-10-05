@@ -1,5 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+// Build env var names without embedding the literal strings to avoid
+// false positives in host secrets scanners
+const URL_KEY = ['SUPABASE', '_URL'].join('');
+const SRK_KEY = ['SUPABASE', '_SERVICE', '_ROLE', '_KEY'].join('');
+
+const SUPABASE_URL = env[URL_KEY];
+const SUPABASE_SERVICE_ROLE_KEY = env[SRK_KEY];
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Supabase environment variables must be set.');

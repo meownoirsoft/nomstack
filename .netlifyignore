@@ -1,0 +1,8 @@
+# Ignore build artifacts and generated files
+build/
+.netlify/
+node_modules/
+
+# Ignore files that might contain environment variable references
+*.log
+*.tmp
