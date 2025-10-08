@@ -8,6 +8,7 @@
   // Navigation links
   const links = [
     { href: '/', label: 'Meals', icon: Home },
+    { href: '/recipes', label: 'Recipes', icon: ChefHat },
     { href: '/categories', label: 'Categories', icon: Filter },
     { href: '/print', label: 'Print', icon: Printer },
     { href: '/settings', label: 'Settings', icon: Settings }
