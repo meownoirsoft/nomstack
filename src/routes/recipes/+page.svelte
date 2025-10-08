@@ -7,6 +7,7 @@
   import RecipeEditor from '$lib/components/RecipeEditor.svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
+  import { findDuplicateRecipe, mergeRecipes, hasMeaningfulChanges } from '$lib/helpers/recipeComparison.js';
 
   export let data;
 
@@ -95,6 +96,16 @@
     return `${hours}h ${mins}m`;
   }
 
+  function formatTotalTime(prepTime, cookTime) {
+    const total = (prepTime || 0) + (cookTime || 0);
+    if (total === 0) return 'No time specified';
+    if (total < 60) return `${total} min`;
+    const hours = Math.floor(total / 60);
+    const mins = total % 60;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
+  }
+
   // Recipe functions
   async function openRecipeViewer(meal) {
     currentMeal = meal;
@@ -158,12 +169,128 @@
     photoImportModal.open();
   }
 
-  function handleRecipeImported(event) {
-    const { recipe, file } = event.detail;
-    // TODO: Save the imported recipe to the database
-    console.log('Recipe imported:', recipe, 'from file:', file.name);
-    // Reload the recipes list
-    loadMealsWithRecipes();
+  async function handleRecipesImported(event) {
+    const { imports } = event.detail;
+    
+    let successCount = 0;
+    let updateCount = 0;
+    let errorCount = 0;
+    
+    for (const { recipe, file } of imports) {
+      try {
+        const result = await processSingleRecipeImport(recipe, file);
+        if (result.type === 'updated') {
+          updateCount++;
+        } else if (result.type === 'created') {
+          successCount++;
+        }
+      } catch (error) {
+        console.error('Error importing recipe:', error);
+        errorCount++;
+      }
+    }
+    
+    // Show a single summary notification
+    if (errorCount > 0) {
+      notifyError(`Import completed with ${errorCount} errors. ${successCount} new recipes, ${updateCount} updated.`);
+    } else if (updateCount > 0 && successCount > 0) {
+      notifySuccess(`Import completed! ${successCount} new recipes, ${updateCount} updated.`);
+    } else if (updateCount > 0) {
+      notifySuccess(`Import completed! ${updateCount} recipes updated.`);
+    } else if (successCount > 0) {
+      notifySuccess(`Import completed! ${successCount} new recipes added.`);
+    }
+    
+    // Note: loadMealsWithRecipes() is now called before each import in processSingleRecipeImport
+  }
+
+  async function processSingleRecipeImport(recipe, file) {
+    // Refresh the meals list to ensure we have the latest data for duplicate detection
+    await loadMealsWithRecipes();
+    
+    // Check if this recipe already exists
+    // Extract just the recipe data for comparison
+    const existingRecipes = mealsWithRecipes.map(meal => ({
+      ...meal.recipe,
+      mealName: meal.name // Include meal name for title comparison
+    }));
+    
+    console.log('Checking for duplicates...');
+    console.log('New recipe title:', recipe.title);
+    console.log('Existing recipes:', existingRecipes.map(r => r.title || r.mealName));
+    
+    const duplicateMatch = findDuplicateRecipe(existingRecipes, recipe);
+    console.log('Duplicate match result:', duplicateMatch);
+    
+    if (duplicateMatch && duplicateMatch.confidence > 0.7) {
+      // Recipe already exists - merge the data
+      const existingRecipe = duplicateMatch.recipe;
+      console.log('Existing recipe ingredients:', existingRecipe.ingredients);
+      console.log('New recipe ingredients:', recipe.ingredients);
+      
+      const mergedRecipe = mergeRecipes(existingRecipe, recipe);
+      console.log('Merged recipe ingredients:', mergedRecipe.ingredients);
+      
+      // Check if there are meaningful changes
+      const hasChanges = hasMeaningfulChanges(existingRecipe, mergedRecipe);
+      console.log('Has meaningful changes:', hasChanges);
+      
+      if (hasChanges) {
+        // Update the existing recipe with merged data
+        const updateData = {
+          title: mergedRecipe.title,
+          ingredients: mergedRecipe.ingredients,
+          instructions: mergedRecipe.instructions,
+          prep_time: mergedRecipe.prep_time,
+          cook_time: mergedRecipe.cook_time,
+          servings: mergedRecipe.servings,
+          notes: mergedRecipe.notes
+        };
+        
+        const updateResult = await api.updateRecipe(existingRecipe.id, updateData);
+        
+        if (updateResult.success) {
+          return { type: 'updated', recipe: recipe.title };
+        } else {
+          throw new Error(updateResult.error || 'Failed to update recipe');
+        }
+      } else {
+        return { type: 'no-change', recipe: recipe.title };
+      }
+    } else {
+      // New recipe - create it
+      const mealData = {
+        name: recipe.title || `Recipe from ${file.name}`,
+        source: 'Photo Import',
+        cats: [], // No categories initially
+        notes: `Imported from photo: ${file.name}`
+      };
+      
+      const mealResult = await api.addMeal(mealData);
+      
+      if (mealResult.success) {
+        // Now add the recipe to the meal
+        const recipeData = {
+          title: recipe.title || '',
+          ingredients: recipe.ingredients || '',
+          instructions: recipe.instructions || '',
+          prep_time: recipe.prepTime || 0,
+          cook_time: recipe.cookTime || 0,
+          servings: recipe.servings || 1,
+          notes: recipe.notes || ''
+        };
+        
+        const recipeResult = await api.addRecipe(mealResult.data.id, recipeData);
+        
+        if (recipeResult.success) {
+          return { type: 'created', recipe: recipe.title };
+        } else {
+          throw new Error(recipeResult.error || 'Failed to save recipe');
+        }
+      } else {
+        throw new Error(mealResult.error || 'Failed to create meal');
+      }
+    }
   }
 </script>
 
@@ -202,10 +329,10 @@
         <button
           class="btn btn-outline btn-primary"
           on:click={handleBulkImport}
-          title="Bulk Import Recipes"
+          title="Import Recipes"
         >
           <Upload class="h-4 w-4" />
-          Bulk Import
+          Import
         </button>
       </div>
     {/if}
@@ -228,10 +355,10 @@
         <button
           class="btn btn-sm btn-outline btn-primary"
           on:click={handleBulkImport}
-          title="Bulk Import Recipes"
+          title="Import Recipes"
         >
           <Upload class="h-4 w-4" />
-          Bulk Import
+          Import
         </button>
       </div>
     </div>
@@ -262,7 +389,7 @@
               </div>
             </div>
             
-            {#if meal.recipe.servings || meal.recipe.prep_time}
+            {#if meal.recipe.servings || meal.recipe.prep_time || meal.recipe.cook_time}
               <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
                 {#if meal.recipe.servings}
                   <div class="flex items-center gap-1">
@@ -270,23 +397,37 @@
                     <span>{meal.recipe.servings} servings</span>
                   </div>
                 {/if}
-                {#if meal.recipe.prep_time}
+                {#if meal.recipe.prep_time || meal.recipe.cook_time}
                   <div class="flex items-center gap-1">
                     <Clock class="h-4 w-4" />
-                    <span>{formatPrepTime(meal.recipe.prep_time)}</span>
+                    <span>{formatTotalTime(meal.recipe.prep_time, meal.recipe.cook_time)}</span>
                   </div>
                 {/if}
               </div>
             {/if}
             
-            {#if meal.recipe.ingredients}
-              <div class="text-sm text-gray-600">
-                <p class="line-clamp-3">
-                  {meal.recipe.ingredients.split('\n').slice(0, 3).join(', ')}
-                  {meal.recipe.ingredients.split('\n').length > 3 ? '...' : ''}
-                </p>
+            <div class="text-sm text-gray-600 space-y-1">
+              {#if meal.recipe.ingredients}
+                {@const ingredientCount = meal.recipe.ingredients.split('\n').filter(line => line.trim()).length}
+                <div class="flex items-center gap-1">
+                  <ChefHat class="h-3 w-3" />
+                  <span>{ingredientCount} ingredient{ingredientCount !== 1 ? 's' : ''}</span>
+                </div>
+              {/if}
+              
+              {#if meal.recipe.instructions}
+                {@const stepCount = meal.recipe.instructions.split('\n').filter(line => line.trim()).length}
+                <div class="flex items-center gap-1">
+                  <span class="text-xs">📝</span>
+                  <span>{stepCount} step{stepCount !== 1 ? 's' : ''}</span>
+                </div>
+              {/if}
+              
+              <div class="flex items-center gap-1">
+                <span class="text-xs">💰</span>
+                <span>Cost: $--</span>
               </div>
-            {/if}
+            </div>
           </div>
         </div>
       {/each}
@@ -317,9 +458,9 @@
   />
 {/if}
 
-<!-- Photo Import Modal -->
-<PhotoImportModal
-  bind:this={photoImportModal}
-  on:recipe-imported={handleRecipeImported}
-  on:close={() => {}}
-/>
+      <!-- Photo Import Modal -->
+      <PhotoImportModal
+        bind:this={photoImportModal}
+        on:recipes-imported={handleRecipesImported}
+        on:close={() => {}}
+      />

@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { Camera, Upload, X, Check, AlertCircle } from 'lucide-svelte';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
+  import { api } from '$lib/api.js';
 
   const dispatch = createEventDispatcher();
 
@@ -68,6 +69,8 @@
     issues = [];
 
     try {
+      const successfulImports = [];
+      
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         
@@ -78,7 +81,7 @@
         const mockResult = await parseRecipeFromPhoto(file);
         
         if (mockResult.success) {
-          dispatch('recipe-imported', { recipe: mockResult.recipe, file });
+          successfulImports.push({ recipe: mockResult.recipe, file });
         } else {
           issues.push({
             file: file.name,
@@ -90,9 +93,11 @@
         processedCount++;
       }
 
-      const successRate = Math.round((processedCount - issues.length) / processedCount * 100);
-      notifySuccess(`${successRate}% imported successfully! ${issues.length} items need attention.`);
-      
+      // Dispatch a single event with all successful imports
+      if (successfulImports.length > 0) {
+        dispatch('recipes-imported', { imports: successfulImports });
+      }
+
       if (issues.length > 0) {
         // Show issues for user to review
         showIssues();
@@ -108,23 +113,18 @@
     }
   }
 
-  // Mock AI parsing function - replace with actual implementation
+  // Real AI parsing function using OpenAI Vision API
   async function parseRecipeFromPhoto(file) {
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock successful parsing
-    return {
-      success: true,
-      recipe: {
-        title: `Recipe from ${file.name}`,
-        servings: 4,
-        prep_time: 15,
-        cook_time: 30,
-        ingredients: "2 cups flour\n1 cup sugar\n2 eggs\n1/2 cup butter",
-        instructions: "1. Mix dry ingredients\n2. Add wet ingredients\n3. Bake at 350°F for 30 minutes"
-      }
-    };
+    try {
+      const result = await api.parseRecipeFromPhoto(file);
+      return result;
+    } catch (error) {
+      console.error('Error parsing recipe from photo:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to parse recipe from photo'
+      };
+    }
   }
 
   function showIssues() {

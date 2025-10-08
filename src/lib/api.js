@@ -174,6 +174,32 @@ export const api = {
     });
   },
 
+  async parseRecipeFromPhoto(photoFile) {
+    const formData = new FormData();
+    formData.append('photo', photoFile);
+    
+    const token = await getAuthToken();
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+
+    const response = await fetch('/api/parse-recipe-photo', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type - let browser set it with boundary for FormData
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
+
   async adjustRecipeServings(data) {
     return apiRequest('/api/adjust-recipe-servings', {
       method: 'POST',

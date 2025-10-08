@@ -2,7 +2,8 @@
   import { createEventDispatcher } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Sparkles, Leaf } from 'lucide-svelte';
+  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp } from 'lucide-svelte';
+  import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
 
   export let mealId;
   export let mealName = '';
@@ -10,23 +11,28 @@
 
   const dispatch = createEventDispatcher();
 
+  let title = '';
   let ingredients = '';
   let instructions = '';
   let prepTime = 0;
+  let cookTime = 0;
   let servings = 1;
+  let notes = '';
   let loading = false;
   
-  // AI Parsing state
-  let rawRecipeText = '';
-  let parsingRecipe = false;
+  // Import state
   let showManualEdit = false;
+  let photoImportModal;
 
   // Initialize form with existing recipe data
   $: if (recipe) {
+    title = recipe.title || '';
     ingredients = recipe.ingredients || '';
     instructions = recipe.instructions || '';
     prepTime = recipe.prep_time || 0;
+    cookTime = recipe.cook_time || 0;
     servings = recipe.servings || 1;
+    notes = recipe.notes || '';
     // If editing existing recipe, show manual edit section
     showManualEdit = true;
   }
@@ -40,10 +46,13 @@
     loading = true;
     try {
       const recipeData = {
+        title: title.trim(),
         ingredients: ingredients.trim(),
         instructions: instructions.trim(),
         prep_time: prepTime,
-        servings: servings
+        cook_time: cookTime,
+        servings: servings,
+        notes: notes.trim()
       };
 
       let result;
@@ -56,7 +65,7 @@
       }
 
       if (result.success) {
-        notifySuccess(recipe ? 'Recipe updated!' : 'Recipe added!');
+        // Success: emit to parent; avoid duplicate success toast here
         dispatch('saved', { recipe: result.recipe });
         dispatch('close');
       } else {
@@ -70,41 +79,23 @@
     }
   }
 
-  async function parseRecipe() {
-    if (!rawRecipeText.trim()) {
-      notifyError('Please paste a recipe to parse');
-      return;
-    }
-
-    parsingRecipe = true;
-    try {
-      const data = await api.parseRecipe(rawRecipeText.trim());
-
-      if (data.success && data.recipe) {
-        // Populate the form fields with parsed data
-        ingredients = data.recipe.ingredients;
-        instructions = data.recipe.instructions;
-        prepTime = data.recipe.prepTime;
-        servings = data.recipe.servings;
-        
-        // Show manual edit section for review
-        showManualEdit = true;
-        
-        notifySuccess('Recipe parsed successfully! Review and edit as needed.');
-      } else {
-        throw new Error('Invalid response from AI parser');
-      }
-      
-    } catch (error) {
-      console.error('Error parsing recipe:', error);
-      notifyError(`Failed to parse recipe: ${error.message}`);
-    } finally {
-      parsingRecipe = false;
-    }
-  }
-
   function toggleManualEdit() {
     showManualEdit = !showManualEdit;
+  }
+
+  function handlePhotoImports(event) {
+    const { imports } = event.detail || {};
+    if (!imports || imports.length === 0) return;
+    const { recipe: parsed, file } = imports[0];
+    title = parsed.title || title;
+    ingredients = parsed.ingredients || ingredients;
+    instructions = parsed.instructions || instructions;
+    prepTime = parsed.prepTime || prepTime;
+    cookTime = parsed.cookTime || cookTime;
+    servings = parsed.servings || servings;
+    notes = parsed.notes || notes;
+    showManualEdit = true;
+    notifySuccess('Photo parsed. Review and edit as needed.');
   }
 
   function cancel() {
@@ -117,8 +108,10 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-xl font-bold text-primary">Recipe Parsley</h3>
-        <p class="text-sm text-gray-600 mt-1">for {mealName}</p>
+        <h3 class="text-xl font-bold text-primary">Recipe Import</h3>
+        {#if recipe}
+          <p class="text-sm text-gray-600 mt-1">for {mealName}</p>
+        {/if}
       </div>
       <button 
         class="btn btn-ghost btn-sm p-1 -mt-2 -mr-2"
@@ -129,37 +122,23 @@
       </button>
     </div>
 
-    <!-- AI Recipe Parser -->
-    <div class="space-y-4">
-      <div>
-        <label class="label">
-          <span class="label-text font-medium flex items-center gap-2">
-            <Sparkles class="h-4 w-4" />
-            Paste Recipe
-          </span>
-        </label>
-        <textarea 
-          class="textarea textarea-bordered w-full h-32 resize-none" 
-          bind:value={rawRecipeText}
-          placeholder="Paste your recipe here from any website, cookbook, or app. We will fill in the details for you."
-        ></textarea>
-      </div>
-      
-      <button 
-        class="btn w-full"
-        style="background-color: #86efac; border-color: #86efac; color: black;"
-        on:click={parseRecipe}
-        disabled={parsingRecipe || !rawRecipeText.trim()}
-      >
-        {#if parsingRecipe}
-          <span class="loading loading-spinner loading-sm"></span>
-          Applying Parsley...
-        {:else}
-          <Leaf class="h-4 w-4" />
-          Apply Parsley to Recipe
-        {/if}
-      </button>
-    </div>
+  <!-- Import Button -->
+  <div class="mt-2">
+    <button 
+      class="btn w-full"
+      style="background-color: #86efac; border-color: #86efac; color: black;"
+      on:click={() => photoImportModal.open()}
+      type="button"
+    >
+      Import from Photo
+    </button>
+  </div>
+
+  <!-- Embedded Photo Import Modal -->
+  <PhotoImportModal 
+    bind:this={photoImportModal}
+    on:recipes-imported={handlePhotoImports}
+  />
 
     <!-- Manual Edit Accordion -->
     <div class="mt-4">
@@ -169,7 +148,7 @@
       >
         <div class="flex items-center gap-2">
           <ChefHat class="h-4 w-4 text-primary" />
-          <span class="font-medium">Manual Edit</span>
+          <span class="font-medium">{recipe ? 'Manual Edit' : 'Manual Entry'}</span>
         </div>
         {#if showManualEdit}
           <ChevronUp class="h-4 w-4" />
@@ -180,14 +159,27 @@
 
       {#if showManualEdit}
         <div class="mt-3 space-y-3">
+          <!-- Recipe Title -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">Recipe Title</span>
+            </label>
+            <input 
+              type="text" 
+              class="input input-bordered w-full" 
+              bind:value={title}
+              placeholder="Enter recipe title"
+            />
+          </div>
+
           <!-- Quick Info Row -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-3 gap-4">
             <!-- Prep Time -->
             <div>
               <label class="label">
                 <span class="label-text font-medium flex items-center gap-2">
                   <Clock class="h-4 w-4" />
-                  Prep Time (min)
+                  Prep&nbsp;(min)
                 </span>
               </label>
               <input 
@@ -197,6 +189,24 @@
                 min="0"
                 max="999"
                 placeholder="30"
+              />
+            </div>
+
+            <!-- Cook Time -->
+            <div>
+              <label class="label">
+                <span class="label-text font-medium flex items-center gap-2">
+                  <Clock class="h-4 w-4" />
+                  Cook&nbsp;(min)
+                </span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered w-full" 
+                bind:value={cookTime}
+                min="0"
+                max="999"
+                placeholder="45"
               />
             </div>
 
@@ -247,36 +257,79 @@
               bind:value={instructions}
               placeholder="1. Mix dry ingredients in a bowl&#10;2. Beat eggs and butter together&#10;3. Combine wet and dry ingredients&#10;4. Bake at 350°F for 25 minutes"
             ></textarea>
-            <div class="label py-0 -mb-2">
+            <div class="label py-0">
               <span class="label-text-alt text-gray-500">Number your steps for easy following</span>
             </div>
           </div>
+
+          <!-- Notes -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">Notes</span>
+            </label>
+            <textarea 
+              class="textarea textarea-bordered w-full h-24 resize-none" 
+              bind:value={notes}
+              placeholder="Any additional notes, tips, variations, or serving suggestions..."
+            ></textarea>
+            <div class="label py-0 -mb-2">
+              <span class="label-text-alt text-gray-500">Optional: cooking tips, variations, or serving suggestions</span>
+            </div>
+          </div>
         </div>
+
+        {#if !recipe}
+          <!-- Add Recipe button (only for new recipes) -->
+          <div class="flex gap-3 mt-6 pt-4 border-t border-base-200">
+            <button 
+              class="btn btn-ghost text-primary underline flex-1 py-2" 
+              on:click={cancel}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button 
+              class="btn flex-1 py-2"
+              style="background-color: #e9d5ff; border-color: #e9d5ff; color: #7c3aed;"
+              on:click={saveRecipe}
+              disabled={loading || (!ingredients.trim() && !instructions.trim())}
+            >
+              {#if loading}
+                <span class="loading loading-spinner loading-sm"></span>
+                Saving...
+              {:else}
+                Add Recipe
+              {/if}
+            </button>
+          </div>
+        {/if}
       {/if}
     </div>
 
-    <!-- Actions -->
-    <div class="flex gap-3 mt-6 pt-4 border-t border-base-200">
-      <button 
-        class="btn btn-ghost text-primary underline flex-1 py-2" 
-        on:click={cancel}
-        disabled={loading}
-      >
-        Cancel
-      </button>
-      <button 
-        class="btn flex-1 py-2"
-        style="background-color: #e9d5ff; border-color: #e9d5ff; color: #7c3aed;"
-        on:click={saveRecipe}
-        disabled={loading || (!ingredients.trim() && !instructions.trim())}
-      >
-        {#if loading}
-          <span class="loading loading-spinner loading-sm"></span>
-          Saving...
-        {:else}
-          {recipe ? 'Update Recipe' : 'Add Recipe'}
-        {/if}
-      </button>
-    </div>
+    {#if recipe}
+      <!-- Actions (only for editing existing recipes) -->
+      <div class="flex gap-3 mt-6 pt-4 border-t border-base-200">
+        <button 
+          class="btn btn-ghost text-primary underline flex-1 py-2" 
+          on:click={cancel}
+          disabled={loading}
+        >
+          Cancel
+        </button>
+        <button 
+          class="btn flex-1 py-2"
+          style="background-color: #e9d5ff; border-color: #e9d5ff; color: #7c3aed;"
+          on:click={saveRecipe}
+          disabled={loading || (!ingredients.trim() && !instructions.trim())}
+        >
+          {#if loading}
+            <span class="loading loading-spinner loading-sm"></span>
+            Saving...
+          {:else}
+            Update Recipe
+          {/if}
+        </button>
+      </div>
+    {/if}
   </div>
 </div>

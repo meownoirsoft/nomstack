@@ -523,10 +523,13 @@ export async function addRecipe(mealId, recipe) {
     .from('recipes')
     .insert([{
       meal_id: mealId,
+      title: recipe.title || '',
       ingredients: recipe.ingredients || '',
       instructions: recipe.instructions || '',
       prep_time: recipe.prep_time || 0,
-      servings: recipe.servings || 1
+      cook_time: recipe.cook_time || 0,
+      servings: recipe.servings || 1,
+      notes: recipe.notes || ''
     }])
     .select()
     .single();
@@ -542,10 +545,13 @@ export async function updateRecipe(recipeId, recipe) {
   const { data, error } = await supabaseAdmin
     .from('recipes')
     .update({
+      title: recipe.title || '',
       ingredients: recipe.ingredients || '',
       instructions: recipe.instructions || '',
       prep_time: recipe.prep_time || 0,
-      servings: recipe.servings || 1
+      cook_time: recipe.cook_time || 0,
+      servings: recipe.servings || 1,
+      notes: recipe.notes || ''
     })
     .eq('id', recipeId)
     .select()

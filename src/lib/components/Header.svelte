@@ -21,7 +21,7 @@
       <div class="flex items-center gap-3">
         <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
           <Layers class="h-6 w-6" />
-          <span class="tracking-tight">nomStack {capitalize(page.replace('/',''))}</span>
+          <span class="tracking-tight">nomStack</span>
         </h1>
       </div>
       <div class="flex items-center gap-2">

@@ -60,6 +60,15 @@
     return `${hours}h ${mins}m`;
   }
 
+  function formatCookTime(minutes) {
+    if (!minutes || minutes === 0) return 'No cook time';
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) return `${hours}h`;
+    return `${hours}h ${mins}m`;
+  }
+
   async function adjustServings(newServings) {
     if (!recipe || newServings < 1 || newServings > 20) return;
     
@@ -353,6 +362,13 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <Clock class="h-5 w-5 text-primary" />
+          <div>
+            <div class="text-sm font-medium">Cook Time</div>
+            <div class="text-lg font-bold">{formatCookTime(recipe.cook_time)}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 col-span-2">
           <Users class="h-5 w-5 text-primary" />
           <div class="flex-1">
             <div class="text-sm font-medium">Servings</div>
@@ -470,6 +486,16 @@
                 </li>
               {/each}
             </ol>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Notes -->
+      {#if recipe.notes}
+        <div class="mb-6">
+          <h4 class="text-lg font-bold text-primary mb-3">Notes</h4>
+          <div class="bg-base-200 rounded-lg p-4">
+            <div class="text-sm leading-relaxed whitespace-pre-wrap">{recipe.notes}</div>
           </div>
         </div>
       {/if}

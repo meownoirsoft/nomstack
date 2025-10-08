@@ -22,7 +22,7 @@ export function notifyError(message, timeout = 4000) {
   notify('error', message, timeout);
 }
 
-export function notifySuccess(message, timeout = 3000) {
+export function notifySuccess(message, timeout = 6000) {
   notify('success', message, timeout);
 }
 

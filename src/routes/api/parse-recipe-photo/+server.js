@@ -9,33 +9,34 @@ export async function POST({ request }) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { recipeText } = await request.json();
+    const formData = await request.formData();
+    const photo = formData.get('photo');
 
-    if (!recipeText || !recipeText.trim()) {
-      return json({ error: 'Recipe text is required' }, { status: 400 });
+    if (!photo) {
+      return json({ error: 'Photo is required' }, { status: 400 });
     }
-
-    // Convert fraction characters to literal fractions for easier processing
-    let normalizedRecipeText = recipeText;
-    normalizedRecipeText = normalizedRecipeText.replace(/¼/g, '1/4');
-    normalizedRecipeText = normalizedRecipeText.replace(/½/g, '1/2');
-    normalizedRecipeText = normalizedRecipeText.replace(/¾/g, '3/4');
-    normalizedRecipeText = normalizedRecipeText.replace(/⅓/g, '1/3');
-    normalizedRecipeText = normalizedRecipeText.replace(/⅔/g, '2/3');
 
     // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
       return json({ error: 'OpenAI API key not configured' }, { status: 500 });
     }
 
-    // Prepare the prompt for GPT-4
-    const prompt = `Parse the following recipe text and extract structured information. Return ONLY a valid JSON object with these exact fields:
+    // Convert photo to base64 for OpenAI Vision API
+    const photoBuffer = await photo.arrayBuffer();
+    const photoBase64 = Buffer.from(photoBuffer).toString('base64');
+    const photoMimeType = photo.type || 'image/jpeg';
+
+    // Prepare the prompt for GPT-4 Vision
+    const prompt = `Extract recipe information from this image. Return ONLY a JSON object with this exact structure:
 
 {
+  "title": "string (recipe name)",
   "ingredients": "string with each ingredient on a new line, prefixed with *",
   "instructions": "string with each step on a new line, numbered",
   "prepTime": number (in minutes, 0 if not specified),
-  "servings": number (1 if not specified)
+  "cookTime": number (in minutes, 0 if not specified),
+  "servings": number (1 if not specified),
+  "notes": "string (any additional notes, tips, or variations)"
 }
 
 IMPORTANT INGREDIENT FORMATTING:
@@ -53,9 +54,6 @@ IMPORTANT INGREDIENT FORMATTING:
   * "1 large onion, diced"
 - This makes ingredients more natural and easier to read
 
-Recipe text to parse:
-${normalizedRecipeText}
-
 IMPORTANT TIME EXTRACTION RULES:
 - ONLY extract prep time and cooking time
 - IGNORE "additional time", "total time", "chill time", "rest time", "marinate time", etc.
@@ -68,9 +66,10 @@ Other Rules:
 - For ingredients: Use * prefix for each ingredient, one per line
 - For instructions: Number each step (1., 2., 3., etc.), one per line
 - For servings: Extract number of servings, default to 1
+- For notes: Include any cooking tips, variations, serving suggestions, or additional information found in the recipe
 - Return ONLY the JSON, no other text`;
 
-    // Call OpenAI API
+    // Call OpenAI Vision API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -78,22 +77,34 @@ Other Rules:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: [
+              {
+                type: 'text',
+                text: prompt
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${photoMimeType};base64,${photoBase64}`,
+                  detail: 'high'
+                }
+              }
+            ]
           }
         ],
         temperature: 0.1, // Low temperature for consistent parsing
-        max_tokens: 1000
+        max_tokens: 1500
       })
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
-      return json({ error: 'Failed to parse recipe with AI' }, { status: 500 });
+      console.error('OpenAI Vision API error:', response.status, errorData);
+      return json({ error: 'Failed to parse recipe from photo' }, { status: 500 });
     }
 
     const data = await response.json();
@@ -121,7 +132,14 @@ Other Rules:
 
     // Ensure numeric values are valid
     parsedRecipe.prepTime = parseInt(parsedRecipe.prepTime) || 0;
+    parsedRecipe.cookTime = parseInt(parsedRecipe.cookTime) || 0;
     parsedRecipe.servings = parseInt(parsedRecipe.servings) || 1;
+    
+    // Ensure notes field exists
+    parsedRecipe.notes = parsedRecipe.notes || '';
+
+    // Calculate total time
+    parsedRecipe.totalTime = parsedRecipe.prepTime + parsedRecipe.cookTime;
 
     return json({ 
       success: true, 
@@ -129,7 +147,10 @@ Other Rules:
     });
 
   } catch (error) {
-    console.error('Recipe parsing error:', error);
-    return json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Photo recipe parsing error:', error);
+    return json({ 
+      error: 'Failed to parse recipe from photo', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
