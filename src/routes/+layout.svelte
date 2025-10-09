@@ -43,7 +43,7 @@
   <div class="h-screen bg-secondary flex flex-col" style="isolation: auto !important;">
     <Header page={currentPage} />
     <main class="flex-1 overflow-hidden">
-      <div class="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-0 h-full">
+      <div class="max-w-5xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-0 h-full">
         {#if error}
           <h1 class="text-2xl font-semibold text-error">Error: {error.message}</h1>
         {:else}

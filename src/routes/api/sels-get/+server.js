@@ -19,14 +19,15 @@ export async function GET({ url, request }) {
 
         const searchParams = url.searchParams;
         const type = searchParams.get('type');
+        const planId = searchParams.get('plan_id');
 
         let sels;
         if (type === 'lunch') {
-            sels = await getLunchSels(user.id);
+            sels = await getLunchSels(user.id, planId);
         } else if (type === 'dinner') {
-            sels = await getDinnerSels(user.id);
+            sels = await getDinnerSels(user.id, planId);
         } else {
-            sels = await getAllSels(user.id);
+            sels = await getAllSels(user.id, planId);
         }
 
         return json(sels);

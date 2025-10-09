@@ -29,7 +29,8 @@ export async function POST({ request }) {
           .map((value) => value.trim())
           .filter(Boolean);
 
-    const updatedData = await updSels(type, meals, user.id);
+    const planId = updRow.plan_id || null;
+    const updatedData = await updSels(type, meals, user.id, planId);
     return json({ success: true, data: updatedData });
   } catch (error) {
     console.error('sels-upd failed:', error);

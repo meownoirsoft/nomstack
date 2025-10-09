@@ -7,7 +7,10 @@
     import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
     import { api } from '$lib/api.js';
     import { settings } from '$lib/stores/settings.js';
-    import { Edit, Check, Plus, ChefHat } from 'lucide-svelte';
+    import { currentMealPlan, mealPlans, loadingMealPlans, loadMealPlans, setCurrentMealPlan } from '$lib/stores/mealPlan.js';
+    import { Edit, Check, Plus, ChefHat, Printer, Calendar, Edit3 } from 'lucide-svelte';
+    import { onMount } from 'svelte';
+    import MealPlanManager from '$lib/components/MealPlanManager.svelte';
 
     const LUNCH_FLAG = 'lunch';
     const DINNER_FLAG = 'dinner';
@@ -26,6 +29,7 @@
     let lastSelsSnapshot = Array.isArray(sels) ? sels.join(',') : String(sels ?? '');
     let displayMeals = [];
     
+    
     // Filter state
     let activeFilter = 'All';
     const filters = ['All', 'Lunch', 'Dinner', 'Quick'];
@@ -35,8 +39,46 @@
     let showRecipeViewer = false;
     let currentMeal = null;
     let currentRecipe = null;
+    
+    // Meal plan manager state
+    let showMealPlanManager = false;
+    
 
     $: modalCats = Array.isArray(cats) ? cats : [];
+
+    onMount(async () => {
+      await loadMealPlans();
+    });
+
+    // Load selections when meal plan changes
+    $: if ($currentMealPlan) {
+      loadSelectionsForPlan();
+    } else {
+      selectedItems = [];
+    }
+
+    async function loadSelectionsForPlan() {
+      if (!$currentMealPlan) return;
+      
+      try {
+        const result = await api.getSelections(page, $currentMealPlan.id);
+        
+        if (result && Array.isArray(result)) {
+          if (result.length > 0) {
+            const meals = result[0].meals;
+            selectedItems = parseIds(meals);
+          } else {
+            // No selections for this plan yet
+            selectedItems = [];
+          }
+        } else {
+          selectedItems = [];
+        }
+      } catch (error) {
+        console.error('Error loading selections for plan:', error);
+        selectedItems = [];
+      }
+    }
 
     $: {
       const signature = Array.isArray(sels) ? sels.join(',') : String(sels ?? '');
@@ -105,7 +147,9 @@
       activeFilter = filter;
     }
 
-    $: displayMeals = filterMealsByPageAndFilter(meals, page, activeFilter);
+  $: {
+    displayMeals = filterMealsByPageAndFilter(meals, page, activeFilter);
+  }
 
     function parseIds(value) {
       if (!value) {
@@ -146,9 +190,10 @@
 
     async function updateSelections(items, previousItems = selectedItems, { successMessage } = {}) {
       const ids = toIdList(items);
+      const planId = $currentMealPlan?.id || null;
 
       try {
-        const result = await api.updateSelections(page, ids);
+        const result = await api.updateSelections(page, ids, planId);
         
         if (result.success) {
           selectedItems = ids;
@@ -247,8 +292,47 @@
   </script>
     
   <main class="flex flex-col min-h-auto gap-2">
+    <!-- Title and Meal Plan Selector -->
+    <div class="flex items-center justify-between mt-2 mb-1">
+      <h1 class="text-xl font-bold text-primary">Meals</h1>
+      <div class="flex items-center gap-1">
+           <select 
+             id="meal-plan-select"
+             class="select select-bordered select-sm"
+             style="width: 240px;"
+             value={$currentMealPlan?.id || ''}
+             on:change={(e) => setCurrentMealPlan(e.target.value)}
+             disabled={$loadingMealPlans}
+           >
+          <option value="">--Select--</option>
+          {#each $mealPlans as plan}
+            <option value={plan.id}>Plan: {plan.title}</option>
+          {/each}
+        </select>
+        <button 
+          class="btn btn-ghost btn-sm px-2"
+          on:click={() => showMealPlanManager = true}
+          title="Manage meal plans"
+        >
+          <Edit3 class="h-4 w-4" />
+        </button>
+        <a 
+          href="/print" 
+          class="btn btn-ghost btn-sm px-2"
+          class:opacity-50={!$currentMealPlan}
+          class:pointer-events-none={!$currentMealPlan}
+          title={$currentMealPlan ? "Print meal plan" : "Select a meal plan to print"}
+        >
+          <Printer class="h-4 w-4" />
+        </a>
+        {#if $loadingMealPlans}
+          <div class="loading loading-spinner loading-sm"></div>
+        {/if}
+      </div>
+    </div>
+    
     <!-- Filters -->
-    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mt-2 mb-1">
+    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mt-0 mb-1">
       {#each filters as filter}
         <button 
           class="text-sm py-0 m-0 {activeFilter === filter ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
@@ -259,26 +343,28 @@
       {/each}
     </div>
     
-    <div class="flex items-center gap-3 -ml-2">
-      <button class="btn btn-xs sm:btn-sm btn-ghost text-primary font-normal" on:click={clearAll}>
-        Clear ✓
-      </button>
-      <div class="flex-1 flex justify-center">
-        <p class="text-xs text-primary/70">checked = meal plan</p>
+    <div class="scroller flex-grow overflow-y-auto px-0 min-h-[15rem]">
+      <div class="flex items-center justify-between mb-1">
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={clearAll}>
+          Clear
+          <Check class="h-4 w-4" />
+        </button>
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={() => showModal = true}>
+          <Plus class="h-4 w-4" />
+          <span class="hidden sm:inline">Add meal</span>
+          <span class="sm:hidden">Meal</span>
+        </button>
       </div>
-      <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={() => showModal = true}>
-        <Plus class="h-4 w-4" />
-        <span class="hidden sm:inline">Add meal</span>
-        <span class="sm:hidden">New</span>
-      </button>
-    </div>
-    
-    <div class="scroller flex-grow overflow-y-auto pr-1 min-h-[15rem]">
-      <ul class="space-y-3">
+      <ul class="space-y-1">
         {#each displayMeals as meal}
           <li class="w-full">
-            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-2 pr-2 py-3 shadow-sm border border-purple-300">
-              <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="font-medium text-primary" />
+            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-3 pr-1 py-3 shadow-sm border border-purple-300">
+              {#if $currentMealPlan}
+                <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="font-medium text-primary" />
+              {:else}
+                <div class="w-4 h-4"></div>
+                <span class="font-medium text-primary">{meal.name}</span>
+              {/if}
               <div class="ml-auto flex items-center gap-1 text-sm text-primary/70">
                 <SocialIcon icon={meal.source} />
                 <span
@@ -336,4 +422,10 @@
         on:deleted={handleRecipeDeleted}
       />
     {/if}
+
+    <!-- Meal Plan Manager Modal -->
+    <MealPlanManager 
+      bind:isOpen={showMealPlanManager}
+      onClose={() => showMealPlanManager = false}
+    />
   </main>

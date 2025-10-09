@@ -152,15 +152,17 @@
           </div>
       </div>
     {/if}
-    <div class="flex items-center pr-2">
-      <small class="flex-1 font-bold text-primary">CATEGORY</small>
-      <small class="ml-auto font-bold text-primary pr-0">DELETE</small>
-    </div>
-    <div class="scroller flex-grow overflow-y-auto pr-4 min-h-60" style="height: calc(100vh - 180px);">
-      <button type="button" class="btn btn-ghost text-primary text-lg mr-2" style="position: absolute; top: 0px; right: -10px;" on:click={toggleShowAddCat}>
+    
+    <!-- Add Category Button -->
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold text-primary">Categories</h2>
+      <button type="button" class="btn btn-ghost text-primary" on:click={toggleShowAddCat}>
         <Plus style="margin-right: -5px" />Category
       </button>
-      <ul class="mx-0 mt-2 text-primary"> 
+    </div>
+    
+    <div class="scroller flex-grow overflow-y-auto pr-4 min-h-60" style="height: calc(100vh - 180px);">
+      <ul class="mx-0 text-primary"> 
         {#each editableCats as cat}
           <li class="mx-0 w-full flex h-10">
             <input

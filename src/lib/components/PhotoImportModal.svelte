@@ -1,6 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { Camera, Upload, X, Check, AlertCircle } from 'lucide-svelte';
+  import { Camera, Upload, X, Check, AlertCircle, Search, ChefHat } from 'lucide-svelte';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
   import { api } from '$lib/api.js';
 
@@ -12,6 +12,14 @@
   let processedCount = 0;
   let totalCount = 0;
   let issues = [];
+  
+  // Meal selection state
+  let importMode = 'new'; // 'new' or 'existing'
+  let allMeals = [];
+  let filteredMeals = [];
+  let searchTerm = '';
+  let selectedMealId = null;
+  let loadingMeals = false;
 
   export function open() {
     isOpen = true;
@@ -20,6 +28,10 @@
     processedCount = 0;
     totalCount = 0;
     issues = [];
+    importMode = 'new';
+    selectedMealId = null;
+    searchTerm = '';
+    loadMeals();
   }
 
   export function close() {
@@ -95,7 +107,11 @@
 
       // Dispatch a single event with all successful imports
       if (successfulImports.length > 0) {
-        dispatch('recipes-imported', { imports: successfulImports });
+        dispatch('recipes-imported', { 
+          imports: successfulImports,
+          importMode,
+          selectedMealId: importMode === 'existing' ? selectedMealId : null
+        });
       }
 
       if (issues.length > 0) {
@@ -136,6 +152,36 @@
     close();
     dispatch('close');
   }
+
+  // Meal loading and filtering
+  async function loadMeals() {
+    loadingMeals = true;
+    try {
+      const result = await api.getMeals('all');
+      allMeals = result || [];
+      filteredMeals = allMeals;
+    } catch (error) {
+      console.error('Error loading meals:', error);
+      notifyError('Failed to load meals');
+    } finally {
+      loadingMeals = false;
+    }
+  }
+
+  // Filter meals based on search term
+  $: {
+    if (searchTerm.trim()) {
+      filteredMeals = allMeals.filter(meal => 
+        meal.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else {
+      filteredMeals = allMeals;
+    }
+  }
+
+  function selectMeal(mealId) {
+    selectedMealId = mealId;
+  }
 </script>
 
 {#if isOpen}
@@ -170,6 +216,77 @@
             <p class="text-gray-600 text-sm">
               Take photos of recipes or select from your gallery. Works with cookbooks, screenshots, handwritten recipes, and more!
             </p>
+            
+            <!-- Import Mode Selection -->
+            <div class="space-y-3">
+              <h3 class="font-medium text-gray-900">Add recipes to:</h3>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    bind:group={importMode} 
+                    value="new" 
+                    class="radio radio-primary radio-sm"
+                  />
+                  <span class="text-sm">Create new meals</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    bind:group={importMode} 
+                    value="existing" 
+                    class="radio radio-primary radio-sm"
+                  />
+                  <span class="text-sm">Add to existing meal</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Meal Selection (only show when "existing" is selected) -->
+            {#if importMode === 'existing'}
+              <div class="space-y-3">
+                <h3 class="font-medium text-gray-900">Select meal:</h3>
+                
+                <!-- Search input -->
+                <div class="relative">
+                  <input
+                    type="text"
+                    placeholder="Search meals..."
+                    bind:value={searchTerm}
+                    class="input input-bordered input-sm w-full pl-8"
+                  />
+                  <Search class="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                </div>
+                
+                <!-- Meal list -->
+                <div class="max-h-32 overflow-y-auto border rounded-lg">
+                  {#if loadingMeals}
+                    <div class="p-3 text-center text-sm text-gray-500">
+                      Loading meals...
+                    </div>
+                  {:else if filteredMeals.length === 0}
+                    <div class="p-3 text-center text-sm text-gray-500">
+                      {searchTerm ? 'No meals found' : 'No meals available'}
+                    </div>
+                  {:else}
+                    {#each filteredMeals as meal}
+                      <button
+                        class="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 flex items-center gap-2 {selectedMealId === meal.id ? 'bg-primary/10' : ''}"
+                        on:click={() => selectMeal(meal.id)}
+                      >
+                        <ChefHat class="h-4 w-4 text-gray-400" />
+                        <span class="text-sm {selectedMealId === meal.id ? 'font-medium text-primary' : 'text-gray-700'}">
+                          {meal.name}
+                        </span>
+                        {#if selectedMealId === meal.id}
+                          <Check class="h-4 w-4 text-primary ml-auto" />
+                        {/if}
+                      </button>
+                    {/each}
+                  {/if}
+                </div>
+              </div>
+            {/if}
             
             <div class="grid grid-cols-2 gap-4">
               <button
@@ -210,7 +327,7 @@
                 <button
                   class="btn btn-primary w-full"
                   on:click={processPhotos}
-                  disabled={selectedFiles.length === 0}
+                  disabled={selectedFiles.length === 0 || (importMode === 'existing' && !selectedMealId)}
                 >
                   Import {selectedFiles.length} Recipe{selectedFiles.length !== 1 ? 's' : ''}
                 </button>

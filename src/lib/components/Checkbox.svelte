@@ -1,5 +1,7 @@
 <script>
     import { notifyError } from '$lib/stores/notifications.js';
+    import { api } from '$lib/api.js';
+    import { currentMealPlan } from '$lib/stores/mealPlan.js';
     export let type;
     export let label;
     export let value;
@@ -25,14 +27,10 @@
       };
 
       try {
-        const response = await fetch('/api/sels-upd', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newData)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
+        const planId = $currentMealPlan?.id || null;
+        const result = await api.updateSelections(newData.type, newData.meals, planId);
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update selections');
         }
       } catch (error) {
         selectedItems = previousItems;

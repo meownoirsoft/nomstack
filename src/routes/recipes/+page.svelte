@@ -170,7 +170,7 @@
   }
 
   async function handleRecipesImported(event) {
-    const { imports } = event.detail;
+    const { imports, importMode, selectedMealId } = event.detail;
     
     let successCount = 0;
     let updateCount = 0;
@@ -178,7 +178,7 @@
     
     for (const { recipe, file } of imports) {
       try {
-        const result = await processSingleRecipeImport(recipe, file);
+        const result = await processSingleRecipeImport(recipe, file, importMode, selectedMealId);
         if (result.type === 'updated') {
           updateCount++;
         } else if (result.type === 'created') {
@@ -204,7 +204,7 @@
     // Note: loadMealsWithRecipes() is now called before each import in processSingleRecipeImport
   }
 
-  async function processSingleRecipeImport(recipe, file) {
+  async function processSingleRecipeImport(recipe, file, importMode = 'new', selectedMealId = null) {
     // Refresh the meals list to ensure we have the latest data for duplicate detection
     await loadMealsWithRecipes();
     
@@ -259,36 +259,46 @@
       }
     } else {
       // New recipe - create it
-      const mealData = {
-        name: recipe.title || `Recipe from ${file.name}`,
-        source: 'Photo Import',
-        cats: [], // No categories initially
-        notes: `Imported from photo: ${file.name}`
-      };
+      let mealId;
       
-      const mealResult = await api.addMeal(mealData);
-      
-      if (mealResult.success) {
-        // Now add the recipe to the meal
-        const recipeData = {
-          title: recipe.title || '',
-          ingredients: recipe.ingredients || '',
-          instructions: recipe.instructions || '',
-          prep_time: recipe.prepTime || 0,
-          cook_time: recipe.cookTime || 0,
-          servings: recipe.servings || 1,
-          notes: recipe.notes || ''
+      if (importMode === 'existing' && selectedMealId) {
+        // Add recipe to existing meal
+        mealId = selectedMealId;
+      } else {
+        // Create new meal
+        const mealData = {
+          name: recipe.title || `Recipe from ${file.name}`,
+          source: 'Photo Import',
+          cats: [], // No categories initially
+          notes: `Imported from photo: ${file.name}`
         };
         
-        const recipeResult = await api.addRecipe(mealResult.data.id, recipeData);
+        const mealResult = await api.addMeal(mealData);
         
-        if (recipeResult.success) {
-          return { type: 'created', recipe: recipe.title };
-        } else {
-          throw new Error(recipeResult.error || 'Failed to save recipe');
+        if (!mealResult.success) {
+          throw new Error(mealResult.error || 'Failed to create meal');
         }
+        
+        mealId = mealResult.data.id;
+      }
+      
+      // Add the recipe to the meal
+      const recipeData = {
+        title: recipe.title || '',
+        ingredients: recipe.ingredients || '',
+        instructions: recipe.instructions || '',
+        prep_time: recipe.prepTime || 0,
+        cook_time: recipe.cookTime || 0,
+        servings: recipe.servings || 1,
+        notes: recipe.notes || ''
+      };
+      
+      const recipeResult = await api.addRecipe(mealId, recipeData);
+      
+      if (recipeResult.success) {
+        return { type: 'created', recipe: recipe.title };
       } else {
-        throw new Error(mealResult.error || 'Failed to create meal');
+        throw new Error(recipeResult.error || 'Failed to save recipe');
       }
     }
   }
@@ -338,7 +348,7 @@
     {/if}
   </div>
 {:else}
-  <div class="space-y-4 pt-4 pr-4">
+  <div class="space-y-4 pt-4 pr-1">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-primary">
         Recipes ({mealsWithRecipes.length})
@@ -367,7 +377,7 @@
       {#each mealsWithRecipes as meal}
         <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
           <div class="card-body p-4">
-            <div class="flex items-start justify-between mb-3">
+            <div class="flex items-start justify-between mb-0">
               <h3 class="card-title text-base font-medium text-primary line-clamp-2">
                 {meal.recipe.title || meal.name}
               </h3>
@@ -390,7 +400,7 @@
             </div>
             
             {#if meal.recipe.servings || meal.recipe.prep_time || meal.recipe.cook_time}
-              <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+              <div class="flex items-center gap-4 text-sm text-gray-600 mb-0">
                 {#if meal.recipe.servings}
                   <div class="flex items-center gap-1">
                     <Users class="h-4 w-4" />
@@ -403,29 +413,30 @@
                     <span>{formatTotalTime(meal.recipe.prep_time, meal.recipe.cook_time)}</span>
                   </div>
                 {/if}
+                <div class="flex items-center gap-1">
+                  <span class="text-xs">💰</span>
+                  <span>Cost: $--</span>
+                </div>
               </div>
             {/if}
             
-            <div class="text-sm text-gray-600 space-y-1">
-              {#if meal.recipe.ingredients}
-                {@const ingredientCount = meal.recipe.ingredients.split('\n').filter(line => line.trim()).length}
-                <div class="flex items-center gap-1">
-                  <ChefHat class="h-3 w-3" />
-                  <span>{ingredientCount} ingredient{ingredientCount !== 1 ? 's' : ''}</span>
-                </div>
-              {/if}
-              
-              {#if meal.recipe.instructions}
-                {@const stepCount = meal.recipe.instructions.split('\n').filter(line => line.trim()).length}
-                <div class="flex items-center gap-1">
-                  <span class="text-xs">📝</span>
-                  <span>{stepCount} step{stepCount !== 1 ? 's' : ''}</span>
-                </div>
-              {/if}
-              
-              <div class="flex items-center gap-1">
-                <span class="text-xs">💰</span>
-                <span>Cost: $--</span>
+            <div class="text-sm text-gray-600">
+              <div class="flex items-center gap-4">
+                {#if meal.recipe.ingredients}
+                  {@const ingredientCount = meal.recipe.ingredients.split('\n').filter(line => line.trim()).length}
+                  <div class="flex items-center gap-1">
+                    <ChefHat class="h-3 w-3" />
+                    <span>{ingredientCount} ingredient{ingredientCount !== 1 ? 's' : ''}</span>
+                  </div>
+                {/if}
+                
+                {#if meal.recipe.instructions}
+                  {@const stepCount = meal.recipe.instructions.split('\n').filter(line => line.trim()).length}
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs">📝</span>
+                    <span>{stepCount} step{stepCount !== 1 ? 's' : ''}</span>
+                  </div>
+                {/if}
               </div>
             </div>
           </div>

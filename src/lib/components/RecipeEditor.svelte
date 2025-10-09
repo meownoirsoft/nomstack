@@ -2,10 +2,10 @@
   import { createEventDispatcher } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp } from 'lucide-svelte';
+  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Search, Check } from 'lucide-svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
 
-  export let mealId;
+  export let mealId = null; // Optional - if null, user can select a meal
   export let mealName = '';
   export let recipe = null; // Existing recipe data
 
@@ -23,6 +23,13 @@
   // Import state
   let showManualEdit = false;
   let photoImportModal;
+  
+  // Meal selection state (when mealId is not provided)
+  let allMeals = [];
+  let filteredMeals = [];
+  let searchTerm = '';
+  let selectedMealId = null;
+  let loadingMeals = false;
 
   // Initialize form with existing recipe data
   $: if (recipe) {
@@ -37,9 +44,50 @@
     showManualEdit = true;
   }
 
+  // Load meals when component mounts and no mealId is provided
+  $: if (!mealId && allMeals.length === 0) {
+    loadMeals();
+  }
+
+  // Filter meals based on search term
+  $: {
+    if (searchTerm.trim()) {
+      filteredMeals = allMeals.filter(meal => 
+        meal.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else {
+      filteredMeals = allMeals;
+    }
+  }
+
+  // Meal loading and selection functions
+  async function loadMeals() {
+    loadingMeals = true;
+    try {
+      const result = await api.getMeals('all');
+      allMeals = result || [];
+      filteredMeals = allMeals;
+    } catch (error) {
+      console.error('Error loading meals:', error);
+      notifyError('Failed to load meals');
+    } finally {
+      loadingMeals = false;
+    }
+  }
+
+  function selectMeal(mealId) {
+    selectedMealId = mealId;
+  }
+
   async function saveRecipe() {
     if (!ingredients.trim() && !instructions.trim()) {
       notifyError('Please add at least ingredients or instructions');
+      return;
+    }
+
+    // If no mealId is provided, require meal selection
+    if (!mealId && !selectedMealId) {
+      notifyError('Please select a meal for this recipe');
       return;
     }
 
@@ -60,8 +108,9 @@
         // Update existing recipe
         result = await api.updateRecipe(recipe.id, recipeData);
       } else {
-        // Create new recipe
-        result = await api.addRecipe(mealId, recipeData);
+        // Create new recipe - use selectedMealId if mealId is not provided
+        const targetMealId = mealId || selectedMealId;
+        result = await api.addRecipe(targetMealId, recipeData);
       }
 
       if (result.success) {
@@ -171,6 +220,54 @@
               placeholder="Enter recipe title"
             />
           </div>
+
+          <!-- Meal Selection (only show when no mealId is provided) -->
+          {#if !mealId}
+            <div>
+              <label class="label">
+                <span class="label-text font-medium">Assign to Meal</span>
+              </label>
+              
+              <!-- Search input -->
+              <div class="relative mb-2">
+                <input
+                  type="text"
+                  placeholder="Search meals..."
+                  bind:value={searchTerm}
+                  class="input input-bordered w-full pl-8"
+                />
+                <Search class="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              
+              <!-- Meal list -->
+              <div class="max-h-32 overflow-y-auto border rounded-lg">
+                {#if loadingMeals}
+                  <div class="p-3 text-center text-sm text-gray-500">
+                    Loading meals...
+                  </div>
+                {:else if filteredMeals.length === 0}
+                  <div class="p-3 text-center text-sm text-gray-500">
+                    {searchTerm ? 'No meals found' : 'No meals available'}
+                  </div>
+                {:else}
+                  {#each filteredMeals as meal}
+                    <button
+                      class="w-full text-left p-3 hover:bg-gray-50 border-b last:border-b-0 flex items-center gap-2 {selectedMealId === meal.id ? 'bg-primary/10' : ''}"
+                      on:click={() => selectMeal(meal.id)}
+                    >
+                      <ChefHat class="h-4 w-4 text-gray-400" />
+                      <span class="text-sm {selectedMealId === meal.id ? 'font-medium text-primary' : 'text-gray-700'}">
+                        {meal.name}
+                      </span>
+                      {#if selectedMealId === meal.id}
+                        <Check class="h-4 w-4 text-primary ml-auto" />
+                      {/if}
+                    </button>
+                  {/each}
+                {/if}
+              </div>
+            </div>
+          {/if}
 
           <!-- Quick Info Row -->
           <div class="grid grid-cols-3 gap-4">

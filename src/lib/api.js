@@ -99,14 +99,17 @@ export const api = {
   },
 
   // Selections
-  async getSelections(type = 'all') {
-    return apiRequest(`/api/sels-get?type=${type}`);
+  async getSelections(type = 'all', planId = null) {
+    const url = planId 
+      ? `/api/sels-get?type=${type}&plan_id=${planId}`
+      : `/api/sels-get?type=${type}`;
+    return apiRequest(url);
   },
 
-  async updateSelections(type, meals) {
+  async updateSelections(type, meals, planId = null) {
     return apiRequest('/api/sels-upd', {
       method: 'POST',
-      body: JSON.stringify({ type, meals })
+      body: JSON.stringify({ type, meals, plan_id: planId })
     });
   },
 
@@ -204,6 +207,148 @@ export const api = {
     return apiRequest('/api/adjust-recipe-servings', {
       method: 'POST',
       body: JSON.stringify(data)
+    });
+  },
+
+  // ===== SHOPPING LISTS API =====
+
+  // Meal Plans
+  async getMealPlans(status = 'active') {
+    return apiRequest(`/api/meal-plans?status=${status}`);
+  },
+
+  async createMealPlan(planData) {
+    return apiRequest('/api/meal-plans', {
+      method: 'POST',
+      body: JSON.stringify(planData)
+    });
+  },
+
+  async updateMealPlan(planId, planData) {
+    return apiRequest(`/api/meal-plans/${planId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(planData)
+    });
+  },
+
+  async deleteMealPlan(planId) {
+    return apiRequest(`/api/meal-plans/${planId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async deleteMealPlan(planId) {
+    return apiRequest(`/api/meal-plans/${planId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Stores
+  async getStores() {
+    return apiRequest('/api/stores');
+  },
+
+  async createStore(storeData) {
+    return apiRequest('/api/stores', {
+      method: 'POST',
+      body: JSON.stringify(storeData)
+    });
+  },
+
+  async updateStore(storeId, storeData) {
+    return apiRequest(`/api/stores/${storeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(storeData)
+    });
+  },
+
+  async deleteStore(storeId) {
+    return apiRequest(`/api/stores/${storeId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Shopping Lists
+  async getShoppingLists(planId) {
+    return apiRequest(`/api/shopping-lists?plan_id=${planId}`);
+  },
+
+  async createShoppingList(planId, storeId, title) {
+    return apiRequest('/api/shopping-lists', {
+      method: 'POST',
+      body: JSON.stringify({ plan_id: planId, store_id: storeId, title })
+    });
+  },
+
+  async updateShoppingList(listId, listData) {
+    return apiRequest(`/api/shopping-lists/${listId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(listData)
+    });
+  },
+
+  async deleteShoppingList(listId) {
+    return apiRequest(`/api/shopping-lists/${listId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Ingredients
+  async getIngredients(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.store_id) params.append('store_id', filters.store_id);
+    if (filters.plan_id) params.append('plan_id', filters.plan_id);
+    if (filters.category) params.append('category', filters.category);
+    
+    return apiRequest(`/api/ingredients?${params.toString()}`);
+  },
+
+  async createIngredient(ingredientData) {
+    return apiRequest('/api/ingredients', {
+      method: 'POST',
+      body: JSON.stringify(ingredientData)
+    });
+  },
+
+  async updateIngredient(ingredientId, ingredientData) {
+    return apiRequest(`/api/ingredients/${ingredientId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(ingredientData)
+    });
+  },
+
+  async moveIngredient(ingredientId, storeId) {
+    console.log('API moveIngredient called with:', ingredientId, storeId);
+    return apiRequest(`/api/ingredients/${ingredientId}/move`, {
+      method: 'PATCH',
+      body: JSON.stringify({ store_id: storeId })
+    });
+  },
+
+  async toggleIngredient(ingredientId, field) {
+    return apiRequest(`/api/ingredients/${ingredientId}/toggle`, {
+      method: 'PATCH',
+      body: JSON.stringify({ field })
+    });
+  },
+
+  async deleteIngredient(ingredientId) {
+    return apiRequest(`/api/ingredients/${ingredientId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  async refreshIngredients(planId) {
+    return apiRequest('/api/ingredients/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ plan_id: planId })
+    });
+  },
+
+  async regenerateIngredients(planId) {
+    return apiRequest('/api/ingredients/regenerate', {
+      method: 'POST',
+      body: JSON.stringify({ plan_id: planId })
     });
   }
 };
