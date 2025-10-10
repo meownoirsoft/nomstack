@@ -363,5 +363,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ filters })
     });
+  },
+
+  // Sync status
+  async getSyncStatus() {
+    return apiRequest('/api/sync-status');
   }
 };

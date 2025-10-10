@@ -53,7 +53,7 @@
       await loadMealPlans();
     });
 
-    // Load selections when meal plan changes
+    // Load selections when meal plan changes (this is needed for meal plan switching to work)
     $: if ($currentMealPlan) {
       loadSelectionsForPlan();
     } else {
@@ -122,21 +122,19 @@
     } else {
       // Find the selected filter
       const filter = $mealFilters.find(f => f.id === selectedFilter);
+      
       if (filter) {
-        if (filter.is_system) {
-          // Handle system categories (breakfast, lunch, dinner)
-          if (selectedFilter === 'breakfast') {
-            displayMeals = meals.filter(meal => hasFlag(meal, BREAKFAST_FLAG));
-          } else if (selectedFilter === 'lunch') {
-            displayMeals = meals.filter(meal => hasFlag(meal, LUNCH_FLAG));
-          } else if (selectedFilter === 'dinner') {
-            displayMeals = meals.filter(meal => hasFlag(meal, DINNER_FLAG));
-          } else {
-            displayMeals = meals;
-          }
-        } else if (filter.category_id) {
-          // Handle regular category filters
-          displayMeals = meals.filter(meal => meal.category_id === filter.category_id);
+        if (filter.category_id) {
+          // Handle category filters by checking if the meal's categories include this category_id
+          displayMeals = meals.filter(meal => {
+            // meal.cats is an array of category IDs
+            return Array.isArray(meal.cats) && meal.cats.includes(filter.category_id);
+          });
+        } else if (filter.flag) {
+          // Handle flag filters (lunch, dinner) by checking if the meal has this flag
+          displayMeals = meals.filter(meal => {
+            return Array.isArray(meal.flags) && meal.flags.includes(filter.flag);
+          });
         } else {
           displayMeals = meals;
         }
@@ -294,7 +292,7 @@
            <select 
              id="meal-plan-select"
              class="select select-bordered select-sm"
-             style="width: 240px;"
+             style="min-width: 200px; text-align: left;"
              value={$currentMealPlan?.id || ''}
              on:change={(e) => setCurrentMealPlan(e.target.value)}
              disabled={$loadingMealPlans}
@@ -332,7 +330,7 @@
         <div class="flex flex-wrap gap-2">
           {#each $mealFilters as filter}
             <button
-              class="text-sm py-0 m-0 {selectedFilter === filter.id ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
+              class="text-sm py-0 m-0 underline underline-offset-2 {selectedFilter === filter.id ? 'text-primary-focus font-semibold' : 'text-primary hover:text-primary-focus'}"
               on:click={() => selectedFilter = filter.id}
             >
               {filter.name}

@@ -52,17 +52,23 @@ async function resolveSourceId(abbrev, userId) {
 }
 
 async function loadCategoriesMap(mealIds) {
-  if (!mealIds.length) {
+  if (!mealIds || !mealIds.length) {
+    return new Map();
+  }
+
+  // Filter out any invalid IDs
+  const validMealIds = mealIds.filter(id => id != null && id !== undefined && id !== '');
+  if (!validMealIds.length) {
     return new Map();
   }
 
   const { data, error } = await supabaseAdmin
     .from('meal_categories')
     .select('meal_id, category_id')
-    .in('meal_id', mealIds);
+    .in('meal_id', validMealIds);
 
   if (error) {
-    throw new Error(`Failed to load meal categories: ${error.message}`);
+    throw new Error(`Failed to load meal categories: ${error.message || error}`);
   }
 
   const map = new Map();
@@ -75,17 +81,23 @@ async function loadCategoriesMap(mealIds) {
 }
 
 async function loadFlagsMap(mealIds) {
-  if (!mealIds.length) {
+  if (!mealIds || !mealIds.length) {
+    return new Map();
+  }
+
+  // Filter out any invalid IDs
+  const validMealIds = mealIds.filter(id => id != null && id !== undefined && id !== '');
+  if (!validMealIds.length) {
     return new Map();
   }
 
   const { data, error } = await supabaseAdmin
     .from('meal_flags')
     .select('meal_id, flag')
-    .in('meal_id', mealIds);
+    .in('meal_id', validMealIds);
 
   if (error) {
-    throw new Error(`Failed to load meal flags: ${error.message}`);
+    throw new Error(`Failed to load meal flags: ${error.message || error}`);
   }
 
   const map = new Map();
@@ -147,7 +159,18 @@ export async function getAllMeals(userId) {
   }
 
   const meals = data ?? [];
-  const mealIds = meals.map((meal) => meal.id);
+  console.log('getAllMeals: Loaded meals:', meals.length, 'meals');
+  console.log('getAllMeals: First meal:', meals[0]);
+  
+  // Check for meals with undefined IDs
+  const mealsWithUndefinedIds = meals.filter(meal => meal.id == null);
+  if (mealsWithUndefinedIds.length > 0) {
+    console.warn('getAllMeals: Found meals with undefined IDs:', mealsWithUndefinedIds);
+  }
+  
+  const mealIds = meals.map((meal) => meal.id).filter(id => id != null);
+  console.log('getAllMeals: Meal IDs:', mealIds);
+  
   const [categoryMap, flagsMap, sourceMap] = await Promise.all([
     loadCategoriesMap(mealIds),
     loadFlagsMap(mealIds),
@@ -216,8 +239,7 @@ export async function updMeal(id, name, sourceAbbrev, cats = [], notes = '', use
     .update({
       name,
       notes: notes ?? null,
-      source_id: sourceId,
-      updated_at: new Date().toISOString()
+      source_id: sourceId
     })
     .eq('id', id)
     .eq('user_id', userId);
@@ -1287,6 +1309,57 @@ export async function generateIngredientsFromRecipe(userId, planId, recipeId) {
         } else if (parts.length === 2) {
           // Only amount and ingredient name, no unit
           name = parts[1];
+        }
+      }
+    }
+    
+    // If no amount was found, default to "1"
+    if (!amount) {
+      amount = '1';
+    }
+    
+    // Look for units embedded in the ingredient name (like "TBs" or "TB")
+    if (!unit && name) {
+      const unitPatterns = [
+        /\b(TBs?|TB|tbsp|tablespoons?)\b/gi,
+        /\b(tsps?|tsp|teaspoons?)\b/gi,
+        /\b(cups?|c)\b/gi,
+        /\b(pounds?|lbs?|lb)\b/gi,
+        /\b(ounces?|oz)\b/gi,
+        /\b(grams?|g)\b/gi,
+        /\b(kilograms?|kg)\b/gi,
+        /\b(liters?|l)\b/gi,
+        /\b(milliliters?|ml)\b/gi
+      ];
+      
+      for (const pattern of unitPatterns) {
+        const match = name.match(pattern);
+        if (match) {
+          const foundUnit = match[0].toLowerCase();
+          // Map common variations to standard abbreviations
+          if (foundUnit.match(/^(tbs?|tb|tablespoons?)$/)) {
+            unit = 'Tbsp';
+          } else if (foundUnit.match(/^(tsps?|tsp|teaspoons?)$/)) {
+            unit = 'tsp';
+          } else if (foundUnit.match(/^(cups?|c)$/)) {
+            unit = 'c';
+          } else if (foundUnit.match(/^(pounds?|lbs?|lb)$/)) {
+            unit = 'lb';
+          } else if (foundUnit.match(/^(ounces?|oz)$/)) {
+            unit = 'oz';
+          } else if (foundUnit.match(/^(grams?|g)$/)) {
+            unit = 'g';
+          } else if (foundUnit.match(/^(kilograms?|kg)$/)) {
+            unit = 'kg';
+          } else if (foundUnit.match(/^(liters?|l)$/)) {
+            unit = 'L';
+          } else if (foundUnit.match(/^(milliliters?|ml)$/)) {
+            unit = 'mL';
+          }
+          
+          // Remove the unit from the ingredient name
+          name = name.replace(pattern, '').trim();
+          break;
         }
       }
     }

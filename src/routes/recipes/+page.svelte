@@ -2,7 +2,7 @@
   import { api } from '$lib/api.js';
   import { onMount } from 'svelte';
   import { searchTerm } from '$lib/stores/search.js';
-  import { ChefHat, Clock, Users, Eye, Edit, Plus, Upload, Check, LinkOff } from 'lucide-svelte';
+  import { ChefHat, Clock, Users, Eye, Edit, Plus, Upload, Check, Link2Off } from 'lucide-svelte';
   import RecipeViewer from '$lib/components/RecipeViewer.svelte';
   import RecipeEditor from '$lib/components/RecipeEditor.svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
@@ -387,7 +387,7 @@
                   </div>
                 {:else}
                   <div class="flex items-center gap-1 text-gray-500">
-                    <LinkOff class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
+                    <Link2Off class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
                     <span class="text-xs font-medium">orphan</span>
                   </div>
                 {/if}

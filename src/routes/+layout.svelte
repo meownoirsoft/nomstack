@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import '../app.css';
@@ -6,15 +7,16 @@
   import Footer from '$lib/components/Footer.svelte';
   import Notifications from '$lib/components/Notifications.svelte';
   import GlobalModal from '$lib/components/GlobalModal.svelte';
+  import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
   import { user, loading } from '$lib/stores/auth.js';
+  import { initializeOfflineSystem } from '$lib/offline/index.js';
   export let data;
   export let error;
   let currentPage;
+  let offlineInitialized = false;
 
-  $: {
-    const { url, route } = $page;
-    handleUrlChange(url);
-  }
+  // Track current page for header
+  $: currentPage = $page.url.pathname;
 
   // Handle authentication redirects
   $: if (!$loading) {
@@ -25,8 +27,16 @@
     }
   }
 
-  function handleUrlChange(url) {
-    currentPage = url.pathname;
+
+  // Initialize offline system when user is authenticated
+  $: if ($user && !offlineInitialized) {
+    initializeOfflineSystem().then(() => {
+      offlineInitialized = true;
+    }).catch((error) => {
+      console.error('Failed to initialize offline system:', error);
+      // Don't block the app if offline system fails
+      offlineInitialized = true;
+    });
   }
 </script>
 <svelte:head>
@@ -57,4 +67,7 @@
   
   <!-- Global Modal System -->
   <GlobalModal />
+  
+  <!-- Offline Indicator -->
+  <OfflineIndicator />
 {/if}

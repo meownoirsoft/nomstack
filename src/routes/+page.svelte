@@ -33,9 +33,22 @@
     }
   }
 
-  // Reload data when eating mode changes
-  $: if ($eatingMode) {
-    loadDataForCurrentMode();
+  // Reload data when eating mode changes (needed for Eat Out button to work)
+  let previousEatingMode = $eatingMode;
+  let hasLoadedHomeData = false;
+  let hasLoadedOutData = false;
+  
+  $: if ($eatingMode !== previousEatingMode) {
+    previousEatingMode = $eatingMode;
+    
+    // Only reload if we haven't loaded data for this mode yet
+    if ($eatingMode === 'home' && !hasLoadedHomeData) {
+      hasLoadedHomeData = true;
+      loadDataForCurrentMode();
+    } else if ($eatingMode === 'out' && !hasLoadedOutData) {
+      hasLoadedOutData = true;
+      loadDataForCurrentMode();
+    }
   }
 
   async function loadDataForCurrentMode() {
@@ -115,24 +128,11 @@
     // Set eating mode to 'home' for meals page
     setEatingMode('home');
     
-    // Wait for authentication to complete before loading data
-    const unsubscribe = user.subscribe(async (currentUser) => {
-      if (currentUser === null && !$authLoading) {
-        // User is not authenticated and loading is complete, redirect to login
-        goto('/login');
-        return;
-      }
-      
-      if (currentUser && !$authLoading && $accessToken) {
-        // User is authenticated, loading is complete, and token is available
-        await loadDataForCurrentMode();
-      }
-    });
-
-    // Cleanup subscription on component destroy
-    return () => {
-      unsubscribe();
-    };
+    // Load data only once on initial mount, not on tab switches
+    if (allMeals.length === 0) {
+      await loadDataForCurrentMode();
+      hasLoadedHomeData = true; // Mark that we've loaded home data
+    }
   });
 </script>
 

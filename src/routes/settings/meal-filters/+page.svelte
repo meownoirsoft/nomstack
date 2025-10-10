@@ -4,13 +4,18 @@
   import { ChevronUp, ChevronDown, Plus, X } from 'lucide-svelte';
   import { notifySuccess, notifyError } from '$lib/stores/notifications.js';
   import { user, loading as authLoading, accessToken } from '$lib/stores/auth.js';
+  import { loadMealFilters } from '$lib/stores/mealFilters.js';
 
   let categories = [];
   let mealFilters = [];
   let loading = true;
   let saving = false;
+  let showAddFilterDropdown = false;
 
   onMount(async () => {
+    // Ensure page starts at the top
+    window.scrollTo(0, 0);
+    
     // Wait for authentication to complete before loading data
     const unsubscribe = user.subscribe(async (currentUser) => {
       if (currentUser === null && !$authLoading) {
@@ -25,9 +30,18 @@
       }
     });
 
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (showAddFilterDropdown && !event.target.closest('.relative')) {
+        showAddFilterDropdown = false;
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+
     // Cleanup subscription on component destroy
     return () => {
       unsubscribe();
+      document.removeEventListener('click', handleClickOutside);
     };
   });
 
@@ -64,6 +78,8 @@
       
       if (result.success) {
         notifySuccess('Meal filters saved');
+        // Reload the global meal filters store so other pages see the changes
+        await loadMealFilters();
       } else {
         notifyError('Failed to save meal filters');
       }
@@ -99,39 +115,46 @@
     }
   }
 
-  // System categories that can be added as filters
-  const systemCategories = [
-    { id: 'breakfast', name: 'Breakfast' },
-    { id: 'lunch', name: 'Lunch' },
-    { id: 'dinner', name: 'Dinner' }
-  ];
 
-  function addFilter() {
-    // Find available regular categories that aren't already in filters
-    const availableRegularCategories = categories.filter(cat => 
+  function toggleAddFilterDropdown() {
+    showAddFilterDropdown = !showAddFilterDropdown;
+  }
+
+  function addFilter(option) {
+    const newFilter = {
+      id: option.id,
+      name: option.name,
+      category_id: option.is_flag ? null : option.id,
+      flag: option.is_flag ? option.id : null,
+      order: mealFilters.length,
+      is_default: false,
+      is_system: false
+    };
+    mealFilters = [...mealFilters, newFilter];
+    showAddFilterDropdown = false;
+  }
+
+  function getAvailableOptions() {
+    // Available meal type flags (not stored as categories)
+    const availableFlags = [
+      { id: 'lunch', name: 'Lunch', is_flag: true },
+      { id: 'dinner', name: 'Dinner', is_flag: true }
+    ].filter(flag => 
+      !mealFilters.some(filter => filter.flag === flag.id)
+    );
+
+    // Find available categories that aren't already in filters
+    const availableCategories = categories.filter(cat => 
       !mealFilters.some(filter => filter.category_id === cat.id)
     );
 
-    // Find available system categories that aren't already in filters
-    const availableSystemCategories = systemCategories.filter(sysCat => 
-      !mealFilters.some(filter => filter.id === sysCat.id)
-    );
+    // Combine categories and flags
+    const allOptions = [
+      ...availableCategories.map(cat => ({ ...cat, is_flag: false })),
+      ...availableFlags
+    ];
 
-    // Combine available options (system categories first, then regular categories)
-    const availableOptions = [...availableSystemCategories, ...availableRegularCategories];
-
-    if (availableOptions.length > 0) {
-      const option = availableOptions[0];
-      const newFilter = {
-        id: option.id,
-        name: option.name,
-        category_id: option.category_id || null, // System categories don't have category_id
-        order: mealFilters.length,
-        is_default: false,
-        is_system: !option.category_id // Mark as system if no category_id
-      };
-      mealFilters = [...mealFilters, newFilter];
-    }
+    return allOptions;
   }
 
   function removeFilter(index) {
@@ -144,20 +167,13 @@
     }
   }
 
-  function updateFilterCategory(index, categoryId) {
-    const category = categories.find(cat => cat.id === categoryId);
-    if (category) {
-      mealFilters[index].category_id = categoryId;
-      mealFilters[index].name = category.name;
-    }
-  }
 </script>
 
-<div class="min-h-screen bg-base-200">
-  <div class="max-w-4xl mx-auto px-4 py-6">
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-primary mb-2">Meal Filter Settings</h1>
-      <p class="text-gray-600">Configure the category filters that appear at the top of the meals list page.</p>
+<div class="bg-base-200">
+  <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="mb-4">
+      <h1 class="text-2xl font-bold text-primary mb-1">Meal Filter Settings</h1>
+      <p class="text-gray-600 text-sm">Configure the category filters that appear at the top of the meals list page.</p>
     </div>
 
     {#if loading}
@@ -165,57 +181,38 @@
         <div class="loading loading-spinner loading-lg text-primary"></div>
       </div>
     {:else}
-      <div class="bg-base-100 rounded-lg shadow-md p-6">
-        <div class="flex items-center justify-between mb-6">
+      <div class="bg-base-100 rounded-lg shadow-md py-4 px-3">
+        <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-semibold">Filter Order</h2>
-          <button 
-            class="btn btn-primary btn-sm"
-            on:click={saveFilters}
-            disabled={saving}
-          >
-            {#if saving}
-              <div class="loading loading-spinner loading-sm"></div>
-            {/if}
-            Save Changes
-          </button>
-        </div>
-
-        <!-- Debug info -->
-        <div class="text-xs text-gray-500 mb-4 p-2 bg-gray-100 rounded">
-          Debug: {categories.length} categories loaded, {mealFilters.length} filters configured<br>
-          Available regular categories: {categories.filter(cat => 
-            !mealFilters.some(filter => filter.category_id === cat.id)
-          ).length}<br>
-          Available system categories: {systemCategories.filter(sysCat => 
-            !mealFilters.some(filter => filter.id === sysCat.id)
-          ).length}<br>
-          Filter IDs: {mealFilters.map(f => f.category_id || f.id).join(', ')}<br>
-          Category IDs: {categories.slice(0, 5).map(c => c.id).join(', ')}...
-        </div>
-
-        <div class="space-y-3">
-          {#each mealFilters as filter, index}
-            <div class="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-              <!-- Move buttons -->
-              <div class="flex flex-col gap-1">
-                <button 
-                  class="btn btn-ghost btn-xs p-1"
-                  on:click={() => moveFilterUp(index)}
-                  disabled={index <= 1}
-                  title="Move up"
-                >
-                  <ChevronUp class="h-3 w-3" />
-                </button>
-                <button 
-                  class="btn btn-ghost btn-xs p-1"
-                  on:click={() => moveFilterDown(index)}
-                  disabled={index >= mealFilters.length - 1}
-                  title="Move down"
-                >
-                  <ChevronDown class="h-3 w-3" />
-                </button>
+          <div class="relative">
+            <button 
+              class="btn btn-outline btn-sm"
+              on:click={toggleAddFilterDropdown}
+              disabled={getAvailableOptions().length === 0}
+            >
+              <Plus class="h-4 w-4" />
+              Filter
+            </button>
+            
+            {#if showAddFilterDropdown}
+              <div class="absolute top-full right-0 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg z-10 min-w-48">
+                {#each getAvailableOptions() as option}
+                  <button 
+                    class="w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg"
+                    on:click={() => addFilter(option)}
+                  >
+                    {option.name}
+                  </button>
+                {/each}
               </div>
+            {/if}
+          </div>
+        </div>
 
+
+        <div class="space-y-1">
+          {#each mealFilters as filter, index}
+            <div class="flex items-center p-1 bg-base-200 rounded-lg">
               <!-- Filter name -->
               <div class="flex-1">
                 {#if filter.is_default}
@@ -225,34 +222,47 @@
                   <span class="font-medium text-blue-600">{filter.name}</span>
                   <span class="text-xs text-gray-500 ml-2">(System category - cannot be changed)</span>
                 {:else}
-                  <select 
-                    class="select select-bordered select-sm w-full max-w-xs"
-                    value={filter.category_id}
-                    on:change={(e) => updateFilterCategory(index, e.target.value)}
-                  >
-                    {#each categories as category}
-                      <option value={category.id}>{category.name}</option>
-                    {/each}
-                  </select>
+                  <span class="font-medium">{filter.name}</span>
+                  <span class="text-xs text-gray-500 ml-2">
+                    {filter.flag ? `(System)` : ``}
+                  </span>
                 {/if}
               </div>
 
-              <!-- Remove button -->
+              <!-- Action buttons (only for non-default filters) -->
               {#if !filter.is_default}
-                <button 
-                  class="btn btn-ghost btn-sm text-error p-2"
-                  on:click={() => removeFilter(index)}
-                  title="Remove filter"
-                >
-                  <X class="h-4 w-4" />
-                </button>
+                <div class="flex gap-0.5 ml-auto">
+                  <button 
+                    class="btn btn-ghost btn-sm p-1"
+                    on:click={() => moveFilterUp(index)}
+                    disabled={index === 1}
+                    title="Move up"
+                  >
+                    <ChevronUp class="h-4 w-4" />
+                  </button>
+                  <button 
+                    class="btn btn-ghost btn-sm p-1"
+                    on:click={() => moveFilterDown(index)}
+                    disabled={index === mealFilters.length - 1}
+                    title="Move down"
+                  >
+                    <ChevronDown class="h-4 w-4" />
+                  </button>
+                  <button 
+                    class="btn btn-ghost btn-sm text-error p-1"
+                    on:click={() => removeFilter(index)}
+                    title="Remove filter"
+                  >
+                    <X class="h-4 w-4" />
+                  </button>
+                </div>
               {/if}
             </div>
           {/each}
         </div>
 
-        <!-- Add filter button -->
-        <div class="mt-4">
+        <!-- Save changes button -->
+        <div class="mt-4 flex justify-center">
           {#if categories.length === 0}
             <div class="text-sm text-gray-600 mb-2">
               No categories available. <a href="/categories" class="link link-primary">Create categories first</a>.
@@ -266,14 +276,14 @@
           {/if}
           
           <button 
-            class="btn btn-outline btn-sm"
-            on:click={addFilter}
-            disabled={categories.filter(cat => 
-              !mealFilters.some(filter => filter.category_id === cat.id)
-            ).length === 0}
+            class="btn btn-primary btn-sm"
+            on:click={saveFilters}
+            disabled={saving}
           >
-            <Plus class="h-4 w-4" />
-            Add Category Filter
+            {#if saving}
+              <div class="loading loading-spinner loading-sm"></div>
+            {/if}
+            Save Filters
           </button>
         </div>
       </div>

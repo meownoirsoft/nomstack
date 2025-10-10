@@ -35,15 +35,6 @@
     }
   });
 
-  // Refresh data when page becomes visible (user navigates back from recipes)
-  if (typeof window !== 'undefined') {
-    document.addEventListener('visibilitychange', async () => {
-      if (!document.hidden && $currentMealPlan) {
-        console.log('Page became visible, refreshing shopping list data...');
-        await loadData();
-      }
-    });
-  }
 
   // React to meal plan ID changes specifically
   $: if ($currentMealPlan?.id) {
@@ -359,7 +350,7 @@
           <div class="flex items-center">
             <select
               class="select select-bordered select-sm"
-              style="width: 240px;"
+              style="min-width: 200px; text-align: left;"
               value={$currentMealPlan?.id || ''}
               on:change={(e) => setCurrentMealPlan(e.target.value)}
               disabled={$loadingMealPlans}

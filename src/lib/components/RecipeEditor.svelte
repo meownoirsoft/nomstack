@@ -108,8 +108,25 @@
         // Update existing recipe
         result = await api.updateRecipe(recipe.id, recipeData);
       } else {
-        // Create new recipe - use selectedMealId if mealId is not provided
-        const targetMealId = mealId || selectedMealId;
+        // Create new recipe
+        let targetMealId = mealId || selectedMealId;
+        
+        // If creating a new meal, create it first with the recipe title
+        if (selectedMealId === 'new') {
+          const mealData = {
+            name: title.trim(),
+            source: '',
+            cats: [],
+            notes: ''
+          };
+          const mealResult = await api.addMeal(mealData);
+          if (mealResult.success) {
+            targetMealId = mealResult.data.id;
+          } else {
+            throw new Error(mealResult.error || 'Failed to create meal');
+          }
+        }
+        
         result = await api.addRecipe(targetMealId, recipeData);
       }
 
@@ -133,7 +150,7 @@
   }
 
   function handlePhotoImports(event) {
-    const { imports } = event.detail || {};
+    const { imports, importMode, selectedMealId: importedMealId } = event.detail || {};
     if (!imports || imports.length === 0) return;
     const { recipe: parsed, file } = imports[0];
     title = parsed.title || title;
@@ -144,6 +161,15 @@
     servings = parsed.servings || servings;
     notes = parsed.notes || notes;
     showManualEdit = true;
+    
+    // Handle meal assignment based on import mode
+    if (importMode === 'existing' && importedMealId) {
+      selectedMealId = importedMealId;
+    } else if (importMode === 'new') {
+      // For new meals, we'll need to create the meal when saving
+      selectedMealId = 'new';
+    }
+    
     notifySuccess('Photo parsed. Review and edit as needed.');
   }
 
@@ -266,6 +292,23 @@
                   {/each}
                 {/if}
               </div>
+              
+              <!-- Create New Meal Option -->
+              <div class="mt-2">
+                <button
+                  class="w-full text-left p-3 border border-dashed border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 {selectedMealId === 'new' ? 'bg-primary/10 border-primary' : ''}"
+                  on:click={() => selectMeal('new')}
+                >
+                  <ChefHat class="h-4 w-4 text-gray-400" />
+                  <span class="text-sm {selectedMealId === 'new' ? 'font-medium text-primary' : 'text-gray-700'}">
+                    + Create new meal
+                  </span>
+                  {#if selectedMealId === 'new'}
+                    <Check class="h-4 w-4 text-primary ml-auto" />
+                  {/if}
+                </button>
+              </div>
+              
             </div>
           {/if}
 

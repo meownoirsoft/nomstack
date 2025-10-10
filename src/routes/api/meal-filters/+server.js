@@ -124,14 +124,16 @@ export async function POST({ request }) {
     }
     console.log('POST /api/meal-filters: Existing filters deleted successfully');
 
-    // Insert new filters (skip default "All" filter and system categories since they're not stored in DB)
+    // Insert new filters (skip only the default "All" filter)
     const filtersToInsert = filters
-      .filter(filter => !filter.is_default && !filter.is_system) // Skip default and system filters
+      .filter(filter => !filter.is_default) // Skip only default filter, include system categories
       .map(filter => ({
         user_id: user.id,
-        category_id: filter.category_id,
+        category_id: filter.category_id || null,
+        flag: filter.flag || null,
         name: filter.name,
-        "order": filter.order
+        "order": filter.order,
+        is_system: filter.is_system || false
       }));
 
     console.log('POST /api/meal-filters: Filters to insert:', filtersToInsert);
