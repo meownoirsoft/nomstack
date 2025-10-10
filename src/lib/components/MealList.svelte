@@ -8,10 +8,12 @@
     import { api } from '$lib/api.js';
     import { settings } from '$lib/stores/settings.js';
     import { currentMealPlan, mealPlans, loadingMealPlans, loadMealPlans, setCurrentMealPlan } from '$lib/stores/mealPlan.js';
+    import { mealFilters } from '$lib/stores/mealFilters.js';
     import { Edit, Check, Plus, ChefHat, Printer, Calendar, Edit3 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import MealPlanManager from '$lib/components/MealPlanManager.svelte';
 
+    const BREAKFAST_FLAG = 'breakfast';
     const LUNCH_FLAG = 'lunch';
     const DINNER_FLAG = 'dinner';
 
@@ -30,9 +32,7 @@
     let displayMeals = [];
     
     
-    // Filter state
-    let activeFilter = 'All';
-    const filters = ['All', 'Lunch', 'Dinner', 'Quick'];
+    // Filter state - now handled by parent component
     
     // Recipe-related state
     let showRecipeEditor = false;
@@ -42,6 +42,9 @@
     
     // Meal plan manager state
     let showMealPlanManager = false;
+    
+    // Filter state
+    let selectedFilter = 'all';
     
 
     $: modalCats = Array.isArray(cats) ? cats : [];
@@ -111,44 +114,36 @@
       return list;
     }
 
-    function filterMealsByPageAndFilter(list, currentPage, filter) {
-      let filtered = filterMealsByPage(list, currentPage);
-      
-      if (filter === 'All') {
-        return filtered;
-      }
-      
-      if (filter === 'Lunch') {
-        return filtered.filter((meal) => hasFlag(meal, LUNCH_FLAG));
-      }
-      
-      if (filter === 'Dinner') {
-        return filtered.filter((meal) => hasFlag(meal, DINNER_FLAG));
-      }
-      
-      if (filter === 'Quick') {
-        return filtered.filter((meal) => {
-          // Filter for quick meals (you can adjust this logic based on your data structure)
-          return meal.prep_time && meal.prep_time <= 30; // 30 minutes or less
-        });
-      }
-      
-      if (filter === 'Healthy') {
-        return filtered.filter((meal) => {
-          // Filter for healthy meals (you can adjust this logic based on your data structure)
-          return meal.notes && meal.notes.toLowerCase().includes('healthy');
-        });
-      }
-      
-      return filtered;
-    }
-
-    function setFilter(filter) {
-      activeFilter = filter;
-    }
 
   $: {
-    displayMeals = filterMealsByPageAndFilter(meals, page, activeFilter);
+    // Filter meals based on selected filter
+    if (selectedFilter === 'all') {
+      displayMeals = meals;
+    } else {
+      // Find the selected filter
+      const filter = $mealFilters.find(f => f.id === selectedFilter);
+      if (filter) {
+        if (filter.is_system) {
+          // Handle system categories (breakfast, lunch, dinner)
+          if (selectedFilter === 'breakfast') {
+            displayMeals = meals.filter(meal => hasFlag(meal, BREAKFAST_FLAG));
+          } else if (selectedFilter === 'lunch') {
+            displayMeals = meals.filter(meal => hasFlag(meal, LUNCH_FLAG));
+          } else if (selectedFilter === 'dinner') {
+            displayMeals = meals.filter(meal => hasFlag(meal, DINNER_FLAG));
+          } else {
+            displayMeals = meals;
+          }
+        } else if (filter.category_id) {
+          // Handle regular category filters
+          displayMeals = meals.filter(meal => meal.category_id === filter.category_id);
+        } else {
+          displayMeals = meals;
+        }
+      } else {
+        displayMeals = meals;
+      }
+    }
   }
 
     function parseIds(value) {
@@ -331,27 +326,30 @@
       </div>
     </div>
     
-    <!-- Filters -->
-    <div class="flex items-center justify-center gap-3 flex-wrap py-0 mt-0 mb-1">
-      {#each filters as filter}
-        <button 
-          class="text-sm py-0 m-0 {activeFilter === filter ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
-          on:click={() => setFilter(filter)}
-        >
-          {filter}
-        </button>
-      {/each}
-    </div>
+    <!-- Meal Filter Tabs -->
+    {#if $mealFilters.length > 0}
+      <div class="mb-2 px-4">
+        <div class="flex flex-wrap gap-2">
+          {#each $mealFilters as filter}
+            <button
+              class="text-sm py-0 m-0 {selectedFilter === filter.id ? 'text-primary-focus underline font-semibold' : 'text-primary hover:text-primary-focus underline-offset-4 hover:underline'}"
+              on:click={() => selectedFilter = filter.id}
+            >
+              {filter.name}
+            </button>
+          {/each}
+        </div>
+      </div>
+    {/if}
     
     <div class="scroller flex-grow overflow-y-auto px-0 min-h-[15rem]">
       <div class="flex items-center justify-between mb-1">
-        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={clearAll}>
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 ml-2 flex items-center gap-1" on:click={clearAll}>
           Clear
           <Check class="h-4 w-4" />
         </button>
-        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={() => showModal = true}>
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 mr-2 flex items-center gap-1" on:click={() => showModal = true}>
           <Plus class="h-4 w-4" />
-          <span class="hidden sm:inline">Add meal</span>
           <span class="sm:hidden">Meal</span>
         </button>
       </div>

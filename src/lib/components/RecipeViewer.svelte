@@ -18,6 +18,7 @@
   let adjustedServings = 1;
   let adjustedIngredients = [];
   let adjustingServings = false;
+  let rememberServings = false;
   
   // Initialize adjusted servings when recipe loads
   $: if (recipe) {
@@ -91,18 +92,52 @@
         adjustedServings = newServings;
         adjustedIngredients = result.ingredients;
         console.log('Frontend adjustedIngredients set to:', adjustedIngredients);
+        
+        // Save the adjusted servings if rememberServings is checked
+        if (rememberServings) {
+          await saveAdjustedServings(newServings);
+        }
       } else {
         // Fallback to simple scaling if AI fails
         adjustedServings = newServings;
         adjustedIngredients = createSimpleAdjustments(recipe.ingredients, recipe.servings, newServings);
+        
+        // Save the adjusted servings if rememberServings is checked
+        if (rememberServings) {
+          await saveAdjustedServings(newServings);
+        }
       }
     } catch (error) {
       console.error('Error adjusting servings:', error);
       // Fallback to simple scaling
       adjustedServings = newServings;
       adjustedIngredients = createSimpleAdjustments(recipe.ingredients, recipe.servings, newServings);
+      
+      // Save the adjusted servings if rememberServings is checked
+      if (rememberServings) {
+        await saveAdjustedServings(newServings);
+      }
     } finally {
       adjustingServings = false;
+    }
+  }
+  
+  async function saveAdjustedServings(newServings) {
+    try {
+      const result = await api.updateRecipe(recipe.id, {
+        servings: newServings
+      });
+      
+      if (result.success) {
+        // Update the recipe object with new servings
+        recipe.servings = newServings;
+        notifySuccess('Recipe servings saved');
+      } else {
+        notifyError('Failed to save recipe servings');
+      }
+    } catch (error) {
+      console.error('Error saving recipe servings:', error);
+      notifyError('Failed to save recipe servings');
     }
   }
   
@@ -135,7 +170,7 @@
       let change = 'no change';
       
       // Find and scale measurements - improved regex to handle fractions and mixed numbers
-      const measurementRegex = /(\d+(?:\s+\d+\/\d+)?(?:\/\d+)?(?:\.\d+)?)\s*(cups?|tbsp|tsp|oz|lb|g|kg|ml|l|cloves?|halves?|pieces?|whole)/gi;
+      const measurementRegex = /(\d+(?:\s+\d+\/\d+)?(?:\/\d+)?(?:\.\d+)?)\s*(c|cups?|tbsp|tsp|oz|lb|g|kg|ml|l|cloves?|halves?|pieces?|whole)/gi;
       let match;
       let hasChanges = false;
       
@@ -221,6 +256,67 @@
     return `${sign}${amount} ${unit}`;
   }
   
+  function formatScaledAmount(ingredient) {
+    const originalParsed = parseIngredient(ingredient.original);
+    const adjustedParsed = parseIngredient(ingredient.adjusted);
+    
+    if (!originalParsed.hasMeasurement || !adjustedParsed.hasMeasurement) {
+      return ingredient.adjusted;
+    }
+    
+    if (ingredient.change === 'no change') {
+      return `${adjustedParsed.amount} ${adjustedParsed.unit}`;
+    }
+    
+    // Show new total with "was" format: "2 LB (was 1)"
+    const originalAmount = formatAmount(parseFraction(originalParsed.amount));
+    const newAmount = formatAmount(parseFraction(adjustedParsed.amount));
+    
+    return `${newAmount} ${adjustedParsed.unit} (was ${originalAmount})`;
+  }
+  
+  function formatScaledAmountWithStyling(ingredient) {
+    const originalParsed = parseIngredient(ingredient.original);
+    const adjustedParsed = parseIngredient(ingredient.adjusted);
+    
+    if (!originalParsed.hasMeasurement || !adjustedParsed.hasMeasurement) {
+      return ingredient.adjusted;
+    }
+    
+    if (ingredient.change === 'no change') {
+      return `${adjustedParsed.amount} ${adjustedParsed.unit}`;
+    }
+    
+    // Show new total with "was" format: "2 LB (was 1)"
+    const originalAmount = formatAmount(parseFraction(originalParsed.amount));
+    const newAmount = formatAmount(parseFraction(adjustedParsed.amount));
+    
+    return `${newAmount} ${adjustedParsed.unit} <span class="text-xs text-gray-500 ml-1">(was ${originalAmount})</span>`;
+  }
+  
+  function getScaledAmountColor(ingredient) {
+    if (ingredient.change === 'no change') {
+      return 'text-gray-700';
+    }
+    
+    const originalParsed = parseIngredient(ingredient.original);
+    const adjustedParsed = parseIngredient(ingredient.adjusted);
+    
+    if (!originalParsed.hasMeasurement || !adjustedParsed.hasMeasurement) {
+      return 'text-gray-700';
+    }
+    
+    const difference = parseFraction(adjustedParsed.amount) - parseFraction(originalParsed.amount);
+    
+    if (difference > 0) {
+      return 'text-green-600'; // Increased amount
+    } else if (difference < 0) {
+      return 'text-red-600'; // Decreased amount
+    }
+    
+    return 'text-gray-700'; // No change
+  }
+  
 
   function parseIngredient(ingredientText) {
     // First normalize fraction characters to literal fractions
@@ -233,7 +329,7 @@
     
     // Find the first amount/unit in the ingredient
     // First try to match known units, then fall back to any word(s)
-    const knownUnits = /(\d+(?:\s+\d+\/\d+)?(?:\/\d+)?(?:\.\d+)?)\s*(cups?|tbsp|tsp|oz|lb|g|kg|ml|l|cloves?|halves?|pieces?|whole|tablespoons?|teaspoons?|pounds?|ounces?|grams?|kilograms?|milliliters?|liters?)\b/i;
+    const knownUnits = /(\d+(?:\s+\d+\/\d+)?(?:\/\d+)?(?:\.\d+)?)\s*(c|cups?|tbsp|tsp|oz|lb|g|kg|ml|l|cloves?|pieces?|whole|tablespoons?|teaspoons?|pounds?|ounces?|grams?|kilograms?|milliliters?|liters?)\b\s*/i;
     const anyWords = /(\d+(?:\s+\d+\/\d+)?(?:\/\d+)?(?:\.\d+)?)\s*(\w+(?:\s+\w+)*)/i;
     
     let match = normalizedText.match(knownUnits);
@@ -249,21 +345,33 @@
       // Clean up afterAmount: remove leading commas, spaces, and other separators
       afterAmount = afterAmount.replace(/^[,\s]+/, '');
       
+      // If we matched a known unit, the afterAmount should be the ingredient name
+      // If we matched anyWords, the unit might actually be part of the ingredient name
+      
       // Normalize unit abbreviations - handle any word(s) that follow the number
       let normalizedUnit = unit || '';
+      const matchedKnownUnit = normalizedText.match(knownUnits);
+      
       if (normalizedUnit) {
-        // For common measurements, use standard abbreviations
-        if (normalizedUnit.toLowerCase().includes('tablespoon')) normalizedUnit = 'Tbsp';
-        else if (normalizedUnit.toLowerCase().includes('teaspoon')) normalizedUnit = 'tsp';
+        // For common measurements, use standard abbreviations with periods
+        if (normalizedUnit.toLowerCase().includes('tablespoon')) normalizedUnit = 'Tbsp.';
+        else if (normalizedUnit.toLowerCase().includes('teaspoon')) normalizedUnit = 'tsp.';
         else if (normalizedUnit.toLowerCase().includes('pound')) normalizedUnit = 'lb';
-        else if (normalizedUnit.toLowerCase().includes('ounce')) normalizedUnit = 'oz';
-        else if (normalizedUnit.toLowerCase().includes('gram')) normalizedUnit = 'g';
-        else if (normalizedUnit.toLowerCase().includes('kilogram')) normalizedUnit = 'kg';
-        else if (normalizedUnit.toLowerCase().includes('milliliter')) normalizedUnit = 'ml';
-        else if (normalizedUnit.toLowerCase().includes('liter')) normalizedUnit = 'l';
-        else if (normalizedUnit.toLowerCase().includes('cup')) normalizedUnit = 'cup';
-        // For everything else, keep the original text (it's likely an ingredient name)
-        // This handles cases like "6 chicken breast halves" -> "6" + "chicken breast halves"
+        else if (normalizedUnit.toLowerCase().includes('ounce')) normalizedUnit = 'oz.';
+        else if (normalizedUnit.toLowerCase().includes('gram')) normalizedUnit = 'g.';
+        else if (normalizedUnit.toLowerCase().includes('kilogram')) normalizedUnit = 'kg.';
+        else if (normalizedUnit.toLowerCase().includes('milliliter')) normalizedUnit = 'ml.';
+        else if (normalizedUnit.toLowerCase().includes('liter')) normalizedUnit = 'l.';
+        else if (normalizedUnit.toLowerCase().includes('cup')) normalizedUnit = 'c.';
+        else if (normalizedUnit.toLowerCase().includes('clove')) normalizedUnit = 'clove';
+        else if (normalizedUnit.toLowerCase().includes('piece')) normalizedUnit = 'piece';
+        else if (normalizedUnit.toLowerCase().includes('whole')) normalizedUnit = 'whole';
+        // If we didn't match a known unit, treat the "unit" as part of the ingredient name
+        else if (!matchedKnownUnit) {
+          // Move the unit text to the ingredient name and clear the unit
+          afterAmount = normalizedUnit + (afterAmount ? ' ' + afterAmount : '');
+          normalizedUnit = '';
+        }
       }
       
       return {
@@ -320,40 +428,40 @@
 </script>
 
 <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6">
-  <div class="relative mt-8 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-2">
       <div>
         <h3 class="text-xl font-bold text-primary">Recipe View</h3>
         <p class="text-sm text-gray-600 mt-1">{mealName}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 -mt-6">
         <button 
-          class="btn btn-ghost btn-sm p-2"
+          class="btn btn-ghost btn-sm p-2 pr-0"
           on:click={editRecipe}
           title="Edit recipe"
         >
-          <Edit class="h-4 w-4" />
+          <Edit class="h-6 w-6" />
         </button>
         <button 
-          class="btn btn-ghost btn-sm p-2 text-error"
+          class="btn btn-ghost btn-sm p-2 pr-0 text-error"
           on:click={confirmDelete}
           title="Delete recipe"
         >
-          <Trash2 class="h-4 w-4" />
+          <Trash2 class="h-6 w-6" />
         </button>
         <button 
-          class="btn btn-ghost btn-sm p-2"
+          class="btn btn-ghost btn-sm p-2 pr-0"
           on:click={() => dispatch('close')}
         >
-          <X class="h-5 w-5" />
+          <X class="h-6 w-6" />
         </button>
       </div>
     </div>
 
     {#if recipe}
       <!-- Recipe Info -->
-      <div class="grid grid-cols-2 gap-4 mb-6 p-4 bg-base-200 rounded-lg">
+      <div class="grid grid-cols-2 mb-2 p-4 bg-base-200 rounded-lg">
         <div class="flex items-center gap-2">
           <Clock class="h-5 w-5 text-primary" />
           <div>
@@ -368,7 +476,7 @@
             <div class="text-lg font-bold">{formatCookTime(recipe.cook_time)}</div>
           </div>
         </div>
-        <div class="flex items-center gap-2 col-span-2">
+        <div class="flex items-center gap-2 col-span-2 mt-2">
           <Users class="h-5 w-5 text-primary" />
           <div class="flex-1">
             <div class="text-sm font-medium">Servings</div>
@@ -381,8 +489,12 @@
                 >
                   <Minus class="h-4 w-4" />
                 </button>
-                <div class="min-w-[2rem] text-center {getServingColor()}">
-                  {adjustingServings ? '...' : adjustedServings}
+                <div class="min-w-[1rem] text-center {getServingColor()} flex items-center justify-center">
+                  {#if adjustingServings}
+                    <div class="loading loading-spinner loading-sm"></div>
+                  {:else}
+                    {adjustedServings}
+                  {/if}
                 </div>
                 <button 
                   class="btn btn-sm btn-ghost p-1"
@@ -391,6 +503,44 @@
                 >
                   <Plus class="h-4 w-4" />
                 </button>
+                <!-- Multiplier buttons -->
+                <div class="flex flex-col items-center gap-1 ml-6 -mt-4">
+                  <div class="text-xs font-medium text-gray-600">Auto-Scale</div>
+                  <div class="flex items-center gap-2">
+                  <button 
+                    class="btn btn-xs btn-outline px-2"
+                    on:click={() => adjustServings(Math.round(recipe.servings * 1.5))}
+                    disabled={adjustingServings}
+                    title="1.5x"
+                  >
+                    1.5×
+                  </button>
+                  <button 
+                    class="btn btn-xs btn-outline px-2"
+                    on:click={() => adjustServings(recipe.servings * 2)}
+                    disabled={adjustingServings}
+                    title="2x"
+                  >
+                    2×
+                  </button>
+                   <button 
+                    class="btn btn-xs btn-outline px-2"
+                    on:click={() => adjustServings(recipe.servings * 2.5)}
+                    disabled={adjustingServings}
+                    title="2.5x"
+                  >
+                    2.5×
+                  </button>
+                  <button 
+                    class="btn btn-xs btn-outline px-2"
+                    on:click={() => adjustServings(recipe.servings * 3)}
+                    disabled={adjustingServings}
+                    title="3x"
+                  >
+                    3×
+                  </button>
+                </div>
+                </div>
               {:else}
                 <div class="text-lg font-bold">
                   {adjustedServings}
@@ -400,6 +550,30 @@
           </div>
         </div>
       </div>
+      
+      <!-- Processing message and remember servings -->
+      {#if $user}
+        <div class="mb-4 -mt-4 px-3 py-1 bg-base-200 rounded-lg">
+          {#if adjustingServings}
+            <div class="flex items-center text-sm text-gray-600">
+              <div class="loading loading-spinner loading-sm"></div>
+              <span>Processing ingredients... This may take up to 30 seconds.</span>
+            </div>
+          {:else}
+            <div class="flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                class="checkbox checkbox-sm" 
+                bind:checked={rememberServings}
+                id="remember-servings"
+              />
+              <label for="remember-servings" class="text-sm text-gray-600 cursor-pointer">
+                Remember scaled servings for this recipe
+              </label>
+            </div>
+          {/if}
+        </div>
+      {/if}
 
       <!-- Ingredients -->
       {#if recipe.ingredients}
@@ -411,7 +585,7 @@
               <span class="text-sm text-gray-500 font-normal">(adjusted for {adjustedServings} servings)</span>
             {/if}
           </h4>
-          <div class="bg-base-200 rounded-lg p-4">
+          <div class="bg-base-200 rounded-lg px-1 py-4">
             <table class="w-full">
               <tbody>
                 {#if adjustedIngredients.length > 0}
@@ -421,21 +595,8 @@
                     {@const parsed = parseIngredient(ingredient.original)}
                     <!-- Debug ingredient {index}: change = "{ingredient.change}" -->
                     <tr class="align-top">
-                      <td class="text-sm font-medium text-left pr-3 w-24">
-                        {#if parsed.hasMeasurement}
-                          {parsed.amount} {parsed.unit}
-                          {#if ingredient.change !== 'no change'}
-                            <span class="text-xs font-medium px-1.5 py-0.5 rounded ml-1 {ingredient.change.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                              {ingredient.change}
-                            </span>
-                          {/if}
-                        {:else}
-                          {#if ingredient.change !== 'no change'}
-                            <span class="text-xs font-medium px-1.5 py-0.5 rounded {ingredient.change.startsWith('+') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                              {ingredient.change}
-                            </span>
-                          {/if}
-                        {/if}
+                      <td class="text-sm font-medium text-left pr-2 w-32 {getScaledAmountColor(ingredient)}">
+                        {@html formatScaledAmountWithStyling(ingredient)}
                       </td>
                       <td class="text-sm leading-relaxed text-left">
                         {#if parsed.hasMeasurement}
@@ -450,7 +611,7 @@
                   {#each formatIngredients(recipe.ingredients) as ingredient}
                     {@const parsed = parseIngredient(ingredient)}
                     <tr class="align-top">
-                      <td class="text-sm font-medium text-left pr-3 w-24">
+                      <td class="text-sm font-medium text-left pr-2 w-32">
                         {#if parsed.hasMeasurement}
                           {parsed.amount} {parsed.unit}
                         {/if}

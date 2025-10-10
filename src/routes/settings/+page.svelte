@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { settings, updateSetting, toggleRecipes, resetSettings } from '$lib/stores/settings.js';
-  import { ChefHat, Settings, RotateCcw, Check } from 'lucide-svelte';
+  import { ChefHat, Settings, RotateCcw, Check, Filter } from 'lucide-svelte';
   import { notifySuccess } from '$lib/stores/notifications.js';
 
   let showResetConfirm = false;
@@ -104,6 +104,25 @@
           </div>
         </div>
       {/if}
+    </div>
+  </div>
+
+  <!-- Meal Filter Settings -->
+  <div class="card bg-base-100 shadow-lg border border-purple-300 mb-6">
+    <div class="card-body">
+      <div class="flex items-center gap-3 mb-4">
+        <Filter class="h-6 w-6 text-primary" />
+        <h2 class="text-xl font-bold text-primary">Meal Filters</h2>
+      </div>
+      
+      <p class="text-gray-600 mb-6">
+        Configure category filters that appear at the top of the meals list page. You can reorder them and select which categories to include.
+      </p>
+
+      <a href="/settings/meal-filters" class="btn btn-primary">
+        <Filter class="h-4 w-4" />
+        Configure Meal Filters
+      </a>
     </div>
   </div>
 

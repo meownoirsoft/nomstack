@@ -2,7 +2,7 @@
   import { api } from '$lib/api.js';
   import { onMount } from 'svelte';
   import { searchTerm } from '$lib/stores/search.js';
-  import { ChefHat, Clock, Users, Eye, Edit, Plus, Upload } from 'lucide-svelte';
+  import { ChefHat, Clock, Users, Eye, Edit, Plus, Upload, Check, LinkOff } from 'lucide-svelte';
   import RecipeViewer from '$lib/components/RecipeViewer.svelte';
   import RecipeEditor from '$lib/components/RecipeEditor.svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
@@ -378,8 +378,19 @@
         <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
           <div class="card-body p-4">
             <div class="flex items-start justify-between mb-0">
-              <h3 class="card-title text-base font-medium text-primary line-clamp-2">
+              <h3 class="card-title text-base font-medium text-primary line-clamp-2 flex items-center gap-2">
                 {meal.recipe.title || meal.name}
+                {#if meal.recipe.meal_id}
+                  <div class="flex items-center gap-1 text-green-600">
+                    <Check class="h-4 w-4 flex-shrink-0" title="Assigned to meal" />
+                    <span class="text-xs font-medium">Meal</span>
+                  </div>
+                {:else}
+                  <div class="flex items-center gap-1 text-gray-500">
+                    <LinkOff class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
+                    <span class="text-xs font-medium">orphan</span>
+                  </div>
+                {/if}
               </h3>
               <div class="flex gap-1">
                 <button

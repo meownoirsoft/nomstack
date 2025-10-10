@@ -13,8 +13,14 @@ export async function getAuthToken() {
   }
   
   // Fallback to getting from Supabase
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token;
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (error) {
+    console.error('Error getting session:', error);
+    return null;
+  }
+  
+  return session?.access_token || null;
 }
 
 // Generic API request helper with auth
@@ -25,6 +31,7 @@ async function apiRequest(endpoint, options = {}) {
     console.error('No authentication token available for endpoint:', endpoint);
     throw new Error('No authentication token available');
   }
+
 
   const defaultOptions = {
     headers: {
@@ -237,12 +244,6 @@ export const api = {
     });
   },
 
-  async deleteMealPlan(planId) {
-    return apiRequest(`/api/meal-plans/${planId}`, {
-      method: 'DELETE'
-    });
-  },
-
   // Stores
   async getStores() {
     return apiRequest('/api/stores');
@@ -349,6 +350,18 @@ export const api = {
     return apiRequest('/api/ingredients/regenerate', {
       method: 'POST',
       body: JSON.stringify({ plan_id: planId })
+    });
+  },
+
+  // Meal Filters
+  async getMealFilters() {
+    return apiRequest('/api/meal-filters');
+  },
+
+  async updateMealFilters(filters) {
+    return apiRequest('/api/meal-filters', {
+      method: 'POST',
+      body: JSON.stringify({ filters })
     });
   }
 };

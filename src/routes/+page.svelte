@@ -5,7 +5,8 @@
   import { onMount } from 'svelte';
   import { searchTerm } from '$lib/stores/search.js';
   import { eatingMode, setEatingMode } from '$lib/stores/eatingMode.js';
-  import { user, loading as authLoading } from '$lib/stores/auth.js';
+  import { user, loading as authLoading, accessToken } from '$lib/stores/auth.js';
+  import { loadMealFilters } from '$lib/stores/mealFilters.js';
   import { goto } from '$app/navigation';
 
   export let data;
@@ -52,6 +53,9 @@
           api.getSelections('all'),
           api.getSources()
         ]);
+        
+        // Load meal filters
+        await loadMealFilters();
 
         allMeals = mealsData || [];
         cats = catsData || [];
@@ -78,30 +82,31 @@
   }
 
   function filterMeals(mealsList, categoriesList, searchTerm) {
-    if (!searchTerm || searchTerm.trim() === '') {
-      return mealsList;
+    let filtered = mealsList;
+
+    // Apply search filter only (category filtering is now handled in MealList component)
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchLower = searchTerm.toLowerCase();
+      const catNameLookup = new Map(
+        categoriesList.map((cat) => [cat.id, typeof cat.name === 'string' ? cat.name.toLowerCase() : ''])
+      );
+
+      filtered = filtered.filter((meal) => {
+        // Search in meal name
+        const nameMatch = meal.name?.toLowerCase()?.includes(searchLower) || false;
+        
+        // Search in notes
+        const notesMatch = meal.notes?.toLowerCase()?.includes(searchLower) || false;
+        
+        // Search in categories
+        const catNames = Array.isArray(meal.cats)
+          ? meal.cats.map((id) => catNameLookup.get(id) ?? '').join(' ')
+          : '';
+        const catMatch = catNames.includes(searchLower);
+
+        return nameMatch || notesMatch || catMatch;
+      });
     }
-
-    const searchLower = searchTerm.toLowerCase();
-    const catNameLookup = new Map(
-      categoriesList.map((cat) => [cat.id, typeof cat.name === 'string' ? cat.name.toLowerCase() : ''])
-    );
-
-    const filtered = mealsList.filter((meal) => {
-      // Search in meal name
-      const nameMatch = meal.name?.toLowerCase()?.includes(searchLower) || false;
-      
-      // Search in notes
-      const notesMatch = meal.notes?.toLowerCase()?.includes(searchLower) || false;
-      
-      // Search in categories
-      const catNames = Array.isArray(meal.cats)
-        ? meal.cats.map((id) => catNameLookup.get(id) ?? '').join(' ')
-        : '';
-      const catMatch = catNames.includes(searchLower);
-
-      return nameMatch || notesMatch || catMatch;
-    });
 
     return filtered;
   }
@@ -118,8 +123,8 @@
         return;
       }
       
-      if (currentUser && !$authLoading) {
-        // User is authenticated and loading is complete, load data
+      if (currentUser && !$authLoading && $accessToken) {
+        // User is authenticated, loading is complete, and token is available
         await loadDataForCurrentMode();
       }
     });
