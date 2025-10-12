@@ -13,7 +13,7 @@
   let printFormat = 'options'; // 'options' or 'schedule'
   let showBoth = false;
   
-  // Schedule data
+  // Schedule data - will be stored per meal plan
   let weeklySchedule = {
     monday: { breakfast: null, lunch: null, dinner: null, snack: null },
     tuesday: { breakfast: null, lunch: null, dinner: null, snack: null },
@@ -24,7 +24,7 @@
     sunday: { breakfast: null, lunch: null, dinner: null, snack: null }
   };
 
-  // Options data
+  // Options data - will be stored per meal plan
   let mealOptions = {
     breakfast: [],
     lunch: [],
@@ -107,8 +107,13 @@
           console.log(`Selected meal for new plan: ${meal.name}`);
         });
         
-        // Initialize meal options from selected meals
+        // Load saved meal options and weekly schedule for this specific meal plan
+        console.log('Loading saved data for meal plan:', $currentMealPlan.id);
+        
+        // Load meal options for this meal plan
         initializeMealOptions();
+        
+        // Load weekly schedule for this meal plan
         loadWeeklySchedule();
       }
     } catch (error) {
@@ -189,19 +194,50 @@
   }
 
   function initializeMealOptions() {
-    // Try to load saved meal options from localStorage
-    const savedMealOptions = localStorage.getItem('mealPlanPrintOptions');
+    if (!$currentMealPlan) {
+      mealOptions = {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        snack: []
+      };
+      return;
+    }
+
+    // Try to load saved meal options from localStorage for this specific meal plan
+    const key = `mealPlanPrintOptions_${$currentMealPlan.id}`;
+    const savedMealOptions = localStorage.getItem(key);
     if (savedMealOptions) {
       try {
         const parsed = JSON.parse(savedMealOptions);
         // Validate that the saved data has the right structure
         if (parsed.breakfast && parsed.lunch && parsed.dinner && parsed.snack) {
           mealOptions = parsed;
-          console.log('Loaded saved meal options from localStorage:', mealOptions);
+          console.log(`Loaded saved meal options for meal plan ${$currentMealPlan.id}:`, mealOptions);
           return;
         }
       } catch (error) {
         console.error('Error parsing saved meal options:', error);
+      }
+    }
+    
+    // Try to migrate old data (without meal plan ID) to new format
+    const oldKey = 'mealPlanPrintOptions';
+    const oldSavedMealOptions = localStorage.getItem(oldKey);
+    if (oldSavedMealOptions) {
+      try {
+        const parsed = JSON.parse(oldSavedMealOptions);
+        if (parsed.breakfast && parsed.lunch && parsed.dinner && parsed.snack) {
+          mealOptions = parsed;
+          console.log(`Migrated old meal options to meal plan ${$currentMealPlan.id}:`, mealOptions);
+          // Save the migrated data under the new key
+          saveMealOptions();
+          // Remove the old data
+          localStorage.removeItem(oldKey);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing old meal options:', error);
       }
     }
     
@@ -213,13 +249,16 @@
       snack: []
     };
 
-    console.log('Initialized empty meal options - meals will be added manually via dropdowns');
+    console.log(`Initialized empty meal options for meal plan ${$currentMealPlan.id} - meals will be added manually via dropdowns`);
   }
 
   function saveMealOptions() {
+    if (!$currentMealPlan) return;
+    
     try {
-      localStorage.setItem('mealPlanPrintOptions', JSON.stringify(mealOptions));
-      console.log('Saved meal options to localStorage');
+      const key = `mealPlanPrintOptions_${$currentMealPlan.id}`;
+      localStorage.setItem(key, JSON.stringify(mealOptions));
+      console.log(`Saved meal options for meal plan ${$currentMealPlan.id} to localStorage`);
     } catch (error) {
       console.error('Error saving meal options:', error);
     }
@@ -251,27 +290,64 @@
   }
 
   function saveWeeklySchedule() {
+    if (!$currentMealPlan) return;
+    
     try {
-      localStorage.setItem('mealPlanPrintWeeklySchedule', JSON.stringify(weeklySchedule));
-      console.log('Saved weekly schedule to localStorage');
+      const key = `mealPlanPrintWeeklySchedule_${$currentMealPlan.id}`;
+      localStorage.setItem(key, JSON.stringify(weeklySchedule));
+      console.log(`Saved weekly schedule for meal plan ${$currentMealPlan.id} to localStorage`);
     } catch (error) {
       console.error('Error saving weekly schedule:', error);
     }
   }
 
   function loadWeeklySchedule() {
-    const savedSchedule = localStorage.getItem('mealPlanPrintWeeklySchedule');
+    if (!$currentMealPlan) {
+      weeklySchedule = {
+        monday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        tuesday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        wednesday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        thursday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        friday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        saturday: { breakfast: null, lunch: null, dinner: null, snack: null },
+        sunday: { breakfast: null, lunch: null, dinner: null, snack: null }
+      };
+      return;
+    }
+
+    const key = `mealPlanPrintWeeklySchedule_${$currentMealPlan.id}`;
+    const savedSchedule = localStorage.getItem(key);
     if (savedSchedule) {
       try {
         const parsed = JSON.parse(savedSchedule);
         // Validate that the saved data has the right structure
         if (parsed && typeof parsed === 'object') {
           weeklySchedule = parsed;
-          console.log('Loaded saved weekly schedule from localStorage:', weeklySchedule);
+          console.log(`Loaded saved weekly schedule for meal plan ${$currentMealPlan.id} from localStorage:`, weeklySchedule);
           return;
         }
       } catch (error) {
         console.error('Error parsing saved weekly schedule:', error);
+      }
+    }
+    
+    // Try to migrate old data (without meal plan ID) to new format
+    const oldKey = 'mealPlanPrintWeeklySchedule';
+    const oldSavedSchedule = localStorage.getItem(oldKey);
+    if (oldSavedSchedule) {
+      try {
+        const parsed = JSON.parse(oldSavedSchedule);
+        if (parsed && typeof parsed === 'object') {
+          weeklySchedule = parsed;
+          console.log(`Migrated old weekly schedule to meal plan ${$currentMealPlan.id}:`, weeklySchedule);
+          // Save the migrated data under the new key
+          saveWeeklySchedule();
+          // Remove the old data
+          localStorage.removeItem(oldKey);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing old weekly schedule:', error);
       }
     }
     
@@ -285,7 +361,7 @@
       saturday: { breakfast: null, lunch: null, dinner: null, snack: null },
       sunday: { breakfast: null, lunch: null, dinner: null, snack: null }
     };
-    console.log('Initialized empty weekly schedule');
+    console.log(`Initialized empty weekly schedule for meal plan ${$currentMealPlan.id}`);
   }
   
 
