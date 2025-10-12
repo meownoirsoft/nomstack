@@ -310,7 +310,7 @@
           <Edit3 class="h-4 w-4" />
         </button>
         <a 
-          href="/print" 
+          href="/meal-plan-print" 
           class="btn btn-ghost btn-sm px-2"
           class:opacity-50={!$currentMealPlan}
           class:pointer-events-none={!$currentMealPlan}

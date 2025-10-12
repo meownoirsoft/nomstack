@@ -47,6 +47,64 @@
 html,body{background-color: #E6E6FA;}
 html,body{background-color: #f5f3ff;}
 
+/* Global print styles - hide navigation and UI elements when printing */
+@media print {
+  /* Force hide all navigation and interactive elements */
+  nav, .navbar, .menu, .dropdown, .btn, button,
+  .search, .search-box, .search-input, .menu-items, .nav-items,
+  .navigation, .breadcrumb, .breadcrumbs, .sidebar, .menu-toggle,
+  .hamburger, .menu-icon, .nav-toggle, .nav-icon, .footer, .footer-content {
+    display: none !important;
+  }
+  
+  /* Hide navigation and search elements */
+  nav, .navbar, .menu, .dropdown, .search, .search-box, .search-input {
+    display: none !important;
+  }
+  
+  /* Ensure meal-list elements are visible in print */
+  .meal-list, .meal-item, .meal-label {
+    display: block !important;
+  }
+  
+  /* Hide specific layout elements but keep content */
+  .drawer, .drawer-toggle, .drawer-content {
+    display: none !important;
+  }
+  
+  /* Ensure main content is visible and takes full width */
+  main, .main-content, .print-content {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Remove layout constraints for print */
+  .max-w-5xl, .max-w-6xl, .container {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* Remove backgrounds and shadows for clean print */
+  .card, .btn, .dropdown, .modal, .drawer {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+  
+  /* Remove colored backgrounds */
+  .bg-primary, .bg-secondary, .bg-base-200, .bg-base-100 {
+    background: white !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .print-options-list, .print-weekly-schedule {
+    page-break-inside: avoid;
+  }
+}
+
 @keyframes fade-in-out {
   0% {
     opacity: 0;

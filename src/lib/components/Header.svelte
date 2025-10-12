@@ -1,10 +1,24 @@
 <script>
+    import { onMount } from 'svelte';
     import Nav from '$lib/components/Nav.svelte';
-    import { Layers, Store, Home, Menu } from 'lucide-svelte';
     import { eatingMode, toggleEatingMode } from '$lib/stores/eatingMode.js';
     import { openModal, MODAL_TYPES } from '$lib/stores/modal.js';
+    import { browser } from '$app/environment';
     
     export let page;
+    
+    // Dynamically import icons to reduce SSR load
+    let LayersIcon, StoreIcon, HomeIcon, MenuIcon;
+    
+    onMount(async () => {
+        if (browser) {
+            const { Layers, Store, Home, Menu } = await import('lucide-svelte');
+            LayersIcon = Layers;
+            StoreIcon = Store;
+            HomeIcon = Home;
+            MenuIcon = Menu;
+        }
+    });
 
     function toggleMenu() {
         openModal(MODAL_TYPES.MOBILE_MENU);
@@ -15,26 +29,66 @@
     }
     // Updated button text
 </script>
+
+<style>
+  /* Show/hide elements for print vs screen */
+  .print-only {
+    display: none !important;
+  }
+  
+  .screen-only {
+    display: block !important;
+  }
+  
+  @media print {
+    .print-only {
+      display: block !important;
+    }
+    
+    .screen-only {
+      display: none !important;
+    }
+  }
+</style>
 <header class="bg-base-100/80 backdrop-blur border-b border-primary/10">
   <div class="max-w-5xl mx-auto flex flex-col gap-1 px-4 sm:px-6 lg:px-8 py-2">
     <div class="flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 screen-only">
         <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
-          <Layers class="h-6 w-6" />
+          {#if LayersIcon}
+            <svelte:component this={LayersIcon} class="h-6 w-6" />
+          {:else}
+            <div class="h-6 w-6 bg-primary/20 rounded"></div>
+          {/if}
           <span class="tracking-tight">nomStack</span>
         </h1>
       </div>
-      <div class="flex items-center gap-2">
+      <!-- Print-only title -->
+      <div class="flex items-center gap-3 print-only">
+        <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
+          {#if LayersIcon}
+            <svelte:component this={LayersIcon} class="h-6 w-6" />
+          {:else}
+            <div class="h-6 w-6 bg-primary/20 rounded"></div>
+          {/if}
+          <span class="tracking-tight">nomStack</span>
+        </h1>
+      </div>
+      <div class="flex items-center gap-2 screen-only">
         {#if !['/categories','/login','/print'].includes(page)}
           <button
             class="btn btn-sm btn-ghost text-primary border border-primary/20 hover:bg-primary/10"
             on:click={toggleEatingMode}
           >
             {#if $eatingMode === 'home'}
-              <Store class="h-4 w-4" />
+              {#if StoreIcon}
+                <svelte:component this={StoreIcon} class="h-4 w-4" />
+              {/if}
               <span>Eat Out</span>
             {:else}
-              <Home class="h-4 w-4" />
+              {#if HomeIcon}
+                <svelte:component this={HomeIcon} class="h-4 w-4" />
+              {/if}
               <span>Eat at Home</span>
             {/if}
           </button>
@@ -46,10 +100,20 @@
           on:click={toggleMenu} 
           aria-label="Open mobile menu"
         >
-          <Menu class="h-6 w-6" />
+          {#if MenuIcon}
+            <svelte:component this={MenuIcon} class="h-6 w-6" />
+          {:else}
+            <div class="h-6 w-6 flex items-center justify-center">
+              <div class="w-4 h-3 flex flex-col justify-between">
+                <div class="w-full h-0.5 bg-current"></div>
+                <div class="w-full h-0.5 bg-current"></div>
+                <div class="w-full h-0.5 bg-current"></div>
+              </div>
+            </div>
+          {/if}
         </button>
       </div>
     </div>
-    <Nav {page} />
+    <Nav {page} class="screen-only" />
   </div>
 </header>
