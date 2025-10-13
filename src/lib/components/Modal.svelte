@@ -1,10 +1,11 @@
 <script>
     // Imports
     import Checkbox from './Checkbox.svelte';
-    import { XMark, XCircle, CheckCircle, ChevronDown, ChevronUp } from 'svelte-heros-v2';
+    import { XMark, XCircle, CheckCircle, ChevronDown, ChevronUp, Plus } from 'svelte-heros-v2';
     import { createEventDispatcher } from 'svelte';
     import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
     import { invalidateAll } from '$app/navigation';
+    import { api } from '$lib/api.js';
     const dispatch = createEventDispatcher();
     const LUNCH_FLAG = 'lunch';
     const DINNER_FLAG = 'dinner';
@@ -23,6 +24,11 @@
     let nameTouched = false;
     let nameError = '';
     let nameIsValid = false;
+    
+    // New category variables
+    let newCategoryName = '';
+    let showAddCategory = false;
+    let addingCategory = false;
 
     // Props
     export let showModal; 
@@ -38,6 +44,51 @@
 
     function toggleNotes(){
         showNotes = !showNotes;
+    }
+
+    function toggleAddCategory() {
+        showAddCategory = !showAddCategory;
+        if (!showAddCategory) {
+            newCategoryName = '';
+        }
+    }
+
+    async function addNewCategory() {
+        if (!newCategoryName.trim()) return;
+        
+        addingCategory = true;
+        try {
+            const result = await api.addCategory({
+                name: newCategoryName.trim()
+            });
+            
+            // Add the new category to the list
+            availableCats = [...availableCats, { id: String(result.data.id), name: newCategoryName.trim() }]
+                .sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Automatically select the new category
+            selectedItems = [...selectedItems, String(result.data.id)];
+            
+            // Store the name for the success message before clearing
+            const categoryName = newCategoryName.trim();
+            
+            // Clear the input and hide the form
+            newCategoryName = '';
+            showAddCategory = false;
+            
+            notifySuccess(`Category "${categoryName}" added successfully!`);
+            
+        } catch (error) {
+            console.error('Error adding category:', error);
+            notifyError('Failed to add category. Please try again.');
+        } finally {
+            addingCategory = false;
+        }
+    }
+
+    function cancelAddCategory() {
+        newCategoryName = '';
+        showAddCategory = false;
     }
 
     $: nameIsValid = name.trim().length > 0;
@@ -141,6 +192,9 @@
         saveError = false;
         nameTouched = false;
         nameError = '';
+        newCategoryName = '';
+        showAddCategory = false;
+        addingCategory = false;
     }
 </script>
 {#if showModal}
@@ -196,6 +250,48 @@
                         {#each availableCats as category}
                             <Checkbox label={category.name} value={category.id} bind:selectedItems lblClass="text-sm text-primary" />
                         {/each}
+                    </div>
+                    
+                    <!-- Add Category Section - Outside scroll area -->
+                    <div class="border-t border-base-300 pt-2 mt-2">
+                        {#if showAddCategory}
+                            <div class="flex items-center gap-2 mb-2">
+                                <input 
+                                    type="text" 
+                                    class="input input-sm input-bordered flex-1" 
+                                    placeholder="New category name"
+                                    bind:value={newCategoryName}
+                                    on:keydown={(e) => e.key === 'Enter' && addNewCategory()}
+                                    disabled={addingCategory}
+                                />
+                                <button 
+                                    class="btn btn-sm btn-success"
+                                    on:click={addNewCategory}
+                                    disabled={addingCategory || !newCategoryName.trim()}
+                                >
+                                    {#if addingCategory}
+                                        <span class="loading loading-spinner loading-xs"></span>
+                                    {:else}
+                                        <CheckCircle class="h-4 w-4" />
+                                    {/if}
+                                </button>
+                                <button 
+                                    class="btn btn-sm btn-ghost"
+                                    on:click={cancelAddCategory}
+                                    disabled={addingCategory}
+                                >
+                                    <XMark class="h-4 w-4" />
+                                </button>
+                            </div>
+                        {:else}
+                            <button 
+                                class="btn btn-sm btn-outline btn-primary w-full"
+                                on:click={toggleAddCategory}
+                            >
+                                <Plus class="h-4 w-4 mr-1" />
+                                Add Category
+                            </button>
+                        {/if}
                     </div>
                 </div>
             </div>

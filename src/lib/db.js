@@ -6,6 +6,21 @@ function getUserId(request) {
   return request.userId;
 }
 
+// Helper function to ensure user profile exists
+async function ensureUserProfile(userId) {
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .upsert({
+      id: userId,
+      display_name: 'User',
+      created_at: new Date().toISOString()
+    });
+
+  if (error) {
+    throw new Error(`Failed to create/update profile: ${error.message}`);
+  }
+}
+
 const LUNCH_FLAG = 'lunch';
 const DINNER_FLAG = 'dinner';
 const SPECIAL_VALUE_MAP = new Map([
@@ -191,6 +206,9 @@ export async function getDinners(userId) {
 }
 
 export async function addMeal(name, sourceAbbrev, cats = [], notes = '', userId) {
+  // Ensure user profile exists first
+  await ensureUserProfile(userId);
+  
   const { flags, categories } = splitFlags(cats);
   const sourceId = await resolveSourceId(sourceAbbrev, userId);
 
@@ -285,6 +303,9 @@ export async function delMeal(id, userId) {
 }
 
 export async function getAllCats(userId) {
+  // Ensure user profile exists first
+  await ensureUserProfile(userId);
+
   const { data, error } = await supabaseAdmin
     .from('categories')
     .select('id, name')
@@ -295,11 +316,43 @@ export async function getAllCats(userId) {
     throw new Error(`Failed to load categories: ${error.message}`);
   }
 
-  const categories = (data ?? []).filter((cat) => !['Lunch', 'Dinner'].includes(cat.name));
+  // Get existing categories (don't filter out Lunch/Dinner anymore)
+  let categories = data ?? [];
+  
+  // Ensure special categories exist
+  const specialCategories = ['Lunch', 'Dinner'];
+  const existingNames = categories.map(cat => cat.name);
+  
+  for (const specialName of specialCategories) {
+    if (!existingNames.includes(specialName)) {
+      // Create the missing special category
+      const { data: newCat, error: insertError } = await supabaseAdmin
+        .from('categories')
+        .insert({ 
+          user_id: userId, 
+          name: specialName,
+          color: specialName === 'Lunch' ? '#10b981' : '#8b5cf6',
+          sort_order: specialName === 'Lunch' ? 2 : 3
+        })
+        .select('id, name')
+        .single();
+        
+      if (!insertError && newCat) {
+        categories.push(newCat);
+      }
+    }
+  }
+  
+  // Sort categories by name
+  categories.sort((a, b) => a.name.localeCompare(b.name));
+  
   return categories;
 }
 
 export async function addCat(name, userId) {
+  // Ensure user profile exists first
+  await ensureUserProfile(userId);
+
   const { data, error } = await supabaseAdmin
     .from('categories')
     .insert({ user_id: userId, name })
@@ -600,13 +653,12 @@ export async function addRecipe(mealId, recipe) {
         // Check if this meal is selected in any of these plans
         for (const plan of mealPlans) {
           const { data: selections } = await supabaseAdmin
-            .from('selections')
-            .select('meals')
-            .eq('user_id', meal.user_id)
-            .eq('type', 'all')
-            .single();
+            .from('meal_plan_selections')
+            .select('meal_id')
+            .eq('plan_id', plan.id)
+            .eq('meal_id', mealId);
 
-          if (selections && selections.meals && selections.meals.includes(mealId)) {
+          if (selections && selections.length > 0) {
             // This meal is selected in an active plan, generate ingredients
             try {
               await generateIngredientsFromRecipe(meal.user_id, plan.id, data.id);
@@ -1510,6 +1562,15 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
 
   console.log('Recipes query result:', { recipes, recipesError });
   console.log('Number of recipes found for selected meals:', recipes?.length || 0);
+  console.log('Selected meal IDs being queried:', selectedMealIds);
+  
+  // Debug: Let's also check all recipes for this user to see what exists
+  const { data: allRecipes, error: allRecipesError } = await supabaseAdmin
+    .from('recipes')
+    .select('id, ingredients, meal_id')
+    .eq('meal_id', selectedMealIds[0]); // Check first meal ID specifically
+    
+  console.log('Debug - All recipes for first meal ID:', { allRecipes, allRecipesError });
 
   if (recipesError) {
     throw new Error(`Failed to get recipes: ${recipesError.message}`);
@@ -1527,19 +1588,23 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
   for (const recipe of recipes) {
     if (!recipe.ingredients) continue;
 
+    console.log('Processing recipe:', recipe.id, 'ingredients:', recipe.ingredients);
+    
     const ingredientLines = recipe.ingredients
       .split('\n')
       .map(line => line.trim())
       .filter(line => line && line.startsWith('*'));
+      
+    console.log('Filtered ingredient lines:', ingredientLines);
 
     for (let i = 0; i < ingredientLines.length; i++) {
       const line = ingredientLines[i].substring(1).trim(); // Remove the * prefix
       
-    // Parse ingredient (same logic as generateIngredientsFromRecipe)
-    const parts = line.split(' ');
-    let amount = '';
-    let unit = '';
-    let name = line;
+      // Parse ingredient (same logic as generateIngredientsFromRecipe)
+      const parts = line.split(' ');
+      let amount = '';
+      let unit = '';
+      let name = line;
     
       
       const units = [
@@ -1632,29 +1697,34 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     }
   }
 
-         // Insert ingredients without combining (let client-side handle combining)
-         const ingredientsToInsert = allIngredients.map((ingredient, index) => ({
-           user_id: userId,
-           plan_id: planId,
-           source_recipe_id: ingredient.source_recipe_id,
-           name: ingredient.name,
-           amount: ingredient.amount,
-           unit: ingredient.unit,
-           category: detectIngredientCategory(ingredient.name),
-           is_custom: false,
-           position: index
-         }));
+  // Insert ingredients without combining (let client-side handle combining)
+  const ingredientsToInsert = allIngredients.map((ingredient, index) => ({
+    user_id: userId,
+    plan_id: planId,
+    source_recipe_id: ingredient.source_recipe_id,
+    name: ingredient.name,
+    amount: ingredient.amount,
+    unit: ingredient.unit,
+    category: detectIngredientCategory(ingredient.name),
+    is_custom: false,
+    position: index
+  }));
 
   if (ingredientsToInsert.length > 0) {
+    console.log('Inserting ingredients:', ingredientsToInsert.length, 'items');
+    console.log('First ingredient sample:', ingredientsToInsert[0]);
+    
     const { data, error } = await supabaseAdmin
       .from('ingredients')
       .insert(ingredientsToInsert)
       .select();
 
     if (error) {
+      console.error('Error inserting ingredients:', error);
       throw new Error(`Failed to insert merged ingredients: ${error.message}`);
     }
 
+    console.log('Successfully inserted ingredients:', data?.length || 0, 'items');
     return { success: true, data };
   }
 

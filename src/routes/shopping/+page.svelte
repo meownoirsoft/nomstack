@@ -90,6 +90,7 @@
       console.log('loadIngredientsForPlan: Regenerating ingredients to ensure accuracy...');
       try {
         const regenerateResult = await api.regenerateIngredients($currentMealPlan.id);
+        console.log('loadIngredientsForPlan: Regenerate result:', regenerateResult);
         if (regenerateResult.success) {
           console.log('loadIngredientsForPlan: Ingredients regenerated successfully');
           // Now load the regenerated ingredients
@@ -131,7 +132,7 @@
 
   async function loadSelections() {
     try {
-      const result = await api.getSelections('all');
+      const result = await api.getSelections('all', $currentMealPlan?.id);
       console.log('Selections result:', result);
       // The getSelections API returns an array of objects with {type, meals}
       // We need to extract the meals array from the first object
@@ -210,6 +211,15 @@
         // Update global store
         currentMealPlan.set(result.data);
         notifySuccess('Meal plan created!');
+        
+        // Save the selected meals to the meal plan
+        console.log('Saving selected meals to meal plan...');
+        const saveSelectionsResult = await api.updateSelections('all', sels, result.data.id);
+        if (saveSelectionsResult.success) {
+          console.log('Selected meals saved to meal plan');
+        } else {
+          console.error('Failed to save selections to meal plan:', saveSelectionsResult.error);
+        }
         
         // Generate ingredients from selected meals with recipes
         console.log('Generating ingredients from selected meals...');
@@ -340,8 +350,14 @@
       Shopping Lists
     </h1>
     {#if $currentMealPlan}
-      <div class="text-sm text-gray-600">
-        <span>Plan Meals: {sels.length}</span>
+      <div class="flex items-center gap-4">
+        <div class="text-sm text-gray-600">
+          <span>Plan Meals: {sels.length}</span>
+        </div>
+        <a href="/shopping/print-select" class="btn btn-outline btn-sm" title="Print shopping lists">
+          <Printer class="h-4 w-4" />
+          <span>Print</span>
+        </a>
       </div>
     {/if}
   </div>
@@ -398,6 +414,24 @@
             key={forceUpdate}
           />
         {/if}
+      {:else}
+        <!-- No stores created yet -->
+        <div class="bg-base-100 rounded-lg shadow-md p-6">
+          <div class="text-center py-8">
+            <Store class="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">No Stores Created Yet</h3>
+            <p class="text-gray-600 mb-4">
+              Create stores to organize your shopping list by location.
+            </p>
+            <p class="text-sm text-gray-500 mb-6">
+              You can create stores like "Grocery Store", "Costco", "Farmers Market", etc.
+            </p>
+            <a href="/stores" class="btn btn-primary">
+              <Store class="h-4 w-4" />
+              Create Your First Store
+            </a>
+          </div>
+        </div>
       {/if}
     </div>
   {/if}

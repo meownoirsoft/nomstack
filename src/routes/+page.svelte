@@ -8,6 +8,7 @@
   import { user, loading as authLoading, accessToken } from '$lib/stores/auth.js';
   import { loadMealFilters } from '$lib/stores/mealFilters.js';
   import { goto } from '$app/navigation';
+  import { setupNewUserSeedData, userHasSeedData } from '$lib/seedData.js';
 
   export let data;
 
@@ -19,6 +20,11 @@
   let dataLoading = true;
   let error = null;
   const pageType = 'all';
+  
+  // Debug variables for seed data
+  let seedDataLoading = false;
+  let seedDataResult = null;
+  let hasSeedData = false;
 
 
   // Reactive search filtering
@@ -33,22 +39,17 @@
     }
   }
 
-  // Reload data when eating mode changes (needed for Eat Out button to work)
-  let previousEatingMode = $eatingMode;
+  // Track if we've loaded data to prevent infinite loops
   let hasLoadedHomeData = false;
   let hasLoadedOutData = false;
   
-  $: if ($eatingMode !== previousEatingMode) {
-    previousEatingMode = $eatingMode;
-    
-    // Only reload if we haven't loaded data for this mode yet
-    if ($eatingMode === 'home' && !hasLoadedHomeData) {
-      hasLoadedHomeData = true;
-      loadDataForCurrentMode();
-    } else if ($eatingMode === 'out' && !hasLoadedOutData) {
-      hasLoadedOutData = true;
-      loadDataForCurrentMode();
-    }
+  // Handle eating mode changes without infinite loops
+  $: if ($eatingMode === 'home' && !hasLoadedHomeData && $user && !$authLoading) {
+    hasLoadedHomeData = true;
+    loadDataForCurrentMode();
+  } else if ($eatingMode === 'out' && !hasLoadedOutData && $user && !$authLoading) {
+    hasLoadedOutData = true;
+    loadDataForCurrentMode();
   }
 
   async function loadDataForCurrentMode() {
@@ -128,12 +129,38 @@
     // Set eating mode to 'home' for meals page
     setEatingMode('home');
     
-    // Load data only once on initial mount, not on tab switches
-    if (allMeals.length === 0) {
-      await loadDataForCurrentMode();
-      hasLoadedHomeData = true; // Mark that we've loaded home data
+    // Check if user has seed data
+    if ($user) {
+      try {
+        hasSeedData = await userHasSeedData($user.id);
+        console.log('User has seed data:', hasSeedData);
+      } catch (err) {
+        console.error('Error checking seed data:', err);
+      }
     }
   });
+
+  // Debug function to manually setup seed data
+  async function setupSeedData() {
+    if (!$user) return;
+    
+    seedDataLoading = true;
+    try {
+      seedDataResult = await setupNewUserSeedData($user.id);
+      console.log('Seed data setup result:', seedDataResult);
+      
+      // Reload data after setup
+      if (seedDataResult.success) {
+        await loadDataForCurrentMode();
+        hasSeedData = true;
+      }
+    } catch (err) {
+      console.error('Error setting up seed data:', err);
+      seedDataResult = { success: false, error: err.message };
+    } finally {
+      seedDataLoading = false;
+    }
+  }
 </script>
 
 {#if dataLoading}
@@ -148,6 +175,38 @@
     <span>Error loading data: {error}</span>
   </div>
 {:else}
+  <!-- Debug section for seed data -->
+  {#if $user && (!hasSeedData || meals.length === 0)}
+    <div class="alert alert-warning mb-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="font-bold">No data found!</span>
+          <p class="text-sm">You don't have any meals, categories, or sources yet.</p>
+        </div>
+        <button 
+          class="btn btn-primary btn-sm"
+          on:click={setupSeedData}
+          disabled={seedDataLoading}
+        >
+          {#if seedDataLoading}
+            <span class="loading loading-spinner loading-xs"></span>
+            Setting up...
+          {:else}
+            Setup Sample Data
+          {/if}
+        </button>
+      </div>
+    </div>
+    
+    {#if seedDataResult}
+      <div class="alert {seedDataResult.success ? 'alert-success' : 'alert-error'} mb-4">
+        <span>{seedDataResult.success ? '✅ Setup complete!' : '❌ Setup failed'}</span>
+        {#if seedDataResult.error}
+          <p class="text-sm">{seedDataResult.error}</p>
+        {/if}
+      </div>
+    {/if}
+  {/if}
   {#if $eatingMode === 'home'}
     <MealList {meals} {sels} {cats} {srcs} page={pageType} />
   {:else}

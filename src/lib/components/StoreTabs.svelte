@@ -2,14 +2,14 @@
   import { createEventDispatcher } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, TableCellsMerge, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar } from 'lucide-svelte';
+  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, TableCellsMerge, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar, GripVertical } from 'lucide-svelte';
   import AddItem from './AddItem.svelte';
 
   const dispatch = createEventDispatcher();
 
   export let stores = [];
   export let ingredients = [];
-  export let currentMealPlan = null;
+  export let currentMealPlan = null; // Fixed: using prop instead of store
 
   let activeStoreId = null;
   let showAddItem = false;
@@ -17,6 +17,7 @@
   let tabsContainer = null;
   let showLeftChevron = false;
   let showRightChevron = false;
+  let categoryOrder = {}; // Store custom category order per store
   
   const categories = ['Produce', 'Meat & Seafood', 'Dairy', 'Pantry', 'Frozen', 'Bakery', 'Other'];
 
@@ -339,6 +340,78 @@
   function getUncheckedCount(storeId) {
     return ingredientsByStore[storeId]?.filter(ing => !ing.checked).length || 0;
   }
+
+  // Load category order from localStorage
+  function loadCategoryOrder() {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`categoryOrder_${currentMealPlan?.id || 'default'}`);
+      if (saved) {
+        try {
+          categoryOrder = JSON.parse(saved);
+        } catch (e) {
+          console.error('Error loading category order:', e);
+          categoryOrder = {};
+        }
+      }
+    }
+  }
+
+  // Save category order to localStorage
+  function saveCategoryOrder() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`categoryOrder_${currentMealPlan?.id || 'default'}`, JSON.stringify(categoryOrder));
+    }
+  }
+
+  // Get ordered categories for a store
+  function getOrderedCategories(storeId) {
+    const storeCategories = Object.keys(ingredientsByCategory[storeId] || {});
+    const customOrder = categoryOrder[storeId] || [];
+    
+    // Start with custom order, then add any missing categories
+    const ordered = [...customOrder];
+    storeCategories.forEach(cat => {
+      if (!ordered.includes(cat)) {
+        ordered.push(cat);
+      }
+    });
+    
+    return ordered;
+  }
+
+  // Move category up or down
+  function moveCategory(storeId, category, direction) {
+    if (!categoryOrder[storeId]) {
+      categoryOrder[storeId] = getOrderedCategories(storeId);
+    }
+    
+    const currentIndex = categoryOrder[storeId].indexOf(category);
+    if (currentIndex === -1) return;
+    
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= categoryOrder[storeId].length) return;
+    
+    // Swap categories
+    [categoryOrder[storeId][currentIndex], categoryOrder[storeId][newIndex]] = 
+    [categoryOrder[storeId][newIndex], categoryOrder[storeId][currentIndex]];
+    
+    categoryOrder = categoryOrder; // Trigger reactivity
+    saveCategoryOrder();
+  }
+
+  // Load category order when component mounts or meal plan changes
+  $: if (currentMealPlan) {
+    loadCategoryOrder();
+  }
+
+  // Get ordered categories for the active store
+  $: orderedCategories = activeStoreId ? getOrderedCategories(activeStoreId) : [];
+  
+  // Create ordered categories for each store to avoid infinite loops
+  $: orderedCategoriesByStore = Object.keys(ingredientsByCategory).reduce((acc, storeId) => {
+    acc[storeId] = getOrderedCategories(storeId);
+    return acc;
+  }, {});
 </script>
 
 <div class="space-y-6 mb-16">
@@ -430,12 +503,35 @@
 
         <!-- Ingredients by Category -->
         {#if ingredientsByCategory[activeStoreId]}
-          {#each Object.entries(ingredientsByCategory[activeStoreId]) as [category, categoryIngredients]}
-            <div class="mb-6">
-              <h4 class="text-md font-medium text-gray-700 mb-1 flex items-center gap-2 border-b border-gray-200 pb-1">
-                {category}
-                <span class="text-sm font-normal text-gray-500">({categoryIngredients.length})</span>
-              </h4>
+          {#each orderedCategoriesByStore[activeStoreId] || [] as category}
+            {@const categoryIngredients = ingredientsByCategory[activeStoreId][category]}
+            {#if categoryIngredients}
+              <div class="mb-6">
+              <div class="flex items-center gap-2 mb-1 border-b border-gray-200 pb-1">
+                <h4 class="text-md font-medium text-gray-700 flex items-center gap-2">
+                  <GripVertical class="h-4 w-4 text-gray-400" />
+                  {category}
+                  <span class="text-sm font-normal text-gray-500">({categoryIngredients.length})</span>
+                </h4>
+                <div class="flex flex-col gap-0.5 ml-auto">
+                  <button
+                    class="btn btn-ghost btn-xs p-0.5"
+                    on:click={() => moveCategory(activeStoreId, category, 'up')}
+                    disabled={(orderedCategoriesByStore[activeStoreId] || []).indexOf(category) === 0}
+                    title="Move category up"
+                  >
+                    <ChevronUp class="h-3 w-3" />
+                  </button>
+                  <button
+                    class="btn btn-ghost btn-xs p-0.5"
+                    on:click={() => moveCategory(activeStoreId, category, 'down')}
+                    disabled={(orderedCategoriesByStore[activeStoreId] || []).indexOf(category) === (orderedCategoriesByStore[activeStoreId] || []).length - 1}
+                    title="Move category down"
+                  >
+                    <ChevronDown class="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
               
               <!-- Column Headers -->
               <div class="flex items-center gap-3 py-2 px-0 bg-base-300 rounded-t-lg text-xs font-bold text-gray-600">
@@ -514,7 +610,8 @@
                   </div>
                 {/each}
               </div>
-            </div>
+              </div>
+            {/if}
           {/each}
         {:else}
           <div class="text-center py-8">

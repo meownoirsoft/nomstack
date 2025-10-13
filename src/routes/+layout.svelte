@@ -8,6 +8,7 @@
   import Notifications from '$lib/components/Notifications.svelte';
   import GlobalModal from '$lib/components/GlobalModal.svelte';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
+  import OnboardingModal from '$lib/components/OnboardingModal.svelte';
   import { user, loading } from '$lib/stores/auth.js';
   import { initializeOfflineSystem } from '$lib/offline/index.js';
   export let data;
@@ -16,7 +17,7 @@
   let offlineInitialized = false;
 
   // Track current page for header
-  $: currentPage = $page.url.pathname;
+  $: currentPage = $page?.url?.pathname || '/';
 
   // Handle authentication redirects
   $: if (!$loading) {
@@ -25,6 +26,17 @@
     } else if ($user && data.isAuthPage) {
       goto('/');
     }
+  }
+
+  // Handle onboarding completion
+  function handleOnboardingComplete() {
+    console.log('Onboarding completed successfully');
+    // Could show a success notification here
+  }
+
+  function handleOnboardingSkip() {
+    console.log('Onboarding skipped by user');
+    // Could show a message about manual setup
   }
 
 
@@ -70,4 +82,7 @@
   
   <!-- Offline Indicator -->
   <OfflineIndicator />
+  
+  <!-- Onboarding Modal for New Users -->
+  <OnboardingModal on:complete={handleOnboardingComplete} on:skip={handleOnboardingSkip} />
 {/if}

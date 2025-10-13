@@ -55,12 +55,25 @@ tables.forEach(tableName => {
   });
 });
 
+// Safe localStorage access
+function safeLocalStorage() {
+  if (typeof localStorage === 'undefined') {
+    return {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {}
+    };
+  }
+  return localStorage;
+}
+
 // Generate a unique device ID
 function getDeviceId() {
-  let deviceId = localStorage.getItem('nomstack_device_id');
+  const storage = safeLocalStorage();
+  let deviceId = storage.getItem('nomstack_device_id');
   if (!deviceId) {
     deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('nomstack_device_id', deviceId);
+    storage.setItem('nomstack_device_id', deviceId);
   }
   return deviceId;
 }
@@ -74,13 +87,17 @@ export async function initializeSyncStatus() {
       id: deviceId,
       lastSyncTime: 0,
       deviceId,
-      isOnline: navigator.onLine
+      isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
     });
   }
 }
 
 // Network status monitoring
 export function setupNetworkMonitoring() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  
   const updateOnlineStatus = async () => {
     const deviceId = getDeviceId();
     await db.syncStatus.update(deviceId, { isOnline: navigator.onLine });

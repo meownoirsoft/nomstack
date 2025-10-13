@@ -232,7 +232,7 @@ export class OfflineDataManager {
   async getSyncStatus() {
     await this.ensureInitialized();
     
-    const deviceId = localStorage.getItem('nomstack_device_id');
+    const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null;
     const status = await db.syncStatus.get(deviceId);
     const pendingCount = await db.syncQueue.where('status').equals('pending').count();
     const failedCount = await db.syncQueue.where('status').equals('failed').count();
@@ -241,7 +241,7 @@ export class OfflineDataManager {
       ...status,
       pendingSyncCount: pendingCount,
       failedSyncCount: failedCount,
-      isOnline: navigator.onLine
+      isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
     };
   }
 

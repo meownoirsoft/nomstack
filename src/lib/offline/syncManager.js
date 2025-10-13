@@ -53,7 +53,7 @@ export class SyncManager {
       await this.pullFromServer();
       
       // Update sync status
-      const deviceId = localStorage.getItem('nomstack_device_id');
+      const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null;
       await db.syncStatus.update(deviceId, { 
         lastSyncTime: Date.now() 
       });
@@ -78,7 +78,7 @@ export class SyncManager {
   async checkIfSyncNeeded() {
     try {
       // Check if user is authenticated
-      const token = localStorage.getItem('sb-access-token');
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sb-access-token') : null;
       if (!token) {
         console.log('🔄 No auth token, skipping sync check');
         return false;
@@ -95,7 +95,7 @@ export class SyncManager {
       const serverLastUpdated = new Date(serverStatus.lastUpdated).getTime();
       
       // Get our last sync time
-      const deviceId = localStorage.getItem('nomstack_device_id');
+      const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null;
       const localSyncStatus = await db.syncStatus.get(deviceId);
       
       if (!localSyncStatus || !localSyncStatus.lastSyncTime) {
@@ -438,10 +438,10 @@ export class SyncManager {
   // Start periodic sync
   startPeriodicSync(intervalMs = 30000) { // 30 seconds
     this.syncInterval = setInterval(async () => {
-      if (navigator.onLine) {
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
         // Check if user is authenticated before attempting sync
         try {
-          const token = localStorage.getItem('sb-access-token');
+          const token = typeof localStorage !== 'undefined' ? localStorage.getItem('sb-access-token') : null;
           if (token) {
             await this.triggerSync();
           }
@@ -463,7 +463,7 @@ export class SyncManager {
 
   // Trigger sync (public method)
   async triggerSync() {
-    if (navigator.onLine && !this.isSyncing) {
+    if (typeof navigator !== 'undefined' && navigator.onLine && !this.isSyncing) {
       this.sync();
     }
   }

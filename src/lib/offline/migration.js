@@ -10,7 +10,7 @@ export class MigrationManager {
 
   // Check if migration is needed
   async needsMigration() {
-    const deviceId = localStorage.getItem('nomstack_device_id');
+    const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null;
     const status = await db.syncStatus.get(deviceId);
     
     // Migration needed if no last sync time or if it's been more than 24 hours
@@ -29,6 +29,7 @@ export class MigrationManager {
       
       // Migrate each data type
       await this.migrateMeals();
+      await this.migrateRecipes();
       await this.migrateCategories();
       await this.migrateMealPlans();
       await this.migrateStores();
@@ -36,10 +37,10 @@ export class MigrationManager {
       await this.migrateMealFilters();
       
       // Update sync status
-      const deviceId = localStorage.getItem('nomstack_device_id');
+      const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null;
       await db.syncStatus.update(deviceId, {
         lastSyncTime: Date.now(),
-        isOnline: navigator.onLine
+        isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
       });
       
       console.log('Migration completed successfully');
@@ -63,7 +64,7 @@ export class MigrationManager {
             synced: true,
             lastModified: Date.now(),
             version: 1,
-            deviceId: localStorage.getItem('nomstack_device_id')
+            deviceId: typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null
           });
         }
         console.log(`Migrated ${serverMeals.length} meals`);
@@ -85,7 +86,7 @@ export class MigrationManager {
             synced: true,
             lastModified: Date.now(),
             version: 1,
-            deviceId: localStorage.getItem('nomstack_device_id')
+            deviceId: typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null
           });
         }
       }
@@ -110,7 +111,7 @@ export class MigrationManager {
               synced: true,
               lastModified: Date.now(),
               version: 1,
-              deviceId: localStorage.getItem('nomstack_device_id')
+              deviceId: typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null
             });
           }
         } catch (error) {
@@ -135,7 +136,7 @@ export class MigrationManager {
             synced: true,
             lastModified: Date.now(),
             version: 1,
-            deviceId: localStorage.getItem('nomstack_device_id')
+            deviceId: typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null
           });
         }
         console.log(`Migrated ${serverCategories.length} categories`);
@@ -189,7 +190,7 @@ export class MigrationManager {
             synced: true,
             lastModified: Date.now(),
             version: 1,
-            deviceId: localStorage.getItem('nomstack_device_id')
+            deviceId: typeof localStorage !== 'undefined' ? localStorage.getItem('nomstack_device_id') : null
           });
         }
         console.log(`Migrated ${serverFilters.data.length} meal filters`);

@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { Store, Plus, Edit3, Trash2, Save, X, ChevronUp, ChevronDown } from 'lucide-svelte';
+  import { Store, Plus, Edit3, Trash2, Save, X, ChevronUp, ChevronDown, ShoppingCart } from 'lucide-svelte';
 
   let stores = [];
   let loading = true;
@@ -268,5 +268,13 @@
         {/each}
       </div>
     {/if}
+  </div>
+
+  <!-- Back to Shopping List -->
+  <div class="text-center">
+    <a href="/shopping" class="btn btn-outline">
+      <ShoppingCart class="h-4 w-4" />
+      Back to Shopping List
+    </a>
   </div>
 </div>

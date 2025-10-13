@@ -4,7 +4,7 @@
   import { Wifi, WifiOff, RefreshCw, AlertCircle } from 'lucide-svelte';
 
   let syncStatus = {
-    isOnline: navigator.onLine,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     pendingSyncCount: 0,
     failedSyncCount: 0,
     lastSyncTime: 0
@@ -20,16 +20,20 @@
     statusInterval = setInterval(updateSyncStatus, 5000);
     
     // Listen for online/offline events
-    window.addEventListener('online', updateSyncStatus);
-    window.addEventListener('offline', updateSyncStatus);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', updateSyncStatus);
+      window.addEventListener('offline', updateSyncStatus);
+    }
   });
 
   onDestroy(() => {
     if (statusInterval) {
       clearInterval(statusInterval);
     }
-    window.removeEventListener('online', updateSyncStatus);
-    window.removeEventListener('offline', updateSyncStatus);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', updateSyncStatus);
+      window.removeEventListener('offline', updateSyncStatus);
+    }
   });
 
   async function updateSyncStatus() {
