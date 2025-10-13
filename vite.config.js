@@ -45,7 +45,6 @@ export default defineConfig({
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
 				globIgnores: ['**/node_modules/**/*', '**/sw.js', '**/workbox-*.js'],
-				navigateFallback: null,
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -54,10 +53,7 @@ export default defineConfig({
 							cacheName: 'supabase-cache',
 							expiration: {
 								maxEntries: 10,
-								maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
-							},
-							cacheKeyWillBeUsed: async ({ request }) => {
-								return `${request.url}?v=1`;
+								maxAgeSeconds: 60 * 60 * 24 * 365
 							}
 						}
 					}
@@ -65,9 +61,7 @@ export default defineConfig({
 			},
 			devOptions: {
 				enabled: true,
-				type: 'module',
-				navigationFallback: '/',
-				suppressWarnings: true
+				type: 'module'
 			}
 		})
 	],
