@@ -368,5 +368,31 @@ export const api = {
   // Sync status
   async getSyncStatus() {
     return apiRequest('/api/sync-status');
+  },
+
+  // Pantry management
+  async getPantryItems() {
+    return apiRequest('/api/pantry');
+  },
+
+  async addPantryItem(name, category = null) {
+    return apiRequest('/api/pantry', {
+      method: 'POST',
+      body: JSON.stringify({ name, category })
+    });
+  },
+
+  async deletePantryItem(id) {
+    return apiRequest('/api/pantry', {
+      method: 'DELETE',
+      body: JSON.stringify({ id })
+    });
+  },
+
+  async addPantryItemToPlan(pantryItemId, planId) {
+    return apiRequest('/api/pantry/add-to-plan', {
+      method: 'POST',
+      body: JSON.stringify({ pantryItemId, planId })
+    });
   }
 };

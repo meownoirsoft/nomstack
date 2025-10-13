@@ -469,7 +469,7 @@
     </div>
 
     <!-- Store Content -->
-    <div class="px-3 py-4 pb-2 max-h-[calc(100vh-240px)] overflow-y-auto">
+    <div class="px-3 py-4 pb-2">
       {#if activeStoreId}
                <div class="flex items-center justify-between mb-4">
                  <h3 class="text-lg font-semibold text-primary">

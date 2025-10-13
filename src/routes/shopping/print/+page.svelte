@@ -65,7 +65,8 @@
       const planId = mealPlan?.id || $currentMealPlan?.id;
       const ingredientsResult = await api.getIngredients({ plan_id: planId });
       if (ingredientsResult.success) {
-        ingredients = ingredientsResult.data;
+        // Filter out pantry items from the printout
+        ingredients = ingredientsResult.data.filter(ingredient => !ingredient.is_pantry);
         
         // Group ingredients by store
         ingredientsByStore = ingredients.reduce((acc, ingredient) => {

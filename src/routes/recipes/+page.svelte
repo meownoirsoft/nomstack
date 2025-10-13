@@ -375,24 +375,13 @@
     
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {#each mealsWithRecipes as meal}
-        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card bg-base-100 shadow-md hover:shadow-lg transition-shadow relative">
           <div class="card-body p-4">
             <div class="flex items-start justify-between mb-0">
-              <h3 class="card-title text-base font-medium text-primary line-clamp-2 flex items-center gap-2">
+              <h3 class="card-title text-base font-medium text-primary line-clamp-2">
                 {meal.recipe.title || meal.name}
-                {#if meal.recipe.meal_id}
-                  <div class="flex items-center gap-1 text-green-600">
-                    <Check class="h-4 w-4 flex-shrink-0" title="Assigned to meal" />
-                    <span class="text-xs font-medium">Meal</span>
-                  </div>
-                {:else}
-                  <div class="flex items-center gap-1 text-gray-500">
-                    <Link2Off class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
-                    <span class="text-xs font-medium">orphan</span>
-                  </div>
-                {/if}
               </h3>
-              <div class="flex gap-1">
+              <div class="flex gap-0 -mr-1">
                 <button
                   class="btn btn-ghost btn-xs text-primary"
                   on:click={() => openRecipeViewer(meal)}
@@ -408,6 +397,21 @@
                   <Edit class="h-4 w-4" />
                 </button>
               </div>
+            </div>
+            
+            <!-- Meal status indicator positioned at bottom right corner of card -->
+            <div class="absolute bottom-3 right-3">
+              {#if meal.recipe.meal_id}
+                <div class="flex items-center gap-1 text-green-600">
+                  <Check class="h-4 w-4 flex-shrink-0" title="Assigned to meal" />
+                  <span class="text-xs font-medium">Meal</span>
+                </div>
+              {:else}
+                <div class="flex items-center gap-1 text-gray-500">
+                  <Link2Off class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
+                  <span class="text-xs font-medium">orphan</span>
+                </div>
+              {/if}
             </div>
             
             {#if meal.recipe.servings || meal.recipe.prep_time || meal.recipe.cook_time}

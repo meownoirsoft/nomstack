@@ -1,6 +1,6 @@
 <script>
   import Search from './Search.svelte';
-  import { Cake, Sun, Sparkles, ChefHat, Filter, ShoppingCart, Store, Settings } from 'lucide-svelte';
+  import { Cake, Sun, Sparkles, ChefHat, Filter, ShoppingCart, Store, Settings, TableCellsSplit } from 'lucide-svelte';
   import { signOut } from '$lib/auth.js';
   import { eatingMode } from '$lib/stores/eatingMode.js';
   
@@ -12,6 +12,7 @@
     { href: '/dinner', icon: Sparkles, label: 'Dinner' },
     { href: '/categories', icon: Filter, label: 'Meal Categories' },
     { href: '/recipes', icon: ChefHat, label: 'Recipes' },
+    { href: '/pantry', icon: TableCellsSplit, label: 'Pantry' },
     { href: '/shopping', icon: ShoppingCart, label: 'Shopping Lists' },
     { href: '/stores', icon: Store, label: 'Stores' },
     { href: '/settings', icon: Settings, label: 'Settings' }

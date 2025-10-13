@@ -3,7 +3,7 @@
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
   import { currentMealPlan, mealPlans, loadingMealPlans, loadMealPlans, setCurrentMealPlan } from '$lib/stores/mealPlan.js';
-  import { ShoppingCart, Plus, Store, Calendar, Printer, Edit3, ChefHat, CookingPot } from 'lucide-svelte';
+  import { ShoppingCart, Plus, Store, Calendar, Printer, Edit3, ChefHat, CookingPot, TableCellsSplit } from 'lucide-svelte';
   import MealPlanManager from '$lib/components/MealPlanManager.svelte';
   import StoreTabs from '$lib/components/StoreTabs.svelte';
   import AddItem from '$lib/components/AddItem.svelte';
@@ -321,7 +321,7 @@
           <p class="text-sm text-gray-600 mb-3">
             {sels.length} meal{sels.length !== 1 ? 's' : ''} selected for this week
           </p>
-          <a href="/" class="btn btn-sm btn-outline">
+          <a href="/" class="btn btn-sm btn-ghost text-primary">
             <CookingPot class="h-4 w-4" />
             Manage Meals
           </a>
@@ -350,13 +350,15 @@
       Shopping Lists
     </h1>
     {#if $currentMealPlan}
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-0">
         <div class="text-sm text-gray-600">
           <span>Plan Meals: {sels.length}</span>
         </div>
-        <a href="/shopping/print-select" class="btn btn-outline btn-sm" title="Print shopping lists">
+        <a href="/pantry" class="btn btn-ghost btn-sm" title="Manage pantry items">
+          <TableCellsSplit class="h-4 w-4" />
+        </a>
+        <a href="/shopping/print-select" class="btn btn-ghost btn-sm" title="Print shopping lists">
           <Printer class="h-4 w-4" />
-          <span>Print</span>
         </a>
       </div>
     {/if}
@@ -386,7 +388,7 @@
             >
               <Edit3 class="h-4 w-4" />
             </button>
-            <a href="/" class="btn btn-outline btn-sm px-2 ml-auto" title="Go to Meals page">
+            <a href="/" class="btn btn-ghost btn-sm px-2 ml-auto text-primary" title="Go to Meals page">
               <CookingPot class="h-4 w-4" />
               <span>Meals</span>
             </a>

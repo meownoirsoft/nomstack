@@ -1697,18 +1697,40 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     }
   }
 
+  // Get pantry items for this user to filter out
+  const { data: pantryItems, error: pantryError } = await supabaseAdmin
+    .from('pantry_items')
+    .select('name')
+    .eq('user_id', userId);
+
+  if (pantryError) {
+    console.error('Error fetching pantry items:', pantryError);
+  }
+
+  const pantryItemNames = pantryItems ? pantryItems.map(item => item.name.toLowerCase()) : [];
+
   // Insert ingredients without combining (let client-side handle combining)
-  const ingredientsToInsert = allIngredients.map((ingredient, index) => ({
-    user_id: userId,
-    plan_id: planId,
-    source_recipe_id: ingredient.source_recipe_id,
-    name: ingredient.name,
-    amount: ingredient.amount,
-    unit: ingredient.unit,
-    category: detectIngredientCategory(ingredient.name),
-    is_custom: false,
-    position: index
-  }));
+  // Filter out ingredients that are in the pantry
+  const ingredientsToInsert = allIngredients
+    .filter(ingredient => {
+      const isInPantry = pantryItemNames.includes(ingredient.name.toLowerCase());
+      if (isInPantry) {
+        console.log('Filtering out pantry item:', ingredient.name);
+      }
+      return !isInPantry;
+    })
+    .map((ingredient, index) => ({
+      user_id: userId,
+      plan_id: planId,
+      source_recipe_id: ingredient.source_recipe_id,
+      name: ingredient.name,
+      amount: ingredient.amount,
+      unit: ingredient.unit,
+      category: detectIngredientCategory(ingredient.name),
+      is_custom: false,
+      is_pantry: false, // These are not pantry items since we filtered them out
+      position: index
+    }));
 
   if (ingredientsToInsert.length > 0) {
     console.log('Inserting ingredients:', ingredientsToInsert.length, 'items');

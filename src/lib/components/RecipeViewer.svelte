@@ -1,6 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { Clock, Users, ChefHat, Edit, Trash2, X, Plus, Minus } from 'lucide-svelte';
+  import { Clock, Users, ChefHat, Edit, Trash2, X, Plus, Minus, TableCellsSplit } from 'lucide-svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
   import { user } from '$lib/stores/auth.js';
@@ -20,10 +20,106 @@
   let adjustingServings = false;
   let rememberServings = false;
   
+  // Pantry state
+  let pantryItems = [];
+  let loadingPantry = false;
+  
   // Initialize adjusted servings when recipe loads
   $: if (recipe) {
     adjustedServings = recipe.servings || 1;
     adjustedIngredients = [];
+    loadPantryItems();
+  }
+  
+  // Force re-processing of ingredients when pantry items change
+  $: if (recipe && pantryItems.length > 0) {
+    console.log('PANTRY DEBUG: Pantry items loaded, forcing ingredient re-evaluation');
+    // Force a re-render by updating adjustedIngredients
+    adjustedIngredients = adjustedIngredients.length > 0 ? [...adjustedIngredients] : [];
+  }
+
+  async function loadPantryItems() {
+    if (!$user) return;
+    
+    try {
+      loadingPantry = true;
+      const result = await api.getPantryItems();
+      if (result.success) {
+        pantryItems = result.data;
+        console.log('PANTRY DEBUG: Loaded pantry items:', pantryItems);
+      }
+    } catch (error) {
+      console.error('Error loading pantry items:', error);
+    } finally {
+      loadingPantry = false;
+    }
+  }
+
+  // Make this a reactive statement so it updates when pantryItems changes
+  $: isIngredientInPantry = (ingredientName) => {
+    console.log('PANTRY DEBUG: Checking ingredient:', ingredientName, 'against', pantryItems.length, 'pantry items');
+    console.log('PANTRY DEBUG: pantryItems array:', pantryItems);
+    const isInPantry = pantryItems.some(item => {
+      const pantryName = item.name.toLowerCase().trim();
+      const ingredientNameLower = ingredientName.toLowerCase().trim();
+      
+      // Debug logging for vanilla extract
+      if (ingredientNameLower.includes('vanilla') || pantryName.includes('vanilla')) {
+        console.log('VANILLA DEBUG:');
+        console.log('  Ingredient name:', `"${ingredientName}"`);
+        console.log('  Ingredient lower:', `"${ingredientNameLower}"`);
+        console.log('  Pantry name:', `"${item.name}"`);
+        console.log('  Pantry lower:', `"${pantryName}"`);
+        console.log('  Exact match:', pantryName === ingredientNameLower);
+        console.log('  Ingredient contains pantry:', ingredientNameLower.includes(pantryName));
+        console.log('  Pantry contains ingredient:', pantryName.includes(ingredientNameLower));
+      }
+      
+      // Exact match
+      if (pantryName === ingredientNameLower) return true;
+      
+      // Check if ingredient contains the pantry item name (for variations like "extra virgin olive oil" vs "olive oil")
+      if (ingredientNameLower.includes(pantryName)) return true;
+      
+      // Check if pantry item contains the ingredient name (for base ingredients)
+      if (pantryName.includes(ingredientNameLower)) return true;
+      
+      return false;
+    });
+    
+    return isInPantry;
+  };
+
+  async function togglePantryStatus(ingredientName) {
+    if (!$user) return;
+    
+    try {
+      const isInPantry = isIngredientInPantry(ingredientName);
+      
+      if (isInPantry) {
+        // Remove from pantry
+        const pantryItem = pantryItems.find(item => 
+          item.name.toLowerCase() === ingredientName.toLowerCase()
+        );
+        if (pantryItem) {
+          await api.deletePantryItem(pantryItem.id);
+          pantryItems = pantryItems.filter(item => item.id !== pantryItem.id);
+          notifySuccess(`${ingredientName} removed from pantry`);
+        }
+      } else {
+        // Add to pantry
+        const result = await api.addPantryItem(ingredientName);
+        if (result.success) {
+          pantryItems.push(result.data);
+          notifySuccess(`${ingredientName} added to pantry`);
+        } else {
+          notifyError(result.error);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling pantry status:', error);
+      notifyError('Failed to update pantry');
+    }
   }
 
   function formatIngredients(ingredients) {
@@ -428,7 +524,7 @@
 </script>
 
 <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6">
-  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-4 py-4">
     <!-- Header -->
     <div class="flex items-center justify-between mb-2">
       <div>
@@ -441,20 +537,20 @@
           on:click={editRecipe}
           title="Edit recipe"
         >
-          <Edit class="h-6 w-6" />
+          <Edit class="h-4 w-4" />
         </button>
         <button 
           class="btn btn-ghost btn-sm p-2 pr-0 text-error"
           on:click={confirmDelete}
           title="Delete recipe"
         >
-          <Trash2 class="h-6 w-6" />
+          <Trash2 class="h-4 w-4" />
         </button>
         <button 
           class="btn btn-ghost btn-sm p-2 pr-0"
           on:click={() => dispatch('close')}
         >
-          <X class="h-6 w-6" />
+          <X class="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -477,8 +573,9 @@
           </div>
         </div>
         <div class="flex items-center gap-2 col-span-2 mt-2">
-          <Users class="h-5 w-5 text-primary" />
+            <Users class="h-5 w-5 text-primary flex-shrink-0" />
           <div class="flex-1">
+            
             <div class="text-sm font-medium">Servings</div>
             <div class="flex items-center gap-2">
               {#if $user}
@@ -578,31 +675,59 @@
       <!-- Ingredients -->
       {#if recipe.ingredients}
         <div class="mb-6">
-          <h4 class="text-lg font-bold text-primary mb-3 flex items-center gap-2">
+          <h4 class="text-lg font-bold text-primary mb-0 flex items-center gap-1">
             <ChefHat class="h-5 w-5" />
             Ingredients
             {#if adjustedServings !== recipe.servings}
               <span class="text-sm text-gray-500 font-normal">(adjusted for {adjustedServings} servings)</span>
             {/if}
           </h4>
-          <div class="bg-base-200 rounded-lg px-1 py-4">
+          <div class="bg-base-200 rounded-lg px-0 py-2">
             <table class="w-full">
+              <thead>
+                <tr>
+                  <th class="text-sm font-medium text-left pr-1 w-20 text-gray-600">Amount</th>
+                  <th class="text-sm font-medium text-left text-gray-600">Ingredient</th>
+                  <th class="text-sm font-medium text-center text-gray-600 w-8">Pantry</th>
+                </tr>
+              </thead>
               <tbody>
                 {#if adjustedIngredients.length > 0}
                   <!-- Debug: adjustedIngredients.length = {adjustedIngredients.length} -->
                   <!-- Debug: adjustedServings = {adjustedServings}, recipe.servings = {recipe.servings} -->
                   {#each adjustedIngredients as ingredient, index}
                     {@const parsed = parseIngredient(ingredient.original)}
+                    {@const ingredientName = parsed.hasMeasurement ? parsed.beforeAmount + parsed.afterAmount : parsed.beforeAmount}
+                    {@const isInPantry = isIngredientInPantry(ingredientName)}
                     <!-- Debug ingredient {index}: change = "{ingredient.change}" -->
                     <tr class="align-top">
-                      <td class="text-sm font-medium text-left pr-2 w-32 {getScaledAmountColor(ingredient)}">
+                      <td class="text-sm font-medium text-left pr-1 w-20 {getScaledAmountColor(ingredient)}">
                         {@html formatScaledAmountWithStyling(ingredient)}
                       </td>
                       <td class="text-sm leading-relaxed text-left">
-                        {#if parsed.hasMeasurement}
-                          {parsed.beforeAmount}{parsed.afterAmount}
-                        {:else}
-                          {parsed.beforeAmount}
+                        <span>
+                          {#if parsed.hasMeasurement}
+                            {parsed.beforeAmount}{parsed.afterAmount}
+                          {:else}
+                            {parsed.beforeAmount}
+                          {/if}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        {#if $user}
+                          {#if isInPantry}
+                            <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
+                              <TableCellsSplit class="h-4 w-4" />
+                            </div>
+                          {:else}
+                            <button
+                              class="btn btn-ghost btn-xs p-1 text-gray-400"
+                              on:click={() => togglePantryStatus(ingredientName)}
+                              title="Add to pantry"
+                            >
+                              <Plus class="h-4 w-4" />
+                            </button>
+                          {/if}
                         {/if}
                       </td>
                     </tr>
@@ -610,17 +735,38 @@
                 {:else}
                   {#each formatIngredients(recipe.ingredients) as ingredient}
                     {@const parsed = parseIngredient(ingredient)}
+                    {@const ingredientName = parsed.hasMeasurement ? parsed.beforeAmount + parsed.afterAmount : parsed.beforeAmount}
+                    {@const isInPantry = isIngredientInPantry(ingredientName)}
                     <tr class="align-top">
-                      <td class="text-sm font-medium text-left pr-2 w-32">
+                      <td class="text-sm font-medium text-left pr-1 w-20">
                         {#if parsed.hasMeasurement}
                           {parsed.amount} {parsed.unit}
                         {/if}
                       </td>
                       <td class="text-sm leading-relaxed text-left">
-                        {#if parsed.hasMeasurement}
-                          {parsed.beforeAmount}{parsed.afterAmount}
-                        {:else}
-                          {parsed.beforeAmount}
+                        <span>
+                          {#if parsed.hasMeasurement}
+                            {parsed.beforeAmount}{parsed.afterAmount}
+                          {:else}
+                            {parsed.beforeAmount}
+                          {/if}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        {#if $user}
+                          {#if isInPantry}
+                            <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
+                              <TableCellsSplit class="h-4 w-4" />
+                            </div>
+                          {:else}
+                            <button
+                              class="btn btn-ghost btn-xs p-1 text-gray-400"
+                              on:click={() => togglePantryStatus(ingredientName)}
+                              title="Add to pantry"
+                            >
+                              <Plus class="h-4 w-4" />
+                            </button>
+                          {/if}
                         {/if}
                       </td>
                     </tr>
@@ -634,9 +780,9 @@
 
       <!-- Instructions -->
       {#if recipe.instructions}
-        <div class="mb-6">
+        <div class="mb-4">
           <h4 class="text-lg font-bold text-primary mb-3">Instructions</h4>
-          <div class="bg-base-200 rounded-lg p-4">
+          <div class="bg-base-200 rounded-lg px-2 py-4">
             <ol class="space-y-3">
               {#each formatInstructions(recipe.instructions) as instruction, index}
                 <li class="flex items-start gap-3">
@@ -653,9 +799,9 @@
 
       <!-- Notes -->
       {#if recipe.notes}
-        <div class="mb-6">
-          <h4 class="text-lg font-bold text-primary mb-3">Notes</h4>
-          <div class="bg-base-200 rounded-lg p-4">
+        <div class="mb-4">
+          <h4 class="text-lg font-bold text-primary mb-1">Notes</h4>
+          <div class="bg-base-200 rounded-lg px-2 py-2">
             <div class="text-sm leading-relaxed whitespace-pre-wrap">{recipe.notes}</div>
           </div>
         </div>

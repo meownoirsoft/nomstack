@@ -3,13 +3,14 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { signOut } from '$lib/auth.js';
-  import { Menu, X, Home, Filter, ChefHat, ShoppingCart, Store, Settings } from 'lucide-svelte';
+  import { Menu, X, Home, Filter, ChefHat, ShoppingCart, Store, Settings, TableCellsSplit } from 'lucide-svelte';
 
   // Navigation links
   const links = [
     { href: '/', label: 'Meals/Plans', icon: Home },
     { href: '/categories', label: 'Meal Categories', icon: Filter },
     { href: '/recipes', label: 'Recipes', icon: ChefHat },
+    { href: '/pantry', label: 'Pantry', icon: TableCellsSplit },
     { href: '/shopping', label: 'Shopping Lists', icon: ShoppingCart },
     { href: '/stores', label: 'Stores', icon: Store },
     { href: '/settings', label: 'Settings', icon: Settings }
