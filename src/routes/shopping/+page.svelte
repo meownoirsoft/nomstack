@@ -345,27 +345,11 @@
     <div class="max-w-6xl mx-auto px-2 py-2">
       <div class="mb-3">
   <div class="flex items-center justify-between">
-    <h1 class="text-xl font-bold text-primary flex items-center gap-2">
-      <ShoppingCart class="h-5 w-5" />
-      Shopping Lists
-    </h1>
-    {#if $currentMealPlan}
-      <div class="flex items-center gap-0">
-        <div class="text-sm text-primary/70">
-          <span>Plan Meals: {sels.length}</span>
-        </div>
-        <a href="/pantry" class="btn btn-ghost btn-sm text-primary hover:bg-primary/10" title="Manage pantry items">
-          <TableCellsSplit class="h-4 w-4 text-primary" />
-        </a>
-        <a href="/shopping/print-select" class="btn btn-ghost btn-sm text-primary hover:bg-primary/10" title="Print shopping lists">
-          <Printer class="h-4 w-4 text-primary" />
-        </a>
-      </div>
-    {/if}
   </div>
   
         <div class="mt-1">
-          <div class="flex items-center">
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-primary">Plan:</label>
             <select
               class="select select-bordered select-sm border-primary focus:border-primary focus:outline-primary text-primary"
               style="min-width: 200px; text-align: left;"
@@ -375,23 +359,27 @@
             >
               <option value="">--Select--</option>
               {#each $mealPlans as plan}
-                <option value={plan.id}>Plan: {plan.title}</option>
+                <option value={plan.id}>{plan.title}</option>
               {/each}
             </select>
-            <button 
-              class="btn btn-ghost btn-sm px-2 text-primary hover:bg-primary/10"
-              on:click={() => {
-                console.log('Edit meal plans button clicked');
-                showMealPlanManager = true;
-              }}
-              title="Edit meal plans"
-            >
-              <Edit3 class="h-4 w-4 text-primary" />
-            </button>
-            <a href="/" class="btn btn-ghost btn-sm px-2 ml-auto text-primary" title="Go to Meals page">
-              <CookingPot class="h-4 w-4 text-primary" />
-              <span class="text-primary">Meals</span>
-            </a>
+            <div class="flex items-center" style="gap: 8px;">
+              <button 
+                class="btn btn-ghost btn-sm px-1 text-primary hover:bg-primary/10"
+                on:click={() => {
+                  console.log('Edit meal plans button clicked');
+                  showMealPlanManager = true;
+                }}
+                title="Edit meal plans"
+              >
+                <Edit3 class="h-4 w-4 text-primary" />
+              </button>
+              <a href="/pantry" class="btn btn-ghost btn-sm px-1 text-primary hover:bg-primary/10" title="Manage pantry items">
+                <TableCellsSplit class="h-4 w-4 text-primary" />
+              </a>
+              <a href="/shopping/print-select" class="btn btn-ghost btn-sm px-1 text-primary hover:bg-primary/10" title="Print shopping lists">
+                <Printer class="h-4 w-4 text-primary" />
+              </a>
+            </div>
             {#if $loadingMealPlans}
               <div class="loading loading-spinner loading-sm"></div>
             {/if}

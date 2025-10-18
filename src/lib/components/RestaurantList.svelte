@@ -266,13 +266,13 @@
   <!-- Tab Navigation -->
   <div class="flex border-b border-gray-200">
     <button
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'decider' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'decider' ? 'border-primary text-primary' : 'border-transparent text-primary/60 hover:text-primary/80'}"
       on:click={() => activeTab = 'decider'}
     >
       Decider
     </button>
     <button
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'my-noms' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'my-noms' ? 'border-primary text-primary' : 'border-transparent text-primary/60 hover:text-primary/80'}"
       on:click={() => activeTab = 'my-noms'}
     >
       My Noms

@@ -149,13 +149,7 @@
     <!-- Header -->
     <div class="p-4">
       <div class="max-w-4xl mx-auto">
-        <div class="flex items-start justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
-              <TableCellsSplit class="h-6 w-6" />
-              Pantry
-            </h1>
-          </div>
+        <div class="flex items-start justify-end">
           <div class="flex items-center gap-4">
             <button
               class="text-primary hover:text-primary-focus text-sm flex items-center gap-1"
@@ -197,7 +191,7 @@
                 type="text"
                 placeholder="Item name (e.g., olive oil, salt, flour)"
                 bind:value={newItemName}
-                class="input input-bordered flex-1"
+                class="input input-bordered flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
                 on:keydown={(e) => e.key === 'Enter' && addPantryItem()}
               />
               <button
@@ -206,7 +200,7 @@
                 disabled={!newItemName.trim()}
                 title="Add item"
               >
-                <Check class="h-4 w-4" />
+                <Check class="h-4 w-4 text-white" />
               </button>
               <button
                 class="btn btn-ghost btn-sm"
@@ -216,7 +210,7 @@
                 }}
                 title="Cancel"
               >
-                <X class="h-4 w-4" />
+                <X class="h-4 w-4 text-primary" />
               </button>
             </div>
           {/if}
@@ -249,7 +243,7 @@
         {:else}
           <div class="space-y-1">
             {#each filteredItems as item}
-              <div class="flex items-center gap-3 p-2 border border-base-300 rounded-lg hover:bg-base-50 transition-colors">
+              <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-50 transition-colors">
                 <div class="flex-1">
                   <h3 class="font-semibold text-primary">{item.name}</h3>
                 </div>
@@ -262,15 +256,15 @@
                       title="Add to current shopping list"
                     >
                       <ShoppingCart class="h-4 w-4" />
-                      Add to List
+                      Buy
                     </button>
                   {/if}
                   <button
-                    class="btn btn-sm btn-error btn-outline"
+                    class="btn btn-sm btn-ghost"
                     on:click={() => deletePantryItem(item.id)}
                     title="Remove from pantry"
                   >
-                    <Trash2 class="h-4 w-4" />
+                    <Trash2 class="h-4 w-4 text-red-500" />
                   </button>
                 </div>
               </div>

@@ -221,7 +221,7 @@
                         <input
                             type="text"
                             placeholder="Enter city or zip code"
-                            class="input input-bordered w-full pr-20"
+                            class="input w-full pr-20 border-primary focus:border-primary"
                             style="padding-top: 4px; padding-bottom: 4px;"
                             bind:value={customLocation}
                             on:input={() => {
@@ -269,7 +269,7 @@
                 <input
                     type="text"
                     placeholder="Search restaurants..."
-                    class="input input-bordered w-full pl-10 pr-10"
+                    class="input w-full pl-10 pr-10 border-primary focus:border-primary"
                     style="padding-top: 4px; padding-bottom: 4px;"
                     value={searchTerm}
                     on:input={updateSearch}

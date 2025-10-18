@@ -6,6 +6,8 @@
     import { browser } from '$app/environment';
     
     export let page;
+    export let pageTitle = '';
+    export let pageIcon = null;
     
     // Dynamically import icons to reduce SSR load
     let LayersIcon, StoreIcon, HomeIcon, MenuIcon;
@@ -61,6 +63,9 @@
             <div class="h-6 w-6 bg-primary/20 rounded"></div>
           {/if}
           <span class="tracking-tight">nomStack</span>
+          {#if pageTitle}
+            <span class="text-primary/60 font-normal">• {pageTitle}</span>
+          {/if}
         </h1>
       </div>
       <!-- Print-only title -->
@@ -72,6 +77,9 @@
             <div class="h-6 w-6 bg-primary/20 rounded"></div>
           {/if}
           <span class="tracking-tight">nomStack</span>
+          {#if pageTitle}
+            <span class="text-primary/60 font-normal">• {pageTitle}</span>
+          {/if}
         </h1>
       </div>
       <div class="flex items-center gap-2 screen-only">

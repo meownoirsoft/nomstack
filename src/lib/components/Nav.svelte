@@ -10,7 +10,6 @@
     { href: '/lunch', icon: Sun, label: 'Lunch' },
     { href: '/dinner', icon: Sparkles, label: 'Dinner' },
     { href: '/categories', icon: Filter, label: 'Meal Categories' },
-    { href: '/recipes', icon: ChefHat, label: 'Recipes' },
     { href: '/pantry', icon: TableCellsSplit, label: 'Pantry' },
     { href: '/shopping', icon: ShoppingCart, label: 'Shopping Lists' },
     { href: '/stores', icon: Store, label: 'Stores' },

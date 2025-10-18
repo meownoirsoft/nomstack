@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Search, Check } from 'lucide-svelte';
+  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Search, Check, Camera } from 'lucide-svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
 
   export let mealId = null; // Optional - if null, user can select a meal
@@ -200,11 +200,11 @@
   <!-- Import Button -->
   <div class="mt-2">
     <button 
-      class="btn w-full"
-      style="background-color: #86efac; border-color: #86efac; color: black;"
+      class="btn btn-primary w-full"
       on:click={() => photoImportModal.open()}
       type="button"
     >
+      <Camera class="h-5 w-5 mr-2" />
       Import from Photo
     </button>
   </div>

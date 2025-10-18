@@ -3,15 +3,15 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { signOut } from '$lib/auth.js';
-  import { Menu, X, Home, ChefHat, ShoppingCart, Settings, TableCellsSplit } from 'lucide-svelte';
+  import { Menu, X, Home, ChefHat, ShoppingCart, Settings, TableCellsSplit, Info } from 'lucide-svelte';
 
   // Navigation links
   const links = [
     { href: '/', label: 'Meals/Plans', icon: Home },
-    { href: '/recipes', label: 'Recipes', icon: ChefHat },
     { href: '/pantry', label: 'Pantry', icon: TableCellsSplit },
     { href: '/shopping', label: 'Shopping Lists', icon: ShoppingCart },
-    { href: '/settings', label: 'Settings', icon: Settings }
+    { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/about', label: 'About', icon: Info }
   ];
 
   function handleLinkClick(href) {

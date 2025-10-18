@@ -10,6 +10,7 @@
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
   import OnboardingModal from '$lib/components/OnboardingModal.svelte';
   import { user, loading } from '$lib/stores/auth.js';
+  import { eatingMode } from '$lib/stores/eatingMode.js';
   import { initializeOfflineSystem } from '$lib/offline/index.js';
   import { updateTheme } from '$lib/stores/theme.js';
   export let data;
@@ -19,6 +20,22 @@
 
   // Track current page for header
   $: currentPage = $page?.url?.pathname || '/';
+  
+  // Determine page title based on current page
+  $: pageTitle = (() => {
+    switch (currentPage) {
+      case '/': return $eatingMode === 'home' ? 'Meals' : '';
+      case '/pantry': return 'Pantry';
+      case '/settings': return 'Settings';
+      case '/categories': return 'Categories';
+      case '/stores': return 'Stores';
+      case '/shopping': return 'Shopping';
+      case '/updates': return 'Updates';
+      case '/about': return 'About';
+      case '/meal-plan-print': return 'Meal Plan';
+      default: return '';
+    }
+  })();
 
   // Handle authentication redirects
   $: if (!$loading) {
@@ -71,7 +88,7 @@
   </div>
 {:else}
   <div class="h-screen flex flex-col" style="background-color: var(--app-background, #ffffff); isolation: auto !important;">
-    <Header page={currentPage} />
+    <Header page={currentPage} {pageTitle} />
     <main class="flex-1 overflow-hidden">
       <div class="max-w-5xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-0 h-full overflow-y-auto">
         {#if error}

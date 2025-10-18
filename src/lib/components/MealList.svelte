@@ -31,6 +31,8 @@
     let modalCats = Array.isArray(cats) ? cats : [];
     let lastSelsSnapshot = Array.isArray(sels) ? sels.join(',') : String(sels ?? '');
     let displayMeals = [];
+    let mealsWithRecipes = new Set();
+  let mealsWithRecipesArray = []; // Set of mealIds that have recipes
     
     
     // Filter state - now handled by parent component
@@ -145,6 +147,20 @@
     }
   }
 
+  // Check for recipes when meals change
+  $: if (meals && meals.length > 0) {
+    checkRecipesForMeals();
+  }
+  
+  // Make mealsWithRecipes reactive to changes
+  $: mealsWithRecipesArray = Array.from(mealsWithRecipes);
+  
+  // Create a reactive map of meal IDs to recipe status
+  $: mealRecipeMap = new Map(mealsWithRecipesArray.map(id => [id, true]));
+  
+  // Create a reactive object that tracks which meals have recipes
+  $: mealsWithRecipesObj = Object.fromEntries(mealsWithRecipesArray.map(id => [id, true]));
+
     function parseIds(value) {
       if (!value) {
         return [];
@@ -160,6 +176,30 @@
 
     function hasFlag(meal, flag) {
       return Array.isArray(meal?.flags) && meal.flags.includes(flag);
+    }
+
+    function hasRecipe(meal) {
+      return mealRecipeMap.has(meal.id);
+    }
+
+
+    async function checkRecipesForMeals() {
+      if (!meals || meals.length === 0) return;
+      
+      const recipePromises = meals.map(async (meal) => {
+        try {
+          const result = await api.getRecipe(meal.id);
+          if (result && result.recipe) {
+            mealsWithRecipes.add(meal.id);
+          }
+        } catch (error) {
+          // Recipe doesn't exist for this meal, that's fine
+        }
+      });
+      
+      await Promise.all(recipePromises);
+      // Trigger reactivity by creating a new Set
+      mealsWithRecipes = new Set(mealsWithRecipes);
     }
 
     function openModal(meal) {
@@ -288,21 +328,23 @@
   <main class="flex flex-col min-h-auto gap-2">
     <!-- Title and Meal Plan Selector -->
     <div class="flex items-center justify-between mt-2 mb-1">
-      <h1 class="text-xl font-bold text-primary">Meals</h1>
-      <div class="flex items-center gap-1">
-           <select 
-             id="meal-plan-select"
-             class="select select-bordered select-sm border-primary focus:border-primary focus:outline-primary text-primary"
-             style="min-width: 200px; text-align: left;"
-             value={$currentMealPlan?.id || ''}
-             on:change={(e) => setCurrentMealPlan(e.target.value)}
-             disabled={$loadingMealPlans}
-           >
+      <div class="flex items-center gap-2 pl-4">
+        <label for="meal-plan-select" class="text-sm font-medium text-primary">Plan:</label>
+        <select 
+          id="meal-plan-select"
+          class="select select-bordered select-sm border-primary focus:border-primary focus:outline-primary text-primary"
+          style="min-width: 250px; text-align: left;"
+          value={$currentMealPlan?.id || ''}
+          on:change={(e) => setCurrentMealPlan(e.target.value)}
+          disabled={$loadingMealPlans}
+        >
           <option value="">--Select--</option>
           {#each $mealPlans as plan}
-            <option value={plan.id}>Plan: {plan.title}</option>
+            <option value={plan.id}>{plan.title}</option>
           {/each}
         </select>
+      </div>
+      <div class="flex items-center gap-1">
         <button 
           class="btn btn-ghost btn-sm px-2 text-primary hover:bg-primary/10"
           on:click={() => showMealPlanManager = true}
@@ -368,7 +410,9 @@
                 <span class="font-medium text-primary">{meal.name}</span>
               {/if}
               <div class="ml-auto flex items-center gap-1 text-sm text-primary/70">
-                <SocialIcon icon={meal.source} />
+                {#if mealsWithRecipesObj[meal.id]}
+                  <ChefHat class="h-4 w-4 text-primary/60" title="Has recipe" />
+                {/if}
                 <span
                   class="w-3 text-center font-semibold"
                   class:opacity-0={!hasFlag(meal, LUNCH_FLAG)}

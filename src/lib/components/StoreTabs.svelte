@@ -1,8 +1,8 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, TableCellsMerge, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar, GripVertical } from 'lucide-svelte';
+  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, ListChecks, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar, SquareArrowRight } from 'lucide-svelte';
   import AddItem from './AddItem.svelte';
 
   const dispatch = createEventDispatcher();
@@ -282,7 +282,7 @@
     }
   }
 
-  async function moveIngredient(ingredientId, newStoreId) {
+  async function moveIngredient(ingredientId, newStoreId, suppressToast = false) {
     try {
       console.log('Moving ingredient:', ingredientId, 'to store:', newStoreId);
       const result = await api.moveIngredient(ingredientId, newStoreId);
@@ -291,7 +291,10 @@
         const updatedIngredient = result.data;
         console.log('Updated ingredient after move:', updatedIngredient);
         dispatch('ingredient-updated', updatedIngredient);
-        notifySuccess('Ingredient moved');
+        
+        if (!suppressToast) {
+          notifySuccess('Ingredient moved');
+        }
         
         // Close the dropdown
         openDropdowns.delete(ingredientId);
@@ -399,10 +402,60 @@
     saveCategoryOrder();
   }
 
+  // Move entire category to another store
+  async function moveCategoryToStore(fromStoreId, category, toStoreId) {
+    if (fromStoreId === toStoreId) return;
+    
+    try {
+      const categoryIngredients = ingredientsByCategory[fromStoreId][category] || [];
+      
+      // Move each ingredient in the category to the new store
+      for (const ingredient of categoryIngredients) {
+        await moveIngredient(ingredient.id, toStoreId, true); // Suppress individual toasts
+      }
+      
+      const destinationName = toStoreId ? stores.find(s => s.id === toStoreId)?.name || 'selected store' : 'List';
+      notifySuccess(`Moved ${category} category to ${destinationName}`);
+      
+      // Dispatch event to parent to refresh ingredients
+      dispatch('ingredientsChanged');
+    } catch (error) {
+      console.error('Error moving category to store:', error);
+      notifyError('Failed to move category to store');
+    }
+  }
+
+  // Toggle dropdown state
+  function toggleDropdown(dropdownId) {
+    if (openDropdowns.has(dropdownId)) {
+      openDropdowns.delete(dropdownId);
+    } else {
+      openDropdowns.add(dropdownId);
+    }
+    openDropdowns = openDropdowns; // Trigger reactivity
+  }
+
+  // Close all dropdowns when clicking outside
+  function handleClickOutside(event) {
+    if (!event.target.closest('.dropdown')) {
+      openDropdowns.clear();
+      openDropdowns = openDropdowns; // Trigger reactivity
+    }
+  }
+
   // Load category order when component mounts or meal plan changes
   $: if (currentMealPlan) {
     loadCategoryOrder();
   }
+
+  // Add click outside listener when component mounts
+  onMount(() => {
+    document.addEventListener('click', handleClickOutside);
+  });
+
+  onDestroy(() => {
+    document.removeEventListener('click', handleClickOutside);
+  });
 
   // Get ordered categories for the active store
   $: orderedCategories = activeStoreId ? getOrderedCategories(activeStoreId) : [];
@@ -412,6 +465,14 @@
     acc[storeId] = getOrderedCategories(storeId);
     return acc;
   }, {});
+  
+  // Force reactivity when categoryOrder changes
+  $: if (categoryOrder) {
+    orderedCategoriesByStore = Object.keys(ingredientsByCategory).reduce((acc, storeId) => {
+      acc[storeId] = getOrderedCategories(storeId);
+      return acc;
+    }, {});
+  }
 </script>
 
 <div class="space-y-6 mb-16">
@@ -442,7 +503,7 @@
         <!-- Tabs Container -->
         <div 
           bind:this={tabsContainer}
-          class="flex overflow-x-auto scrollbar-hide {showLeftChevron ? 'pl-10' : ''} {showRightChevron ? 'pr-10' : ''}"
+          class="flex overflow-x-hidden {showLeftChevron ? 'pl-10' : ''} {showRightChevron ? 'pr-10' : ''}"
           on:scroll={checkChevronVisibility}
         >
           <!-- List Tab -->
@@ -509,10 +570,48 @@
               <div class="mb-6">
               <div class="flex items-center gap-2 mb-1 border-b border-gray-200 pb-1">
                 <h4 class="text-md font-medium text-primary flex items-center gap-2">
-                  <GripVertical class="h-4 w-4 text-primary/40" />
                   {category}
                   <span class="text-sm font-normal text-primary/60">({categoryIngredients.length})</span>
                 </h4>
+                <div class="dropdown dropdown-bottom dropdown-center" class:dropdown-open={openDropdowns.has(`category-${category}`)}>
+                  <button 
+                    class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
+                    on:click={() => toggleDropdown(`category-${category}`)}
+                    title="Move entire category to another store"
+                  >
+                    <SquareArrowRight class="h-5 w-5 text-primary" />
+                  </button>
+                  <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border border-primary/30">
+                    {#if activeStoreId !== 'unassigned'}
+                      <li>
+                        <button 
+                          class="text-primary hover:bg-primary/10"
+                          on:click={() => {
+                            moveCategoryToStore(activeStoreId, category, null);
+                            toggleDropdown(`category-${category}`);
+                          }}
+                        >
+                          <ListChecks class="h-4 w-4" />
+                          List
+                        </button>
+                      </li>
+                    {/if}
+                    {#each stores.filter(store => store.id !== activeStoreId) as store}
+                      <li>
+                        <button 
+                          class="text-primary hover:bg-primary/10"
+                          on:click={() => {
+                            moveCategoryToStore(activeStoreId, category, store.id);
+                            toggleDropdown(`category-${category}`);
+                          }}
+                        >
+                          <Store class="h-4 w-4" />
+                          {store.name}
+                        </button>
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
                 <div class="flex gap-1 ml-auto">
                   <button
                     class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
@@ -560,7 +659,7 @@
                             <span class="badge badge-sm badge-secondary">Custom</span>
                           {/if}
                           {#if ingredient.sourceRecipes && ingredient.sourceRecipes.length > 1}
-                            <span class="badge badge-sm badge-primary">+{ingredient.sourceRecipes.length - 1}</span>
+                            <span class="badge badge-sm badge-outline badge-primary">({ingredient.sourceRecipes.length} meals)</span>
                           {/if}
                         </span>
                         {#if ingredient.checked}
@@ -577,7 +676,7 @@
                         on:click={() => toggleIngredient(ingredient.id, 'checked')}
                         title={ingredient.checked ? 'Mark as need to buy' : 'Mark as already have'}
                       >
-                        <TableCellsMerge class="h-5 w-5 text-primary" />
+                        <ListChecks class="h-5 w-5 text-primary" />
                       </button>
 
                       <!-- Move to Store -->
@@ -626,11 +725,7 @@
                 You can add recipes to selected meals to see ingredients or add one-off items to store tabs.
               </p>
               <div class="flex justify-center gap-3">
-                <a href="/recipes" class="btn btn-primary">
-                  <ChefHat class="h-4 w-4" />
-                  Add Recipes
-                </a>
-                <a href="/" class="btn btn-outline">
+                <a href="/" class="btn btn-primary">
                   <Calendar class="h-4 w-4" />
                   Manage Meals
                 </a>

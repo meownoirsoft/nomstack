@@ -45,12 +45,12 @@
     <!-- Search Results -->
     {#if $restaurantSearchTerm && $restaurantSearchTerm.trim().length >= 2}
     <div class="mb-6">
-      <div class="bg-base-100 border border-base-200 rounded-lg p-4">
+      <div class="bg-base-100 border border-primary/20 rounded-lg p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Search Results</h3>
+          <h3 class="text-lg font-semibold text-primary">Search Results</h3>
           <button
             type="button"
-            class="text-gray-400 hover:text-gray-600 p-1"
+            class="text-primary/40 hover:text-primary/60 p-1"
             on:click={() => {
               // Clear only the restaurant search term, preserve location
               clearRestaurantSearchTerm();
@@ -111,25 +111,25 @@
           <div class="space-y-2 max-h-96 overflow-y-auto">
             {#each searchResults as restaurant (restaurant.google_place_id)}
               <button
-                class="w-full text-left p-3 hover:bg-base-200 border border-base-200 rounded-lg"
+                class="w-full text-left p-3 hover:bg-base-200 border border-primary/20 rounded-lg"
                 on:click={() => selectRestaurant(restaurant)}
               >
                 <div class="flex items-start gap-3">
                   <div class="flex-1 min-w-0">
                     <h4 class="font-medium text-sm truncate">{restaurant.name}</h4>
-                    <p class="text-xs text-gray-600 mt-1 flex items-center gap-1">
-                      <MapPin class="h-3 w-3 flex-shrink-0" />
+                    <p class="text-xs text-primary/70 mt-1 flex items-center gap-1">
+                      <MapPin class="h-3 w-3 flex-shrink-0 text-primary/70" />
                       <span class="truncate">{restaurant.address}</span>
                     </p>
                     <div class="flex items-center gap-2 mt-1">
                       {#if restaurant.rating}
                         <div class="flex items-center gap-1">
-                          <Star class="h-3 w-3 text-yellow-500 fill-current" />
-                          <span class="text-xs">{restaurant.rating}</span>
+                          <Star class="h-4 w-4 text-yellow-500 fill-current" />
+                          <span class="text-xs text-primary/70">{restaurant.rating}</span>
                         </div>
                       {/if}
                       {#if restaurant.price_level}
-                        <span class="text-xs text-gray-600">{restaurant.price_level}</span>
+                        <span class="text-xs text-primary/70">{restaurant.price_level}</span>
                       {/if}
                     </div>
                   </div>
@@ -138,14 +138,14 @@
             {/each}
           </div>
         {:else}
-          <p class="text-gray-600 text-center py-4">No restaurants found. Try a different search term.</p>
+          <p class="text-primary/70 text-center py-4">No restaurants found. Try a different search term.</p>
         {/if}
       </div>
     </div>
     {/if}
 
     <!-- Info Message -->
-    <p class="text-center text-sm text-gray-600 -mt-2 mb-2">
+    <p class="text-center text-sm text-primary/70 -mt-2 mb-2">
       These noms will be randomly picked in the Decider
     </p>
   </div>
@@ -156,7 +156,7 @@
       <div class="flex items-center justify-center py-8">
         <div class="text-center">
           <div class="loading loading-spinner loading-lg text-primary"></div>
-          <p class="mt-4 text-gray-600">Loading restaurants...</p>
+          <p class="mt-4 text-primary/70">Loading restaurants...</p>
         </div>
       </div>
     {:else if error}
@@ -165,7 +165,7 @@
       </div>
     {:else if restaurants.length === 0}
       <div class="text-center py-8">
-        <p class="text-gray-600 mb-4">No restaurants added yet.</p>
+        <p class="text-primary/70 mb-4">No restaurants added yet.</p>
         <button 
           class="btn btn-primary"
           on:click={() => showAddModal = true}
@@ -177,37 +177,37 @@
     {:else}
       <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
       {#each restaurants as restaurant (restaurant.id)}
-        <div class="card bg-base-100 shadow-md border border-base-200">
+        <div class="card bg-base-100 shadow-md border border-primary/20">
           <div class="card-body p-3">
             {#if editingRestaurant && editingRestaurant.id === restaurant.id}
               <!-- Edit Mode -->
               <div class="space-y-3">
                 <input 
                   type="text" 
-                  class="input input-sm input-bordered w-full" 
+                  class="input input-sm w-full border-primary focus:border-primary" 
                   bind:value={editingRestaurant.name}
                   placeholder="Restaurant name"
                 />
                 <input 
                   type="text" 
-                  class="input input-sm input-bordered w-full" 
+                  class="input input-sm w-full border-primary focus:border-primary" 
                   bind:value={editingRestaurant.cuisine}
                   placeholder="Cuisine type"
                 />
                 <input 
                   type="text" 
-                  class="input input-sm input-bordered w-full" 
+                  class="input input-sm w-full border-primary focus:border-primary" 
                   bind:value={editingRestaurant.address}
                   placeholder="Address"
                 />
                 <input 
                   type="text" 
-                  class="input input-sm input-bordered w-full" 
+                  class="input input-sm w-full border-primary focus:border-primary" 
                   bind:value={editingRestaurant.phone}
                   placeholder="Phone number"
                 />
                 <textarea 
-                  class="textarea textarea-sm textarea-bordered w-full" 
+                  class="textarea textarea-sm w-full border-primary focus:border-primary" 
                   bind:value={editingRestaurant.notes}
                   placeholder="Notes"
                   rows="2"
@@ -231,22 +231,22 @@
               <!-- View Mode -->
               <div class="space-y-2">
                 <div class="flex items-start justify-between">
-                  <h3 class="font-semibold text-sm leading-tight flex-1 pr-2">{restaurant.name}</h3>
+                  <h3 class="font-semibold text-sm leading-tight flex-1 pr-2 text-primary">{restaurant.name}</h3>
                   <div class="flex items-center gap-1 flex-shrink-0">
                     {#if restaurant.rating}
                       <div class="flex items-center gap-1">
-                        <Star class="h-3 w-3 text-yellow-500 fill-current" />
-                        <span class="text-xs">{restaurant.rating}</span>
+                        <Star class="h-4 w-4 text-yellow-500 fill-current" />
+                        <span class="text-xs text-primary/70">{restaurant.rating}</span>
                       </div>
                     {/if}
                     {#if restaurant.price_level}
-                      <span class="text-xs text-gray-600 ml-1">{restaurant.price_level}</span>
+                      <span class="text-xs text-primary/70 ml-1">{restaurant.price_level}</span>
                     {/if}
                   </div>
                 </div>
 
                 {#if restaurant.cuisine && restaurant.cuisine !== 'Restaurant'}
-                  <p class="text-xs text-gray-600">{restaurant.cuisine}</p>
+                  <p class="text-xs text-primary/70">{restaurant.cuisine}</p>
                 {/if}
 
                 <div class="flex items-center justify-between">
@@ -257,7 +257,7 @@
                       rel="noopener noreferrer"
                       class="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0"
                     >
-                      <Map class="h-3 w-3" />
+                      <Map class="h-4 w-4 text-primary" />
                       <span class="hidden sm:inline">Map</span>
                     </a>
                     <button 
@@ -265,23 +265,23 @@
                       on:click={() => editingRestaurant = {...restaurant}}
                       title="Edit restaurant"
                     >
-                      <Edit class="h-3 w-3" />
+                      <Edit class="h-4 w-4 text-primary" />
                     </button>
                     <button 
                       class="btn btn-ghost btn-xs p-1 text-error hover:bg-error/10"
                       on:click={() => deleteRestaurant(restaurant.id)}
                       title="Delete restaurant"
                     >
-                      <Trash2 class="h-3 w-3" />
+                      <Trash2 class="h-4 w-4 text-error" />
                     </button>
                   </div>
                 </div>
 
                 <!-- Hours Accordion -->
                 {#if restaurant.hours && restaurant.hours.length > 0}
-                  <div class="border-t border-base-200 pt-2">
+                  <div class="border-t border-gray-300 pt-2">
                     <button
-                      class="flex items-center justify-between w-full text-left text-xs text-gray-600 hover:text-gray-800"
+                      class="flex items-center justify-between w-full text-left text-xs text-primary/70 hover:text-primary/90"
                       on:click={() => {
                         const newExpanded = new Set(expandedHours);
                         if (newExpanded.has(restaurant.id)) {
@@ -294,13 +294,13 @@
                     >
                       <span>Hours: {restaurant.hours.find(h => h.day === new Date().toLocaleDateString('en-US', { weekday: 'long' }))?.hours || 'Check hours'}</span>
                       {#if expandedHours.has(restaurant.id)}
-                        <ChevronUp class="h-3 w-3" />
+                        <ChevronUp class="h-4 w-4 text-primary/70" />
                       {:else}
-                        <ChevronDown class="h-3 w-3" />
+                        <ChevronDown class="h-4 w-4 text-primary/70" />
                       {/if}
                     </button>
                     {#if expandedHours.has(restaurant.id)}
-                      <div class="mt-2 text-xs text-gray-600 space-y-1">
+                      <div class="mt-2 text-xs text-primary/70 space-y-1">
                         {#each restaurant.hours as hour}
                           <div class="flex justify-between">
                             <span class="font-medium">{hour.day}</span>
@@ -314,9 +314,9 @@
 
                 <!-- Details Accordion -->
                 {#if restaurant.address || restaurant.phone}
-                  <div class="border-t border-base-200 pt-2">
+                  <div class="border-t border-gray-300 pt-2">
                     <button
-                      class="flex items-center justify-between w-full text-left text-xs text-gray-600 hover:text-gray-800"
+                      class="flex items-center justify-between w-full text-left text-xs text-primary/70 hover:text-primary/90"
                       on:click={() => {
                         const newExpanded = new Set(expandedDetails);
                         if (newExpanded.has(restaurant.id)) {
@@ -329,22 +329,22 @@
                     >
                       <span class="truncate">{restaurant.address?.split(',')[0] || 'Details'}</span>
                       {#if expandedDetails.has(restaurant.id)}
-                        <ChevronUp class="h-3 w-3" />
+                        <ChevronUp class="h-4 w-4 text-primary/70" />
                       {:else}
-                        <ChevronDown class="h-3 w-3" />
+                        <ChevronDown class="h-4 w-4 text-primary/70" />
                       {/if}
                     </button>
                     {#if expandedDetails.has(restaurant.id)}
-                      <div class="mt-2 text-xs text-gray-600 space-y-1">
+                      <div class="mt-2 text-xs text-primary/70 space-y-1">
                         {#if restaurant.address}
                           <div class="flex items-start gap-1">
-                            <MapPin class="h-3 w-3 mt-0.5 flex-shrink-0" />
+                            <MapPin class="h-4 w-4 mt-0.5 flex-shrink-0 text-primary/70" />
                             <span class="text-xs">{restaurant.address.split(',').slice(1).join(',').trim()}</span>
                           </div>
                         {/if}
                         {#if restaurant.phone}
                           <div class="flex items-center gap-1">
-                            <Phone class="h-3 w-3" />
+                            <Phone class="h-4 w-4 text-primary/70" />
                             <span class="text-xs">{restaurant.phone}</span>
                           </div>
                         {/if}
@@ -354,7 +354,7 @@
                 {/if}
 
                 {#if restaurant.notes}
-                  <p class="text-sm text-gray-600 mt-2">{restaurant.notes}</p>
+                  <p class="text-sm text-primary/70 mt-2">{restaurant.notes}</p>
                 {/if}
               </div>
             {/if}
@@ -369,9 +369,9 @@
 <!-- Add Restaurant Modal -->
 {#if showAddModal}
   <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6 sm:py-10">
-    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-primary/20 px-6 py-6">
       <div class="flex items-center h-8 m-0">
-        <h3 class="flex-1 font-bold text-lg mt-0">Add Restaurant</h3>
+        <h3 class="flex-1 font-bold text-lg mt-0 text-primary">Add Restaurant</h3>
         <button 
           class="btn btn-ghost btn-sm"
           on:click={() => showAddModal = false}
