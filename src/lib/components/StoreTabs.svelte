@@ -417,7 +417,7 @@
 <div class="space-y-6 mb-16">
   <!-- Store Tabs -->
   <div class="bg-base-100 rounded-lg shadow-md">
-    <div class="border-b border-base-200">
+    <div class="border-b border-gray-200">
       <div class="relative flex items-center">
         <!-- Left Chevron -->
         {#if showLeftChevron}
@@ -425,7 +425,7 @@
             class="absolute left-0 z-10 bg-base-100 hover:bg-base-200 p-2 rounded-r-lg shadow-md"
             on:click={() => scrollTabs('left')}
           >
-            <ChevronLeft class="h-4 w-4" />
+            <ChevronLeft class="h-4 w-4 text-primary" />
           </button>
         {/if}
         
@@ -435,7 +435,7 @@
             class="absolute right-0 z-10 bg-base-100 hover:bg-base-200 p-2 rounded-l-lg shadow-md"
             on:click={() => scrollTabs('right')}
           >
-            <ChevronRight class="h-4 w-4" />
+            <ChevronRight class="h-4 w-4 text-primary" />
           </button>
         {/if}
         
@@ -447,20 +447,20 @@
         >
           <!-- List Tab -->
           <button
-            class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors {activeStoreId === 'unassigned' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+            class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors {activeStoreId === 'unassigned' ? 'border-primary text-primary' : 'border-transparent text-primary/60 hover:text-primary/80'}"
             on:click={() => activeStoreId = 'unassigned'}
           >
-            <HelpCircle class="h-4 w-4" />
+            <HelpCircle class="h-4 w-4 text-primary" />
             List
           </button>
 
           <!-- Store Tabs -->
           {#each stores as store}
             <button
-              class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors {activeStoreId === store.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+              class="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors {activeStoreId === store.id ? 'border-primary text-primary' : 'border-transparent text-primary/60 hover:text-primary/80'}"
               on:click={() => activeStoreId = store.id}
             >
-              <Store class="h-4 w-4" />
+              <Store class="h-4 w-4 text-primary" />
               {store.name}
             </button>
           {/each}
@@ -474,7 +474,7 @@
                <div class="flex items-center justify-between mb-4">
                  <h3 class="text-lg font-semibold text-primary">
                    {getStoreName(activeStoreId)}
-                   <span class="text-sm font-normal text-gray-600 ml-2">
+                   <span class="text-sm font-normal text-primary/70 ml-2">
                      ({getIngredientCount(activeStoreId)} items)
                    </span>
                  </h3>
@@ -508,33 +508,33 @@
             {#if categoryIngredients}
               <div class="mb-6">
               <div class="flex items-center gap-2 mb-1 border-b border-gray-200 pb-1">
-                <h4 class="text-md font-medium text-gray-700 flex items-center gap-2">
-                  <GripVertical class="h-4 w-4 text-gray-400" />
+                <h4 class="text-md font-medium text-primary flex items-center gap-2">
+                  <GripVertical class="h-4 w-4 text-primary/40" />
                   {category}
-                  <span class="text-sm font-normal text-gray-500">({categoryIngredients.length})</span>
+                  <span class="text-sm font-normal text-primary/60">({categoryIngredients.length})</span>
                 </h4>
-                <div class="flex flex-col gap-0.5 ml-auto">
+                <div class="flex gap-1 ml-auto">
                   <button
-                    class="btn btn-ghost btn-xs p-0.5"
+                    class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
                     on:click={() => moveCategory(activeStoreId, category, 'up')}
                     disabled={(orderedCategoriesByStore[activeStoreId] || []).indexOf(category) === 0}
                     title="Move category up"
                   >
-                    <ChevronUp class="h-3 w-3" />
+                    <ChevronUp class="h-5 w-5 text-primary" />
                   </button>
                   <button
-                    class="btn btn-ghost btn-xs p-0.5"
+                    class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
                     on:click={() => moveCategory(activeStoreId, category, 'down')}
                     disabled={(orderedCategoriesByStore[activeStoreId] || []).indexOf(category) === (orderedCategoriesByStore[activeStoreId] || []).length - 1}
                     title="Move category down"
                   >
-                    <ChevronDown class="h-3 w-3" />
+                    <ChevronDown class="h-5 w-5 text-primary" />
                   </button>
                 </div>
               </div>
               
               <!-- Column Headers -->
-              <div class="flex items-center gap-3 py-2 px-0 bg-base-300 rounded-t-lg text-xs font-bold text-gray-600">
+              <div class="flex items-center gap-3 py-2 px-0 bg-base-300 rounded-t-lg text-xs font-bold text-primary/70">
                 <div class="flex-1">Ingredient</div>
                 <div class="w-6 text-right">Have?</div>
                 <div class="w-8 text-right">Store</div>
@@ -549,11 +549,11 @@
                       <div class="flex items-start gap-2">
                         <span class="{ingredient.checked ? 'line-through opacity-60' : ''}">
                           {#if ingredient.amount}
-                            <span class="text-sm text-gray-600">
+                            <span class="text-sm text-primary/70">
                               {formatAmount(ingredient.amount)}&nbsp;{ingredient.unit || ''}
                             </span>
                           {/if}
-                          <span class="text-sm text-gray-600">
+                          <span class="text-sm text-primary/70">
                             {extractCoreIngredient(ingredient.name)}
                           </span>
                           {#if ingredient.is_custom}
@@ -564,7 +564,7 @@
                           {/if}
                         </span>
                         {#if ingredient.checked}
-                          <span class="text-xs text-gray-500 ml-1">have this</span>
+                          <span class="text-xs text-primary/60 ml-1">have this</span>
                         {/if}
                       </div>
                     </div>
@@ -573,17 +573,17 @@
                     <div class="flex items-start gap-0.5 flex-shrink-0 pr-1 pt-0 pb-0.5 -mt-1">
                       <!-- Have Toggle -->
                       <button
-                        class="btn btn-ghost btn-sm p-1"
+                        class="btn btn-ghost btn-sm p-1 text-primary hover:bg-primary/10"
                         on:click={() => toggleIngredient(ingredient.id, 'checked')}
                         title={ingredient.checked ? 'Mark as need to buy' : 'Mark as already have'}
                       >
-                        <TableCellsMerge class="h-5 w-5" />
+                        <TableCellsMerge class="h-5 w-5 text-primary" />
                       </button>
 
                       <!-- Move to Store -->
                       <div class="dropdown dropdown-end" class:dropdown-open={openDropdowns.has(ingredient.id)}>
                         <button 
-                          class="btn btn-ghost btn-sm p-1" 
+                          class="btn btn-ghost btn-sm p-1 text-primary hover:bg-primary/10" 
                           tabindex="0"
                           on:click={() => {
                             if (openDropdowns.has(ingredient.id)) {
@@ -594,7 +594,7 @@
                             openDropdowns = openDropdowns;
                           }}
                         >
-                          <ArrowRightLeft class="h-5 w-5" />
+                          <ArrowRightLeft class="h-5 w-5 text-primary" />
                         </button>
                         <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
                           {#if activeStoreId !== 'unassigned'}
@@ -617,12 +617,12 @@
           <div class="text-center py-8">
             {#if activeStoreId === 'unassigned'}
               <!-- List tab empty state -->
-              <HelpCircle class="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <h3 class="text-lg font-semibold text-gray-700 mb-2">No ingredients to shop for</h3>
-              <p class="text-gray-600 mb-4">
+              <HelpCircle class="h-12 w-12 mx-auto text-primary/40 mb-4" />
+              <h3 class="text-lg font-semibold text-primary mb-2">No ingredients to shop for</h3>
+              <p class="text-primary/70 mb-4">
                 You've selected meals for your plan, but they need recipes to generate a shopping list.
               </p>
-              <p class="text-sm text-gray-500 mb-6">
+              <p class="text-sm text-primary/60 mb-6">
                 You can add recipes to selected meals to see ingredients or add one-off items to store tabs.
               </p>
               <div class="flex justify-center gap-3">
@@ -637,8 +637,8 @@
               </div>
             {:else}
               <!-- Store tab empty state -->
-              <Store class="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p class="text-gray-500">No ingredients in this store yet</p>
+              <Store class="h-12 w-12 mx-auto text-primary/40 mb-4" />
+              <p class="text-primary/60">No ingredients in this store yet</p>
               <button
                 class="btn btn-primary btn-sm mt-4"
                 on:click={() => showAddItem = true}

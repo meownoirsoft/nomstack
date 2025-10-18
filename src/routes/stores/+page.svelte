@@ -161,7 +161,7 @@
   <!-- Add Store Form -->
   {#if showAddForm}
     <div class="bg-base-100 rounded-lg shadow-md p-4">
-      <h3 class="text-lg font-semibold mb-4">Add New Store</h3>
+      <h3 class="text-lg font-semibold mb-4 text-primary">Add New Store</h3>
       <div class="flex gap-1">
         <input
           type="text"
@@ -170,10 +170,10 @@
           class="input input-bordered flex-1"
           on:keydown={(e) => e.key === 'Enter' && addStore()}
         />
-        <button class="btn btn-ghost btn-xs px-0" on:click={addStore}>
+        <button class="btn btn-ghost btn-xs px-0 text-primary hover:bg-primary/10" on:click={addStore}>
           <Save class="h-5 w-5" />
         </button>
-        <button class="btn btn-ghost btn-xs px-0" on:click={cancelAdding}>
+        <button class="btn btn-ghost btn-xs px-0 text-primary hover:bg-primary/10" on:click={cancelAdding}>
           <X class="h-5 w-5" />
         </button>
       </div>
@@ -183,25 +183,25 @@
   <!-- Stores List -->
   <div class="bg-base-100 rounded-lg shadow-md">
     <div class="px-4 py-2 bg-gray-50 border-b border-gray-200">
-      <p class="text-sm text-gray-600">Order determines shopping list tab sequence</p>
+      <p class="text-sm text-primary/70">Order determines shopping list tab sequence</p>
     </div>
     {#if loading}
       <div class="p-8 text-center">
         <div class="loading loading-spinner loading-lg"></div>
-        <p class="mt-4 text-gray-500">Loading stores...</p>
+        <p class="mt-4 text-primary/70">Loading stores...</p>
       </div>
     {:else if stores.length === 0}
       <div class="p-8 text-center">
-        <Store class="h-12 w-12 mx-auto text-gray-400 mb-4" />
-        <p class="text-gray-500 mb-4">No stores yet</p>
-        <p class="text-sm text-gray-400">Add your first store to organize your shopping lists</p>
+        <Store class="h-12 w-12 mx-auto text-primary/40 mb-4" />
+        <p class="text-primary/70 mb-4">No stores yet</p>
+        <p class="text-sm text-primary/60">Add your first store to organize your shopping lists</p>
       </div>
     {:else}
       <div class="divide-y divide-base-200">
         {#each stores as store, index}
           <div class="p-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <Store class="h-5 w-5 text-gray-400" />
+              <Store class="h-5 w-5 text-primary/40" />
               {#if editingStore === store.id}
                 <input
                   type="text"
@@ -211,7 +211,7 @@
                   on:keydown={(e) => e.key === 'Escape' && cancelEditing()}
                 />
               {:else}
-                <span class="font-medium">{store.name}</span>
+                <span class="font-medium text-primary">{store.name}</span>
               {/if}
             </div>
             
@@ -219,39 +219,39 @@
               <!-- Reorder arrows -->
               <div class="flex gap-1">
                 <button 
-                  class="btn btn-ghost btn-sm px-1"
+                  class="btn btn-ghost btn-sm px-1 text-primary hover:bg-primary/10"
                   on:click={() => moveStore(store.id, 'up')}
                   disabled={index === 0}
                   class:opacity-50={index === 0}
                 >
-                  <ChevronUp class="h-5 w-5" />
+                  <ChevronUp class="h-5 w-5 text-primary" />
                 </button>
                 <button 
-                  class="btn btn-ghost btn-sm px-1"
+                  class="btn btn-ghost btn-sm px-1 text-primary hover:bg-primary/10"
                   on:click={() => moveStore(store.id, 'down')}
                   disabled={index === stores.length - 1}
                   class:opacity-50={index === stores.length - 1}
                 >
-                  <ChevronDown class="h-5 w-5" />
+                  <ChevronDown class="h-5 w-5 text-primary" />
                 </button>
               </div>
               
               {#if editingStore === store.id}
                 <button 
-                  class="btn btn-ghost btn-xs px-0"
+                  class="btn btn-ghost btn-xs px-0 text-primary hover:bg-primary/10"
                   on:click={() => updateStore(store.id)}
                 >
                   <Save class="h-5 w-5" />
                 </button>
                 <button 
-                  class="btn btn-ghost btn-xs px-0"
+                  class="btn btn-ghost btn-xs px-0 text-primary hover:bg-primary/10"
                   on:click={cancelEditing}
                 >
                   <X class="h-5 w-5" />
                 </button>
               {:else}
                 <button 
-                  class="btn btn-ghost btn-xs px-0"
+                  class="btn btn-ghost btn-xs px-0 text-primary hover:bg-primary/10"
                   on:click={() => startEditing(store)}
                 >
                   <Edit3 class="h-5 w-5" />
@@ -272,7 +272,7 @@
 
   <!-- Back to Shopping List -->
   <div class="text-center">
-    <a href="/shopping" class="btn btn-outline">
+    <a href="/shopping" class="btn btn-outline text-primary border-primary hover:bg-primary hover:text-white">
       <ShoppingCart class="h-4 w-4" />
       Back to Shopping List
     </a>

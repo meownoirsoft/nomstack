@@ -183,7 +183,7 @@
                         {:else}
                             <MapPin class="h-4 w-4 text-primary" />
                         {/if}
-                        <span class="text-sm font-medium text-gray-700">
+                        <span class="text-sm font-medium text-primary/70">
                             {#if locationStatus === 'granted'}
                                 Searching near your location
                             {:else if locationStatus === 'requesting'}
@@ -246,7 +246,7 @@
                                 <!-- Clear button -->
                                 <button
                                     type="button"
-                                    class="text-gray-400 hover:text-gray-600 p-1"
+                                    class="text-primary/40 hover:text-primary/60 p-1"
                                     on:click={() => {
                                         customLocation = '';
                                         useCustomLocation = false;

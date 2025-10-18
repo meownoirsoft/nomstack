@@ -291,7 +291,7 @@
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-        <p class="text-gray-600">Loading shopping lists...</p>
+        <p class="text-primary/70">Loading shopping lists...</p>
       </div>
     </div>
   {:else if error}
@@ -308,7 +308,7 @@
       <div class="text-center mb-8">
         <ShoppingCart class="h-16 w-16 mx-auto text-primary mb-4" />
         <h1 class="text-3xl font-bold text-primary mb-2">Shopping Lists</h1>
-        <p class="text-gray-600">Select meals to create your shopping list</p>
+        <p class="text-primary/70">Select meals to create your shopping list</p>
       </div>
 
       <div class="bg-base-100 rounded-lg shadow-md p-6 mb-6">
@@ -318,11 +318,11 @@
         </h2>
         
         <div class="mb-4">
-          <p class="text-sm text-gray-600 mb-3">
+          <p class="text-sm text-primary/70 mb-3">
             {sels.length} meal{sels.length !== 1 ? 's' : ''} selected for this week
           </p>
           <a href="/" class="btn btn-sm btn-ghost text-primary">
-            <CookingPot class="h-4 w-4" />
+            <CookingPot class="h-4 w-4 text-primary" />
             Manage Meals
           </a>
         </div>
@@ -333,7 +333,7 @@
               class="btn btn-primary btn-lg"
               on:click={createMealPlan}
             >
-              <Plus class="h-5 w-5" />
+              <Plus class="h-5 w-5 text-white" />
               Create Meal Plan
             </button>
           </div>
@@ -351,14 +351,14 @@
     </h1>
     {#if $currentMealPlan}
       <div class="flex items-center gap-0">
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-primary/70">
           <span>Plan Meals: {sels.length}</span>
         </div>
-        <a href="/pantry" class="btn btn-ghost btn-sm" title="Manage pantry items">
-          <TableCellsSplit class="h-4 w-4" />
+        <a href="/pantry" class="btn btn-ghost btn-sm text-primary hover:bg-primary/10" title="Manage pantry items">
+          <TableCellsSplit class="h-4 w-4 text-primary" />
         </a>
-        <a href="/shopping/print-select" class="btn btn-ghost btn-sm" title="Print shopping lists">
-          <Printer class="h-4 w-4" />
+        <a href="/shopping/print-select" class="btn btn-ghost btn-sm text-primary hover:bg-primary/10" title="Print shopping lists">
+          <Printer class="h-4 w-4 text-primary" />
         </a>
       </div>
     {/if}
@@ -367,7 +367,7 @@
         <div class="mt-1">
           <div class="flex items-center">
             <select
-              class="select select-bordered select-sm"
+              class="select select-bordered select-sm border-primary focus:border-primary focus:outline-primary text-primary"
               style="min-width: 200px; text-align: left;"
               value={$currentMealPlan?.id || ''}
               on:change={(e) => setCurrentMealPlan(e.target.value)}
@@ -379,18 +379,18 @@
               {/each}
             </select>
             <button 
-              class="btn btn-ghost btn-sm px-2"
+              class="btn btn-ghost btn-sm px-2 text-primary hover:bg-primary/10"
               on:click={() => {
                 console.log('Edit meal plans button clicked');
                 showMealPlanManager = true;
               }}
               title="Edit meal plans"
             >
-              <Edit3 class="h-4 w-4" />
+              <Edit3 class="h-4 w-4 text-primary" />
             </button>
             <a href="/" class="btn btn-ghost btn-sm px-2 ml-auto text-primary" title="Go to Meals page">
-              <CookingPot class="h-4 w-4" />
-              <span>Meals</span>
+              <CookingPot class="h-4 w-4 text-primary" />
+              <span class="text-primary">Meals</span>
             </a>
             {#if $loadingMealPlans}
               <div class="loading loading-spinner loading-sm"></div>
@@ -404,7 +404,7 @@
           <!-- Loading state -->
           <div class="flex flex-col items-center justify-center py-12">
             <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-            <p class="text-gray-600">Loading ingredients...</p>
+            <p class="text-primary/70">Loading ingredients...</p>
           </div>
         {:else}
           <!-- Ingredients loaded, show the list -->
@@ -420,16 +420,16 @@
         <!-- No stores created yet -->
         <div class="bg-base-100 rounded-lg shadow-md p-6">
           <div class="text-center py-8">
-            <Store class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">No Stores Created Yet</h3>
-            <p class="text-gray-600 mb-4">
+            <Store class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+            <h3 class="text-lg font-semibold text-primary mb-2">No Stores Created Yet</h3>
+            <p class="text-primary/70 mb-4">
               Create stores to organize your shopping list by location.
             </p>
-            <p class="text-sm text-gray-500 mb-6">
+            <p class="text-sm text-primary/60 mb-6">
               You can create stores like "Grocery Store", "Costco", "Farmers Market", etc.
             </p>
             <a href="/stores" class="btn btn-primary">
-              <Store class="h-4 w-4" />
+              <Store class="h-4 w-4 text-white" />
               Create Your First Store
             </a>
           </div>

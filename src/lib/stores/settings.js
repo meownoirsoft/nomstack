@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 
 // Default settings for ADHD-friendly experience
 const defaultSettings = {
-  recipesEnabled: false,  // Master toggle for recipes
+  recipesEnabled: true,   // Always enabled - required for shopping lists
   showPrepTime: true,     // Show prep time in recipe display
   showServings: true,     // Show servings in recipe display
   mobileOptimized: true   // Mobile-first design
@@ -41,12 +41,7 @@ export function updateSetting(key, value) {
   }));
 }
 
-export function toggleRecipes() {
-  settings.update(current => ({
-    ...current,
-    recipesEnabled: !current.recipesEnabled
-  }));
-}
+// Recipe toggle removed - recipes are always enabled for shopping lists to work
 
 export function resetSettings() {
   settings.set(defaultSettings);

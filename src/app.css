@@ -2,6 +2,517 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Custom Properties for Theme Colors */
+:root {
+  --primary: #8b5cf6;
+  --primary-focus: #7c3aed;
+  --primary-content: #ffffff;
+  --secondary: #f5f3ff;
+  --secondary-dark: #E6E6FA;
+}
+
+/* Force theme colors to override Tailwind */
+.text-primary {
+  color: var(--primary) !important;
+}
+
+.border-primary {
+  border-color: var(--primary) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary) !important;
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--primary) !important;
+}
+
+.hover\:text-primary:hover {
+  color: var(--primary) !important;
+}
+
+.focus\:border-primary:focus {
+  border-color: var(--primary) !important;
+}
+
+.focus\:outline-primary:focus {
+  outline-color: var(--primary) !important;
+}
+
+.btn-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-content) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-focus) !important;
+  border-color: var(--primary-focus) !important;
+  color: var(--primary-content) !important;
+}
+
+.btn-primary * {
+  color: var(--primary-content) !important;
+}
+
+.btn-outline {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.btn-outline:hover {
+  background-color: var(--primary) !important;
+  color: var(--primary-content) !important;
+}
+
+.btn-outline:hover * {
+  color: var(--primary-content) !important;
+}
+
+/* Ensure all button text is properly colored */
+.btn {
+  color: inherit !important;
+}
+
+.btn-primary,
+.btn-primary * {
+  color: var(--primary-content) !important;
+}
+
+.btn-outline,
+.btn-outline * {
+  color: var(--primary) !important;
+}
+
+.btn-outline:hover,
+.btn-outline:hover * {
+  color: var(--primary-content) !important;
+}
+
+/* Opacity variants */
+.text-primary\/70 {
+  color: var(--primary-70) !important;
+}
+
+.text-primary\/60 {
+  color: var(--primary-60) !important;
+}
+
+.text-primary\/50 {
+  color: var(--primary-50) !important;
+}
+
+.text-primary\/40 {
+  color: var(--primary-40) !important;
+}
+
+.border-primary\/30 {
+  border-color: var(--primary-30) !important;
+}
+
+.border-primary\/20 {
+  border-color: var(--primary-20) !important;
+}
+
+.bg-primary\/10 {
+  background-color: var(--primary-10) !important;
+}
+
+.bg-primary\/5 {
+  background-color: var(--primary-5) !important;
+}
+
+.hover\:bg-primary\/10:hover {
+  background-color: var(--primary-10) !important;
+}
+
+.hover\:text-primary\/60:hover {
+  color: var(--primary-60) !important;
+}
+
+/* Checkbox and form controls */
+input[type="checkbox"] {
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"]:checked::before {
+  background-color: var(--primary-content) !important;
+}
+
+input[type="checkbox"]:checked::after {
+  background-color: var(--primary-content) !important;
+}
+
+input[type="checkbox"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-20) !important;
+}
+
+/* DaisyUI specific checkbox styling */
+.checkbox {
+  border-color: var(--primary) !important;
+}
+
+.checkbox:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.checkbox:checked::before {
+  background-color: var(--primary-content) !important;
+}
+
+.checkbox:checked::after {
+  background-color: var(--primary-content) !important;
+}
+
+.checkbox:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-20) !important;
+}
+
+/* More specific DaisyUI checkbox selectors */
+input.checkbox {
+  border-color: var(--primary) !important;
+}
+
+input.checkbox:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input.checkbox:checked::before {
+  background-color: var(--primary-content) !important;
+}
+
+input.checkbox:checked::after {
+  background-color: var(--primary-content) !important;
+}
+
+/* Even more specific selectors for DaisyUI checkboxes */
+input[type="checkbox"].checkbox {
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"].checkbox:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"].checkbox:checked::before {
+  background-color: var(--primary-content) !important;
+}
+
+input[type="checkbox"].checkbox:checked::after {
+  background-color: var(--primary-content) !important;
+}
+
+/* Target any checkbox with DaisyUI classes */
+input[type="checkbox"][class*="checkbox"] {
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"][class*="checkbox"]:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"][class*="checkbox"]:checked::before {
+  background-color: var(--primary-content) !important;
+}
+
+input[type="checkbox"][class*="checkbox"]:checked::after {
+  background-color: var(--primary-content) !important;
+}
+
+/* Additional checkmark targeting */
+input[type="checkbox"]:checked {
+  color: var(--primary-content) !important;
+}
+
+.checkbox:checked {
+  color: var(--primary-content) !important;
+}
+
+input.checkbox:checked {
+  color: var(--primary-content) !important;
+}
+
+input[type="checkbox"].checkbox:checked {
+  color: var(--primary-content) !important;
+}
+
+input[type="checkbox"][class*="checkbox"]:checked {
+  color: var(--primary-content) !important;
+}
+
+/* Target checkmark content specifically */
+input[type="checkbox"]:checked * {
+  color: var(--primary-content) !important;
+  fill: var(--primary-content) !important;
+  stroke: var(--primary-content) !important;
+}
+
+.checkbox:checked * {
+  color: var(--primary-content) !important;
+  fill: var(--primary-content) !important;
+  stroke: var(--primary-content) !important;
+}
+
+/* Target any content inside checked checkboxes */
+input[type="checkbox"]:checked::before,
+input[type="checkbox"]:checked::after {
+  color: var(--primary-content) !important;
+  background-color: var(--primary-content) !important;
+  border-color: var(--primary-content) !important;
+}
+
+.checkbox:checked::before,
+.checkbox:checked::after {
+  color: var(--primary-content) !important;
+  background-color: var(--primary-content) !important;
+  border-color: var(--primary-content) !important;
+}
+
+/* Force override DaisyUI checkbox checkmark */
+input[type="checkbox"]:checked,
+.checkbox:checked,
+input.checkbox:checked,
+input[type="checkbox"].checkbox:checked,
+input[type="checkbox"][class*="checkbox"]:checked {
+  background-image: none !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-content) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Additional force override for DaisyUI */
+input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+.checkbox:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+input.checkbox:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+/* Ultra-specific DaisyUI override */
+input[type="checkbox"].checkbox:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+input[type="checkbox"][class*="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+/* Try targeting with attribute selectors */
+input[type="checkbox"]:checked[class] {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+/* Nuclear option - target all checkboxes */
+input:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+/* Try using DaisyUI's own variables */
+input[type="checkbox"]:checked {
+  background-color: hsl(var(--p)) !important;
+  background: hsl(var(--p)) !important;
+}
+
+.checkbox:checked {
+  background-color: hsl(var(--p)) !important;
+  background: hsl(var(--p)) !important;
+}
+
+/* Force with inline styles via CSS */
+input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+  border-color: var(--primary) !important;
+}
+
+/* Try targeting with higher specificity */
+html input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+body input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+/* Override DaisyUI's CSS custom properties */
+:root {
+  --fallback-p: var(--primary);
+  --fallback-pc: var(--primary-content);
+  --fallback-pf: var(--primary-focus);
+}
+
+/* Force DaisyUI to use our theme colors */
+[data-theme="nomstack"] {
+  --p: var(--primary) !important;
+  --pc: var(--primary-content) !important;
+  --pf: var(--primary-focus) !important;
+}
+
+/* Additional DaisyUI override */
+.theme-nomstack {
+  --p: var(--primary) !important;
+  --pc: var(--primary-content) !important;
+  --pf: var(--primary-focus) !important;
+}
+
+/* Nuclear option - completely replace checkbox appearance */
+input[type="checkbox"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  position: relative !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  position: relative !important;
+}
+
+input[type="checkbox"]:checked::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M20 6L9 17l-5-5'/%3e%3c/svg%3e") !important;
+  background-size: 12px 12px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  pointer-events: none !important;
+}
+
+/* DaisyUI checkbox override */
+.checkbox {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid var(--primary) !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  position: relative !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+}
+
+.checkbox:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.checkbox:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  position: relative !important;
+}
+
+.checkbox:checked::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M20 6L9 17l-5-5'/%3e%3c/svg%3e") !important;
+  background-size: 12px 12px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  pointer-events: none !important;
+}
+
+input[type="radio"]:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+input[type="radio"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-20) !important;
+}
+
+/* Custom food-themed checkboxes now handled by Svelte components */
+
+/* Toggle switches */
+.toggle:checked {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.toggle:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-20) !important;
+}
+
+/* Range sliders */
+input[type="range"]::-webkit-slider-thumb {
+  background-color: var(--primary) !important;
+}
+
+input[type="range"]::-moz-range-thumb {
+  background-color: var(--primary) !important;
+}
+
+/* Select dropdowns */
+select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary-20) !important;
+}
+
 /* Force mobile nav menu to appear above everything */
 .mobile-nav-portal {
   z-index: 2147483647 !important;
@@ -44,8 +555,7 @@
   transform: none !important;
   will-change: auto !important;
 }
-html,body{background-color: #E6E6FA;}
-html,body{background-color: #f5f3ff;}
+html,body{background-color: var(--secondary);}
 
 /* Global print styles - hide navigation and UI elements when printing */
 @media print {

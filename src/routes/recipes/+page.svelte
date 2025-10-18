@@ -308,7 +308,7 @@
   <div class="flex items-center justify-center py-8">
     <div class="text-center">
       <div class="loading loading-spinner loading-lg text-primary"></div>
-      <p class="mt-4 text-gray-600">Loading recipes...</p>
+      <p class="mt-4 text-primary/70">Loading recipes...</p>
     </div>
   </div>
 {:else if error}
@@ -317,9 +317,9 @@
   </div>
 {:else if mealsWithRecipes.length === 0}
   <div class="text-center py-12 pt-16 pr-4">
-    <ChefHat class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-    <h2 class="text-xl font-semibold text-gray-600 mb-2">No Recipes Found</h2>
-    <p class="text-gray-500 mb-6">
+    <ChefHat class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+    <h2 class="text-xl font-semibold text-primary mb-2">No Recipes Found</h2>
+    <p class="text-primary/60 mb-6">
       {#if $searchTerm}
         No recipes match your search term.
       {:else}
@@ -333,15 +333,15 @@
           on:click={openNewRecipeEditor}
           title="Add New Recipe"
         >
-          <Plus class="h-4 w-4" />
+          <Plus class="h-4 w-4 text-white" />
           Add Recipe
         </button>
         <button
-          class="btn btn-outline btn-primary"
+          class="btn btn-outline text-primary border-primary hover:bg-primary hover:text-white"
           on:click={handleBulkImport}
           title="Import Recipes"
         >
-          <Upload class="h-4 w-4" />
+          <Upload class="h-4 w-4 text-primary" />
           Import
         </button>
       </div>
@@ -359,15 +359,15 @@
           on:click={openNewRecipeEditor}
           title="Add New Recipe"
         >
-          <Plus class="h-4 w-4" />
+          <Plus class="h-4 w-4 text-white" />
           Recipe
         </button>
         <button
-          class="btn btn-sm btn-outline btn-primary"
+          class="btn btn-sm btn-outline text-primary border-primary hover:bg-primary hover:text-white"
           on:click={handleBulkImport}
           title="Import Recipes"
         >
-          <Upload class="h-4 w-4" />
+          <Upload class="h-4 w-4 text-primary" />
           Import
         </button>
       </div>
@@ -383,18 +383,18 @@
               </h3>
               <div class="flex gap-0 -mr-1">
                 <button
-                  class="btn btn-ghost btn-xs text-primary"
+                  class="btn btn-ghost btn-xs text-primary hover:bg-primary/10"
                   on:click={() => openRecipeViewer(meal)}
                   title="View Recipe"
                 >
-                  <Eye class="h-4 w-4" />
+                  <Eye class="h-4 w-4 text-primary" />
                 </button>
                 <button
-                  class="btn btn-ghost btn-xs text-primary"
+                  class="btn btn-ghost btn-xs text-primary hover:bg-primary/10"
                   on:click={() => openRecipeEditor(meal, meal.recipe)}
                   title="Edit Recipe"
                 >
-                  <Edit class="h-4 w-4" />
+                  <Edit class="h-4 w-4 text-primary" />
                 </button>
               </div>
             </div>
@@ -403,28 +403,28 @@
             <div class="absolute bottom-3 right-3">
               {#if meal.recipe.meal_id}
                 <div class="flex items-center gap-1 text-green-600">
-                  <Check class="h-4 w-4 flex-shrink-0" title="Assigned to meal" />
+                  <Check class="h-4 w-4 flex-shrink-0 text-green-600" title="Assigned to meal" />
                   <span class="text-xs font-medium">Meal</span>
                 </div>
               {:else}
-                <div class="flex items-center gap-1 text-gray-500">
-                  <Link2Off class="h-4 w-4 flex-shrink-0" title="Not linked to meal" />
+                <div class="flex items-center gap-1 text-primary/60">
+                  <Link2Off class="h-4 w-4 flex-shrink-0 text-primary/60" title="Not linked to meal" />
                   <span class="text-xs font-medium">orphan</span>
                 </div>
               {/if}
             </div>
             
             {#if meal.recipe.servings || meal.recipe.prep_time || meal.recipe.cook_time}
-              <div class="flex items-center gap-4 text-sm text-gray-600 mb-0">
+              <div class="flex items-center gap-4 text-sm text-primary/70 mb-0">
                 {#if meal.recipe.servings}
                   <div class="flex items-center gap-1">
-                    <Users class="h-4 w-4" />
+                    <Users class="h-4 w-4 text-primary/70" />
                     <span>{meal.recipe.servings} servings</span>
                   </div>
                 {/if}
                 {#if meal.recipe.prep_time || meal.recipe.cook_time}
                   <div class="flex items-center gap-1">
-                    <Clock class="h-4 w-4" />
+                    <Clock class="h-4 w-4 text-primary/70" />
                     <span>{formatTotalTime(meal.recipe.prep_time, meal.recipe.cook_time)}</span>
                   </div>
                 {/if}
@@ -435,12 +435,12 @@
               </div>
             {/if}
             
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-primary/70">
               <div class="flex items-center gap-4">
                 {#if meal.recipe.ingredients}
                   {@const ingredientCount = meal.recipe.ingredients.split('\n').filter(line => line.trim()).length}
                   <div class="flex items-center gap-1">
-                    <ChefHat class="h-3 w-3" />
+                    <ChefHat class="h-3 w-3 text-primary/70" />
                     <span>{ingredientCount} ingredient{ingredientCount !== 1 ? 's' : ''}</span>
                   </div>
                 {/if}

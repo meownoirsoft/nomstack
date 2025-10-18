@@ -3,16 +3,14 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { signOut } from '$lib/auth.js';
-  import { Menu, X, Home, Filter, ChefHat, ShoppingCart, Store, Settings, TableCellsSplit } from 'lucide-svelte';
+  import { Menu, X, Home, ChefHat, ShoppingCart, Settings, TableCellsSplit } from 'lucide-svelte';
 
   // Navigation links
   const links = [
     { href: '/', label: 'Meals/Plans', icon: Home },
-    { href: '/categories', label: 'Meal Categories', icon: Filter },
     { href: '/recipes', label: 'Recipes', icon: ChefHat },
     { href: '/pantry', label: 'Pantry', icon: TableCellsSplit },
     { href: '/shopping', label: 'Shopping Lists', icon: ShoppingCart },
-    { href: '/stores', label: 'Stores', icon: Store },
     { href: '/settings', label: 'Settings', icon: Settings }
   ];
 
@@ -38,12 +36,12 @@
   
   <!-- Menu -->
   <div class="fixed top-12 right-4 z-[9999]">
-    <ul class="menu menu-sm p-3 shadow-lg bg-purple-100 border border-purple-300 rounded-box w-56">
+    <ul class="menu menu-sm p-3 shadow-lg bg-base-100 border border-primary/30 rounded-box w-56">
       {#each links as link}
         <li>
           <a 
             href={link.href} 
-            class={$page.url.pathname === link.href ? 'active text-primary font-semibold' : 'text-primary'}
+            class={$page.url.pathname === link.href ? 'text-primary font-semibold bg-primary/10' : 'text-primary'}
             on:click={() => handleLinkClick(link.href)}
           >
             <svelte:component this={link.icon} class="h-4 w-4" />
@@ -54,7 +52,7 @@
       <li>
         <a 
           href="/logout" 
-          class="text-black"
+          class="text-primary"
           on:click={handleLogout}
         >
           <X class="h-4 w-4" />

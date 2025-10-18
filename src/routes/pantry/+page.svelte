@@ -134,7 +134,7 @@
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-        <p class="text-gray-600">Loading pantry...</p>
+        <p class="text-primary/70">Loading pantry...</p>
       </div>
     </div>
   {:else if error}
@@ -178,13 +178,13 @@
       <!-- Search Section -->
       <div class="mb-2">
         <div class="relative">
-          <Search class="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Search class="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-primary/40" />
           <input
             type="text"
             placeholder="Search pantry items..."
             bind:value={searchTerm}
             on:input={handleSearchInput}
-            class="input input-bordered w-full pl-10"
+            class="input input-bordered w-full pl-10 border-primary focus:border-primary focus:outline-primary text-primary"
           />
         </div>
       
@@ -225,11 +225,11 @@
         <!-- Pantry Items List -->
         {#if filteredItems.length === 0}
           <div class="text-center py-8">
-            <TableCellsSplit class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">
+            <TableCellsSplit class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+            <h3 class="text-lg font-semibold text-primary mb-2">
               {searchTerm ? 'No items found' : 'Your pantry is empty'}
             </h3>
-            <p class="text-gray-500 mb-6">
+            <p class="text-primary/60 mb-6">
               {#if searchTerm}
                 Try adjusting your search terms
               {:else}
@@ -251,7 +251,7 @@
             {#each filteredItems as item}
               <div class="flex items-center gap-3 p-2 border border-base-300 rounded-lg hover:bg-base-50 transition-colors">
                 <div class="flex-1">
-                  <h3 class="font-semibold text-gray-800">{item.name}</h3>
+                  <h3 class="font-semibold text-primary">{item.name}</h3>
                 </div>
                 
                 <div class="flex items-center gap-2">

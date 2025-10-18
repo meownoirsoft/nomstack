@@ -10,12 +10,14 @@ export default {
     daisyui: {
       logs: false,
       styled: true,
-      base: false,
+      base: true,
       themes: [
         {
           nomstack: {
-            "primary": "#663399",
-            "secondary": "#E6E6FA",
+            "primary": "var(--primary)",
+            "primary-focus": "var(--primary-focus)",
+            "primary-content": "var(--primary-content)",
+            "secondary": "var(--secondary)",
             "accent": "#EE82EE",
           },
         },

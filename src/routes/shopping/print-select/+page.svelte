@@ -131,7 +131,7 @@
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-        <p class="text-gray-600">Loading shopping lists...</p>
+        <p class="text-primary/70">Loading shopping lists...</p>
       </div>
     </div>
   {:else if error}
@@ -139,16 +139,20 @@
       <div class="text-center">
         <div class="text-error text-lg mb-4">⚠️</div>
         <p class="text-error mb-4">{error}</p>
-        <button class="btn btn-primary" on:click={loadData}>Try Again</button>
+        <button class="btn btn-primary" on:click={loadData}>
+          <span class="text-white">Try Again</span>
+        </button>
       </div>
     </div>
   {:else if !mealPlan && !$currentMealPlan}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
-        <ShoppingCart class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-        <h1 class="text-2xl font-bold text-gray-600 mb-2">No Active Meal Plan</h1>
-        <p class="text-gray-500 mb-6">Create a meal plan first to generate shopping lists</p>
-        <a href="/shopping" class="btn btn-primary">Go to Shopping Lists</a>
+        <ShoppingCart class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+        <h1 class="text-2xl font-bold text-primary mb-2">No Active Meal Plan</h1>
+        <p class="text-primary/60 mb-6">Create a meal plan first to generate shopping lists</p>
+        <a href="/shopping" class="btn btn-primary">
+          <span class="text-white">Go to Shopping Lists</span>
+        </a>
       </div>
     </div>
   {:else}
@@ -161,7 +165,7 @@
               <Printer class="h-6 w-6" />
               Print Shopping Lists
             </h1>
-            <p class="text-gray-600 font-medium mt-1">{(mealPlan || $currentMealPlan)?.title}</p>
+            <p class="text-primary/70 font-medium mt-1">{(mealPlan || $currentMealPlan)?.title}</p>
           </div>
           <a href="/shopping" class="text-primary hover:text-primary-focus flex items-center gap-1 text-sm">
             <ArrowLeft class="h-4 w-4" />
@@ -176,21 +180,21 @@
       <div class="bg-base-100 rounded-lg shadow-md p-6">
         <div class="mb-6">
           <h2 class="text-xl font-semibold text-primary mb-2">Select Stores to Print</h2>
-          <p class="text-gray-600 mb-4">Choose which stores you want to print. Each store will be printed on its own page.</p>
+          <p class="text-primary/70 mb-4">Choose which stores you want to print. Each store will be printed on its own page.</p>
         </div>
 
         {#if Object.keys(ingredientsByStore).length === 0}
           <div class="text-center py-8">
-            <Store class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">No Ingredients Found</h3>
-            <p class="text-gray-500 mb-6">Add some ingredients to your shopping list first.</p>
+            <Store class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+            <h3 class="text-lg font-semibold text-primary mb-2">No Ingredients Found</h3>
+            <p class="text-primary/60 mb-6">Add some ingredients to your shopping list first.</p>
             <a href="/shopping" class="btn btn-primary">Go to Shopping Lists</a>
           </div>
         {:else}
           <div class="space-y-3">
             {#each Object.entries(ingredientsByStore) as [storeId, storeIngredients]}
               {#if storeIngredients.length > 0}
-                <div class="flex items-center gap-3 p-4 border border-base-300 rounded-lg hover:bg-base-50 transition-colors">
+                <div class="flex items-center gap-3 p-4 border border-primary/30 rounded-lg hover:bg-primary/5 transition-colors">
                   <button
                     class="btn btn-ghost btn-sm p-1"
                     on:click={() => toggleStore(storeId)}
@@ -198,15 +202,15 @@
                     {#if selectedStores.has(storeId)}
                       <CheckSquare class="h-5 w-5 text-primary" />
                     {:else}
-                      <Square class="h-5 w-5 text-gray-400" />
+                      <Square class="h-5 w-5 text-primary/40" />
                     {/if}
                   </button>
                   
                   <div class="flex-1">
                     <div class="flex items-center gap-2">
-                      <Store class="h-4 w-4 text-gray-500" />
-                      <h3 class="font-semibold text-gray-800">{getStoreName(storeId)}</h3>
-                      <span class="text-sm text-gray-500">({getIngredientCount(storeId)} items)</span>
+                      <Store class="h-4 w-4 text-primary/60" />
+                      <h3 class="font-semibold text-primary">{getStoreName(storeId)}</h3>
+                      <span class="text-sm text-primary/60">({getIngredientCount(storeId)} items)</span>
                     </div>
                   </div>
                 </div>
@@ -214,9 +218,9 @@
             {/each}
           </div>
 
-          <div class="mt-8 pt-6 border-t border-base-300">
+          <div class="mt-8 pt-6 border-t border-primary/30">
             <div class="text-center mb-4">
-              <div class="text-lg font-medium text-gray-700">
+              <div class="text-lg font-medium text-primary">
                 {selectedStores.size} store{selectedStores.size !== 1 ? 's' : ''} selected
               </div>
             </div>
@@ -226,7 +230,7 @@
                 on:click={printSelected}
                 disabled={selectedStores.size === 0}
               >
-                <Printer class="h-5 w-5" />
+                <Printer class="h-5 w-5 text-white" />
                 Print Selected Stores
               </button>
             </div>

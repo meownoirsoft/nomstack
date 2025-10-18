@@ -126,7 +126,7 @@
       <div class="divider">OR</div>
 
       <div class="text-center">
-        <p class="text-sm text-gray-600 mb-2">Don't have an account?</p>
+        <p class="text-sm text-primary/70 mb-2">Don't have an account?</p>
         <button 
           type="button" 
           class="btn btn-outline btn-primary w-full"

@@ -219,7 +219,7 @@
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
         <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-        <p class="text-gray-600">Loading shopping list...</p>
+        <p class="text-primary/70">Loading shopping list...</p>
       </div>
     </div>
   {:else if error}
@@ -233,9 +233,9 @@
   {:else if !mealPlan && !$currentMealPlan}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
-        <ShoppingCart class="h-16 w-16 mx-auto text-gray-400 mb-4" />
-        <h1 class="text-2xl font-bold text-gray-600 mb-2">No Active Meal Plan</h1>
-        <p class="text-gray-500 mb-6">Create a meal plan first to generate shopping lists</p>
+        <ShoppingCart class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+        <h1 class="text-2xl font-bold text-primary mb-2">No Active Meal Plan</h1>
+        <p class="text-primary/60 mb-6">Create a meal plan first to generate shopping lists</p>
         <a href="/shopping" class="btn btn-primary">Go to Shopping Lists</a>
       </div>
     </div>
@@ -248,7 +248,7 @@
             <ShoppingCart class="h-6 w-6" />
             Shopping List
           </h1>
-          <p class="text-gray-600">{(mealPlan || $currentMealPlan)?.title}</p>
+          <p class="text-primary/70">{(mealPlan || $currentMealPlan)?.title}</p>
         </div>
         <div class="flex gap-2">
           <a href="/shopping/print-select?plan_id={(mealPlan || $currentMealPlan)?.id}" class="btn btn-outline">
@@ -273,12 +273,12 @@
           <div class="print:min-h-screen">
             <!-- Store Header -->
             <div class="text-center mb-8 print:mb-6">
-              <h1 class="text-3xl font-bold text-gray-800 print:text-2xl mb-2 flex items-center justify-center gap-2">
+              <h1 class="text-3xl font-bold text-primary print:text-2xl mb-2 flex items-center justify-center gap-2">
                 <Store class="h-8 w-8 print:h-6 print:w-6" />
                 {getStoreName(storeId)}
               </h1>
-              <p class="text-gray-600 print:text-sm">{(mealPlan || $currentMealPlan)?.title}</p>
-              <p class="text-gray-500 print:text-xs">Generated on {new Date().toLocaleDateString()}</p>
+              <p class="text-primary/70 print:text-sm">{(mealPlan || $currentMealPlan)?.title}</p>
+              <p class="text-primary/60 print:text-xs">Generated on {new Date().toLocaleDateString()}</p>
             </div>
 
             <!-- Ingredients by Category -->
@@ -290,9 +290,9 @@
                   <div class="bg-white border border-gray-300 rounded-lg print:border-gray-400 print:rounded-none">
                     <!-- Category Header -->
                     <div class="bg-gray-100 print:bg-gray-200 p-4 print:p-3 border-b border-gray-300 print:border-gray-400">
-                      <h2 class="text-xl font-bold text-gray-800 print:text-lg">
+                      <h2 class="text-xl font-bold text-primary print:text-lg">
                         {category}
-                        <span class="text-sm font-normal text-gray-600 print:text-xs ml-2">
+                        <span class="text-sm font-normal text-primary/70 print:text-xs ml-2">
                           ({categoryIngredients.length} items)
                         </span>
                       </h2>
@@ -308,19 +308,19 @@
                               {#if ingredient.checked}
                                 <CheckSquare class="h-6 w-6 print:h-5 print:w-5 text-green-600" />
                               {:else}
-                                <Square class="h-6 w-6 print:h-5 print:w-5 text-gray-400" />
+                                <Square class="h-6 w-6 print:h-5 print:w-5 text-primary/40" />
                               {/if}
                             </div>
 
                             <!-- Ingredient Info -->
                             <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2">
-                                <span class="{ingredient.checked ? 'line-through text-gray-500' : ''}">
-                                  <span class="font-medium {ingredient.checked ? 'text-gray-500' : 'text-gray-800'} print:text-sm">
+                                <span class="{ingredient.checked ? 'line-through text-primary/60' : ''}">
+                                  <span class="font-medium {ingredient.checked ? 'text-primary/60' : 'text-primary'} print:text-sm">
                                     {extractCoreIngredient(ingredient.name)}
                                   </span>
                                   {#if ingredient.amount}
-                                    <span class="text-sm text-gray-600 print:text-xs ml-2">
+                                    <span class="text-sm text-primary/70 print:text-xs ml-2">
                                       {formatAmount(ingredient.amount)} {ingredient.unit || ''}
                                     </span>
                                   {/if}
@@ -329,7 +329,7 @@
                                   {/if}
                                 </span>
                                 {#if ingredient.checked}
-                                  <span class="text-xs text-gray-500 ml-1">have this</span>
+                                  <span class="text-xs text-primary/60 ml-1">have this</span>
                                 {/if}
                               </div>
                             </div>

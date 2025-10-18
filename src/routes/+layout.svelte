@@ -11,6 +11,7 @@
   import OnboardingModal from '$lib/components/OnboardingModal.svelte';
   import { user, loading } from '$lib/stores/auth.js';
   import { initializeOfflineSystem } from '$lib/offline/index.js';
+  import { updateTheme } from '$lib/stores/theme.js';
   export let data;
   export let error;
   let currentPage;
@@ -40,6 +41,13 @@
   }
 
 
+  // Initialize theme on mount
+  onMount(() => {
+    // Load saved theme from localStorage
+    const savedTheme = localStorage.getItem('nomstack-theme') || 'purple';
+    updateTheme(savedTheme);
+  });
+
   // Initialize offline system when user is authenticated
   $: if ($user && !offlineInitialized) {
     initializeOfflineSystem().then(() => {
@@ -58,7 +66,7 @@
   <div class="min-h-screen bg-secondary flex items-center justify-center">
     <div class="text-center">
       <div class="loading loading-spinner loading-lg text-primary"></div>
-      <p class="mt-4 text-gray-600">Loading...</p>
+      <p class="mt-4 text-primary/70">Loading...</p>
     </div>
   </div>
 {:else}

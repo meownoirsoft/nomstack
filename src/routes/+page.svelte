@@ -167,7 +167,7 @@
   <div class="flex items-center justify-center py-8">
     <div class="text-center">
       <div class="loading loading-spinner loading-lg text-primary"></div>
-      <p class="mt-4 text-gray-600">Loading meals...</p>
+      <p class="mt-4 text-primary/70">Loading meals...</p>
     </div>
   </div>
 {:else if error}

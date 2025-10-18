@@ -117,6 +117,16 @@
   }
 </script>
 
+<style>
+  .btn-link {
+    text-decoration: none !important;
+  }
+  
+  .btn-link:hover {
+    text-decoration: none !important;
+  }
+</style>
+
 {#if isOpen}
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden">
@@ -127,10 +137,10 @@
           <h2 class="text-lg font-semibold text-primary">Manage Meal Plans</h2>
         </div>
         <button 
-          class="btn btn-ghost btn-sm"
+          class="btn btn-ghost btn-sm text-primary hover:bg-primary/10"
           on:click={onClose}
         >
-          <X class="h-4 w-4" />
+          <X class="h-6 w-6 -mr-4 text-primary" />
         </button>
       </div>
 
@@ -148,7 +158,7 @@
                 type="text"
                 bind:value={newPlanTitle}
                 placeholder="Enter meal plan title"
-                class="input input-bordered input-sm flex-1"
+                class="input input-bordered input-sm flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
                 on:keydown={(e) => e.key === 'Enter' && createNewPlan()}
               />
               <button 
@@ -156,63 +166,63 @@
                 on:click={createNewPlan}
                 disabled={!newPlanTitle.trim()}
               >
-                <Save class="h-4 w-4" />
+                <Save class="h-4 w-4 text-white" />
               </button>
               <button 
-                class="btn btn-ghost btn-sm"
+                class="btn btn-ghost btn-sm text-primary hover:bg-primary/10"
                 on:click={cancelCreating}
               >
-                <X class="h-4 w-4" />
+                <X class="h-4 w-4 text-primary" />
               </button>
             </div>
           </div>
         {:else}
           <button 
-            class="btn btn-outline btn-sm w-full mb-4"
+            class="btn btn-outline btn-sm w-full mb-4 text-primary border-primary hover:bg-primary hover:text-white"
             on:click={startCreating}
           >
-            <Plus class="h-4 w-4" />
-            Create New Meal Plan
+            <Plus class="h-4 w-4 text-primary" />
+            <span class="text-primary">Meal Plan</span>
           </button>
         {/if}
 
         <!-- Existing Plans -->
         <div class="space-y-2">
           {#each $mealPlans as plan}
-            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div class="flex items-center justify-between py-1 rounded-lg">
               {#if editingPlan && editingPlan.id === plan.id}
-                <div class="flex items-center gap-2 flex-1">
+                <div class="flex items-center gap-1 flex-1">
                   <input
                     type="text"
                     bind:value={tempTitle}
-                    class="input input-bordered input-sm flex-1"
+                    class="input input-bordered input-sm flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
                     on:keydown={(e) => e.key === 'Enter' && saveEdit()}
                   />
                   <button 
-                    class="btn btn-primary btn-sm"
+                    class="btn btn-link btn-sm text-primary"
                     on:click={saveEdit}
                     disabled={!tempTitle.trim()}
                   >
-                    <Save class="h-4 w-4" />
+                    <Save class="h-6 w-6 text-primary" />
                   </button>
                   <button 
-                    class="btn btn-ghost btn-sm"
+                    class="btn btn-ghost btn-sm text-primary hover:bg-primary/10"
                     on:click={cancelEditing}
                   >
-                    <X class="h-4 w-4" />
+                    <X class="h-6 w-6 text-primary" />
                   </button>
                 </div>
               {:else}
-                <div class="flex items-center gap-2 flex-1">
-                  <span class="font-medium {plan.id === $currentMealPlan?.id ? 'text-primary' : 'text-gray-700'}">
+                <div class="flex items-center gap-2 flex-1 ml-2">
+                  <span class="font-medium {plan.id === $currentMealPlan?.id ? 'text-primary' : 'text-primary/70'}">
                     {plan.title}
                   </span>
-                  {#if plan.id === $currentMealPlan?.id}
-                    <span class="badge badge-primary badge-sm">Current</span>
-                  {/if}
+                  <!-- {#if plan.id === $currentMealPlan?.id}
+                    <span class="badge badge-primary badge-md ml-4">Current</span>
+                  {/if} -->
                 </div>
                 <div class="flex items-center gap-1">
-                  {#if plan.id !== $currentMealPlan?.id}
+                  <!-- {#if plan.id !== $currentMealPlan?.id}
                     <button 
                       class="btn btn-ghost btn-sm text-primary"
                       on:click={() => setAsCurrent(plan.id)}
@@ -220,20 +230,20 @@
                     >
                       Set Current
                     </button>
-                  {/if}
+                  {/if} -->
                   <button 
-                    class="btn btn-ghost btn-sm"
+                    class="btn btn-ghost btn-sm mx-0 text-primary hover:bg-primary/10"
                     on:click={() => startEditing(plan)}
                     title="Edit meal plan"
                   >
-                    <Edit3 class="h-4 w-4" />
+                    <Edit3 class="h-6 w-6 text-primary" />
                   </button>
                   <button 
-                    class="btn btn-ghost btn-sm text-red-500"
+                    class="btn btn-ghost btn-sm text-red-500 mx-0"
                     on:click={() => deletePlan(plan.id)}
                     title="Delete meal plan"
                   >
-                    <Trash2 class="h-4 w-4" />
+                    <Trash2 class="h-6 w-6 text-red-500" />
                   </button>
                 </div>
               {/if}
@@ -242,7 +252,7 @@
         </div>
 
         {#if $mealPlans.length === 0}
-          <div class="text-center py-8 text-gray-500">
+          <div class="text-center py-8 text-primary/60">
             <Calendar class="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No meal plans yet</p>
             <p class="text-sm">Create your first meal plan to get started</p>
@@ -251,9 +261,9 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-4 border-t border-gray-200">
+      <div class="p-4 border-t border-gray-300 flex justify-center">
         <button 
-          class="btn btn-primary w-full"
+          class="btn btn-outline px-8 text-primary border-primary hover:bg-primary hover:text-white"
           on:click={onClose}
         >
           Done

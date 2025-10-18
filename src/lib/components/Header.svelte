@@ -51,7 +51,7 @@
   }
 </style>
 <header class="bg-base-100/80 backdrop-blur border-b border-primary/10">
-  <div class="max-w-5xl mx-auto flex flex-col gap-1 px-4 sm:px-6 lg:px-8 py-2">
+  <div class="max-w-5xl mx-auto flex flex-col gap-1 px-4 sm:px-6 lg:px-8 py-3">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 screen-only">
         <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
@@ -75,21 +75,21 @@
         </h1>
       </div>
       <div class="flex items-center gap-2 screen-only">
-        {#if !['/categories','/login','/print'].includes(page)}
+        {#if page === '/'}
           <button
             class="btn btn-sm btn-ghost text-primary border border-primary/20 hover:bg-primary/10"
             on:click={toggleEatingMode}
           >
             {#if $eatingMode === 'home'}
               {#if StoreIcon}
-                <svelte:component this={StoreIcon} class="h-4 w-4" />
+                <svelte:component this={StoreIcon} class="h-4 w-4 text-primary" />
               {/if}
-              <span>Eat Out</span>
+              <span class="text-primary">Eat Out</span>
             {:else}
               {#if HomeIcon}
-                <svelte:component this={HomeIcon} class="h-4 w-4" />
+                <svelte:component this={HomeIcon} class="h-4 w-4 text-primary" />
               {/if}
-              <span>Eat at Home</span>
+              <span class="text-primary">Eat at Home</span>
             {/if}
           </button>
         {/if}
@@ -101,7 +101,7 @@
           aria-label="Open mobile menu"
         >
           {#if MenuIcon}
-            <svelte:component this={MenuIcon} class="h-6 w-6" />
+            <svelte:component this={MenuIcon} class="h-6 w-6 text-primary" />
           {:else}
             <div class="h-6 w-6 flex items-center justify-center">
               <div class="w-4 h-3 flex flex-col justify-between">

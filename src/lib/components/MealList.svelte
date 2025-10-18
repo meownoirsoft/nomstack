@@ -12,6 +12,7 @@
     import { Edit, Check, Plus, ChefHat, Printer, Calendar, Edit3 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import MealPlanManager from '$lib/components/MealPlanManager.svelte';
+    import Search from '$lib/components/Search.svelte';
 
     const BREAKFAST_FLAG = 'breakfast';
     const LUNCH_FLAG = 'lunch';
@@ -291,7 +292,7 @@
       <div class="flex items-center gap-1">
            <select 
              id="meal-plan-select"
-             class="select select-bordered select-sm"
+             class="select select-bordered select-sm border-primary focus:border-primary focus:outline-primary text-primary"
              style="min-width: 200px; text-align: left;"
              value={$currentMealPlan?.id || ''}
              on:change={(e) => setCurrentMealPlan(e.target.value)}
@@ -303,25 +304,30 @@
           {/each}
         </select>
         <button 
-          class="btn btn-ghost btn-sm px-2"
+          class="btn btn-ghost btn-sm px-2 text-primary hover:bg-primary/10"
           on:click={() => showMealPlanManager = true}
           title="Manage meal plans"
         >
-          <Edit3 class="h-4 w-4" />
+          <Edit3 class="h-4 w-4 text-primary" />
         </button>
         <a 
           href="/meal-plan-print" 
-          class="btn btn-ghost btn-sm px-2"
+          class="btn btn-ghost btn-sm px-2 text-primary hover:bg-primary/10"
           class:opacity-50={!$currentMealPlan}
           class:pointer-events-none={!$currentMealPlan}
           title={$currentMealPlan ? "Print meal plan" : "Select a meal plan to print"}
         >
-          <Printer class="h-4 w-4" />
+          <Printer class="h-4 w-4 text-primary" />
         </a>
         {#if $loadingMealPlans}
           <div class="loading loading-spinner loading-sm"></div>
         {/if}
       </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mt-2 mb-1 px-4">
+      <Search />
     </div>
     
     <!-- Meal Filter Tabs -->
@@ -330,7 +336,7 @@
         <div class="flex flex-wrap gap-2">
           {#each $mealFilters as filter}
             <button
-              class="text-sm py-0 m-0 underline underline-offset-2 {selectedFilter === filter.id ? 'text-primary-focus font-semibold' : 'text-primary hover:text-primary-focus'}"
+              class="text-sm py-0 m-0 underline underline-offset-2 {selectedFilter === filter.id ? 'text-primary font-bold' : 'text-primary hover:text-primary-focus'}"
               on:click={() => selectedFilter = filter.id}
             >
               {filter.name}
@@ -354,7 +360,7 @@
       <ul class="space-y-1">
         {#each displayMeals as meal}
           <li class="w-full">
-            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-3 pr-1 py-3 shadow-sm border border-purple-300">
+            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-3 pr-1 py-3 shadow-sm border border-primary/30">
               {#if $currentMealPlan}
                 <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="font-medium text-primary" />
               {:else}

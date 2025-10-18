@@ -546,7 +546,7 @@
                         <Plus class="h-3 w-3" />
                         Add Meal
                       </label>
-                      <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-purple-100 border border-purple-300 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
+                      <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-primary/10 border border-primary/30 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
                         {#each getAvailableMeals(category) as meal}
                           <li>
                             <button on:click={() => addMealToOptions(meal, category)}>
@@ -596,7 +596,7 @@
                         <Plus class="h-3 w-3" />
                         Add Meal
                       </label>
-                      <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-purple-100 border border-purple-300 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
+                      <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-primary/10 border border-primary/30 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
                         {#each getAvailableMeals(category) as meal}
                           <li>
                             <button on:click={() => addMealToOptions(meal, category)}>
@@ -730,7 +730,7 @@
                               <Plus class="h-3 w-3" />
                               Add
                             </label>
-                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-purple-100 border border-purple-300 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
+                            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-primary/10 border border-primary/30 rounded-box w-auto min-w-48 max-w-64 max-h-32 overflow-y-auto z-50">
                               {#each getAvailableMealsForSchedule(mealType) as meal}
                                 <li>
                                   <button on:click={() => assignMealToSchedule(day, mealType, meal)}>

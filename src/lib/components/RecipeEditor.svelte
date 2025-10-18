@@ -218,7 +218,7 @@
     <!-- Manual Edit Accordion -->
     <div class="mt-4">
       <button 
-        class="w-full flex items-center justify-between p-3 text-sm text-primary hover:bg-purple-50 rounded-lg transition-colors border border-purple-200"
+        class="w-full flex items-center justify-between p-3 text-sm text-primary hover:bg-primary/5 rounded-lg transition-colors border border-primary/20"
         on:click={toggleManualEdit}
       >
         <div class="flex items-center gap-2">
