@@ -372,7 +372,7 @@
                             </div>
                         {:else}
                             <button 
-                                class="btn btn-sm btn-outline btn-primary w-full"
+                                class="btn btn-sm btn-outline w-full"
                                 on:click={toggleAddCategory}
                             >
                                 <Plus class="h-4 w-4 mr-1" />
@@ -411,7 +411,7 @@
                         Recipe
                     </button>
                 {/if}
-                <button class="btn btn-sm btn-outline btn-primary" on:click={updateMeal} disabled={!nameIsValid}>Save</button>
+                <button class="btn btn-sm btn-primary" on:click={updateMeal} disabled={!nameIsValid}>Save</button>
             </div>
     </div>
   </div>

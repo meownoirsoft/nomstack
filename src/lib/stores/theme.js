@@ -9,7 +9,7 @@ export const availableThemes = [
   { name: 'Orange', value: 'orange', color: '#f97316' },
   { name: 'Pink', value: 'pink', color: '#ec4899' },
   { name: 'Indigo', value: 'indigo', color: '#6366f1' },
-  { name: 'Teal', value: 'teal', color: '#14b8a6' }
+  { name: 'Cyan', value: 'cyan', color: '#06b6d4' }
 ];
 
 // Default theme
@@ -29,23 +29,56 @@ function loadTheme() {
 // Create the theme store
 export const currentTheme = writable(loadTheme());
 
+// Get appropriate background color for each theme
+function getAppBackgroundColor(themeValue) {
+  const backgroundColors = {
+    purple: '#f3f0ff',   // Light purple
+    blue: '#f0f8ff',     // Light blue
+    green: '#f0fff4',    // Light green (not blue-tinted)
+    red: '#fff5f5',      // Light red
+    orange: '#fffaf0',   // Light orange
+    pink: '#fdf2f8',     // Light pink
+    indigo: '#f0f4ff',   // Light indigo
+    cyan: '#ecfeff'      // Light cyan
+  };
+  return backgroundColors[themeValue] || '#ffffff';
+}
+
 // Update CSS custom properties when theme changes
 export function updateTheme(themeValue) {
   const theme = availableThemes.find(t => t.value === themeValue);
   if (theme) {
     console.log('Updating theme to:', theme.name, theme.color);
     
-    // Update CSS custom properties
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.setProperty('--primary', theme.color);
-      document.documentElement.style.setProperty('--primary-focus', adjustBrightness(theme.color, -20));
-      document.documentElement.style.setProperty('--primary-content', '#ffffff');
+      // Update CSS custom properties
+      if (typeof document !== 'undefined') {
+        document.documentElement.style.setProperty('--primary', theme.color);
+        document.documentElement.style.setProperty('--primary-focus', adjustBrightness(theme.color, -20));
+        
+        // Set appropriate text colors based on theme
+        if (themeValue === 'dark') {
+          document.documentElement.style.setProperty('--primary-content', '#ffffff');
+          document.documentElement.style.setProperty('--text-primary', '#ffffff');
+          document.documentElement.style.setProperty('--text-secondary', '#d1d5db');
+          document.documentElement.style.setProperty('--text-muted', '#9ca3af');
+          document.documentElement.classList.add('dark-theme');
+        } else {
+          document.documentElement.style.setProperty('--primary-content', '#ffffff');
+          document.documentElement.style.setProperty('--text-primary', theme.color);
+          document.documentElement.style.setProperty('--text-secondary', hexToRgba(theme.color, 0.7));
+          document.documentElement.style.setProperty('--text-muted', hexToRgba(theme.color, 0.6));
+          document.documentElement.classList.remove('dark-theme');
+        }
       
       // Update secondary colors based on theme (much lighter versions)
       const lightSecondary = adjustBrightness(theme.color, 90);
       const darkSecondary = adjustBrightness(theme.color, 85);
       document.documentElement.style.setProperty('--secondary', lightSecondary);
       document.documentElement.style.setProperty('--secondary-dark', darkSecondary);
+      
+      // Create app background color (custom light versions for each theme)
+      const appBackground = getAppBackgroundColor(theme.value);
+      document.documentElement.style.setProperty('--app-background', appBackground);
       
       // Create opacity variants
       document.documentElement.style.setProperty('--primary-70', hexToRgba(theme.color, 0.7));
@@ -67,6 +100,7 @@ export function updateTheme(themeValue) {
         primaryFocus: adjustBrightness(theme.color, -20),
         secondary: lightSecondary,
         secondaryDark: darkSecondary,
+        appBackground: appBackground,
         daisyUI: {
           p: theme.color,
           pc: '#ffffff',

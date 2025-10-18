@@ -129,7 +129,7 @@
   <title>Pantry - nomStack</title>
 </svelte:head>
 
-<div class="min-h-screen bg-base-200">
+<div class="min-h-screen" style="background-color: var(--app-background, #ffffff);">
   {#if loading}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">

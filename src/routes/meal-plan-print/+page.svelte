@@ -468,7 +468,7 @@
 </script>
 
 
-<div class="min-h-screen bg-base-200 p-4">
+<div class="min-h-screen p-4" style="background-color: var(--app-background, #ffffff);">
   <div class="max-w-6xl mx-auto print-content">
     <!-- Header -->
     <div class="mb-2 print-header">

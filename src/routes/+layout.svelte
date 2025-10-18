@@ -63,14 +63,14 @@
   <title>{data.title}</title>
 </svelte:head>
 {#if $loading}
-  <div class="min-h-screen bg-secondary flex items-center justify-center">
+  <div class="min-h-screen flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
     <div class="text-center">
       <div class="loading loading-spinner loading-lg text-primary"></div>
       <p class="mt-4 text-primary/70">Loading...</p>
     </div>
   </div>
 {:else}
-  <div class="h-screen bg-secondary flex flex-col" style="isolation: auto !important;">
+  <div class="h-screen flex flex-col" style="background-color: var(--app-background, #ffffff); isolation: auto !important;">
     <Header page={currentPage} />
     <main class="flex-1 overflow-hidden">
       <div class="max-w-5xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-0 h-full overflow-y-auto">

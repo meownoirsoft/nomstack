@@ -126,7 +126,7 @@
   <title>Print Shopping Lists - nomStack</title>
 </svelte:head>
 
-<div class="min-h-screen bg-base-200">
+<div class="min-h-screen" style="background-color: var(--app-background, #ffffff);">
   {#if loading}
     <div class="flex items-center justify-center min-h-screen">
       <div class="text-center">
@@ -188,7 +188,9 @@
             <Store class="h-16 w-16 mx-auto text-primary/40 mb-4" />
             <h3 class="text-lg font-semibold text-primary mb-2">No Ingredients Found</h3>
             <p class="text-primary/60 mb-6">Add some ingredients to your shopping list first.</p>
-            <a href="/shopping" class="btn btn-primary">Go to Shopping Lists</a>
+            <a href="/shopping" class="btn btn-primary">
+              <span class="text-white">Go to Shopping Lists</span>
+            </a>
           </div>
         {:else}
           <div class="space-y-3">

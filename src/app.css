@@ -4,15 +4,280 @@
 
 /* CSS Custom Properties for Theme Colors */
 :root {
-  --primary: #8b5cf6;
-  --primary-focus: #7c3aed;
+  --primary: #000000;
+  --primary-focus: #333333;
   --primary-content: #ffffff;
-  --secondary: #f5f3ff;
-  --secondary-dark: #E6E6FA;
+  --secondary: #ffffff;
+  --secondary-dark: #f5f5f5;
+  --app-background: #f3f0ff;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.7);
+  --text-muted: rgba(0, 0, 0, 0.6);
 }
 
 /* Force theme colors to override Tailwind */
 .text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-primary\/70 {
+  color: var(--text-secondary) !important;
+}
+
+.text-primary\/60 {
+  color: var(--text-muted) !important;
+}
+
+/* Dark theme specific overrides for headers and menus */
+[data-theme="nomstack"] .text-primary {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure headers and menu items are readable in dark mode */
+.dark-theme .text-primary,
+.dark-theme h1,
+.dark-theme h2,
+.dark-theme h3,
+.dark-theme .card-title,
+.dark-theme .menu a {
+  color: #ffffff !important;
+}
+
+/* Dark theme header and navigation - keep light background but make text dark */
+.dark-theme .navbar .text-primary,
+.dark-theme .header .text-primary,
+.dark-theme nav .text-primary,
+.dark-theme .nav .text-primary,
+.dark-theme .navbar h1,
+.dark-theme .header h1,
+.dark-theme nav h1,
+.dark-theme .nav h1,
+.dark-theme .navbar .font-bold,
+.dark-theme .header .font-bold,
+.dark-theme nav .font-bold,
+.dark-theme .nav .font-bold {
+  color: #374151 !important;
+}
+
+.dark-theme .navbar svg,
+.dark-theme .header svg,
+.dark-theme nav svg,
+.dark-theme .nav svg {
+  color: #374151 !important;
+}
+
+.dark-theme .btn-ghost {
+  color: #374151 !important;
+}
+
+.dark-theme .btn-ghost svg {
+  color: #374151 !important;
+}
+
+.dark-theme .btn-ghost:hover {
+  background-color: rgba(55, 65, 81, 0.1) !important;
+}
+
+/* Target the specific header structure */
+.dark-theme header .text-primary,
+.dark-theme header h1,
+.dark-theme header h1 span,
+.dark-theme header .btn-ghost,
+.dark-theme header .btn-ghost span {
+  color: #374151 !important;
+}
+
+.dark-theme header svg {
+  color: #374151 !important;
+}
+
+/* Target bg-base-100/80 specifically */
+.dark-theme .bg-base-100\/80 .text-primary,
+.dark-theme .bg-base-100\/80 h1,
+.dark-theme .bg-base-100\/80 h1 span,
+.dark-theme .bg-base-100\/80 .btn-ghost,
+.dark-theme .bg-base-100\/80 .btn-ghost span {
+  color: #374151 !important;
+}
+
+.dark-theme .bg-base-100\/80 svg {
+  color: #374151 !important;
+}
+
+/* Dark theme form elements */
+.dark-theme select,
+.dark-theme .select,
+.dark-theme .select select,
+.dark-theme input,
+.dark-theme .input {
+  color: #374151 !important;
+  background-color: #ffffff !important;
+}
+
+.dark-theme select option,
+.dark-theme .select option {
+  color: #374151 !important;
+  background-color: #ffffff !important;
+}
+
+/* Dark theme meal item labels */
+.dark-theme .meal-item,
+.dark-theme .meal-item *,
+.dark-theme .meal-item span,
+.dark-theme .meal-item div {
+  color: #ffffff !important;
+}
+
+/* Ensure meal type labels (L, D) are visible */
+.dark-theme .meal-type-label,
+.dark-theme .meal-type,
+.dark-theme [class*="meal"] span,
+.dark-theme [class*="meal"] div {
+  color: #ffffff !important;
+}
+
+/* Specific targeting for L and D indicators */
+.dark-theme .text-primary\/70 {
+  color: #ffffff !important;
+}
+
+.dark-theme .text-primary\/70 span {
+  color: #ffffff !important;
+}
+
+/* Target the specific L and D spans */
+.dark-theme .w-3.text-center.font-semibold {
+  color: #ffffff !important;
+}
+
+/* Dark theme icons next to meal plan dropdown - exclude header */
+.dark-theme .btn-ghost svg:not(header .btn-ghost svg),
+.dark-theme .btn-ghost .lucide:not(header .btn-ghost .lucide),
+.dark-theme .btn-ghost [class*="lucide"]:not(header .btn-ghost [class*="lucide"]) {
+  color: #ffffff !important;
+}
+
+/* Target icons in the meal plan area specifically - exclude header */
+.dark-theme .flex.items-center.gap-0 svg:not(header .flex.items-center.gap-0 svg),
+.dark-theme .flex.items-center.gap-2 svg:not(header .flex.items-center.gap-2 svg) {
+  color: #ffffff !important;
+}
+
+/* More specific targeting for content area icons only */
+.dark-theme main .btn-ghost svg,
+.dark-theme main .flex.items-center svg {
+  color: #ffffff !important;
+}
+
+/* Dark theme checkbox borders */
+.dark-theme .food-checkbox {
+  border-color: #ffffff !important;
+}
+
+.dark-theme .food-checkbox:hover {
+  border-color: #ffffff !important;
+}
+
+.dark-theme .border-primary\/40 {
+  border-color: #ffffff !important;
+}
+
+/* Dark theme modal text - modal has white bg so text should be dark */
+.dark-theme .modal p,
+.dark-theme .modal span,
+.dark-theme .modal div,
+.dark-theme .modal label {
+  color: #374151 !important;
+}
+
+.dark-theme .modal input,
+.dark-theme .modal textarea,
+.dark-theme .modal select {
+  color: #374151 !important;
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+.dark-theme .modal textarea {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+/* Dark theme modal buttons */
+.dark-theme .modal .btn-primary {
+  color: #ffffff !important;
+  background-color: var(--primary) !important;
+}
+
+.dark-theme .modal .btn-primary span {
+  color: #ffffff !important;
+}
+
+.dark-theme .modal .btn-primary svg {
+  color: #ffffff !important;
+}
+
+/* Force white text on primary buttons in dark mode */
+.dark-theme .btn-primary {
+  color: #ffffff !important;
+}
+
+.dark-theme .btn-primary span {
+  color: #ffffff !important;
+}
+
+.dark-theme .btn-primary svg {
+  color: #ffffff !important;
+}
+
+/* Dark theme card backgrounds */
+.dark-theme .card,
+.dark-theme .bg-base-100,
+.dark-theme .bg-base-200 {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .card-body {
+  color: #ffffff !important;
+}
+
+.dark-theme .card-body p,
+.dark-theme .card-body span,
+.dark-theme .card-body div {
+  color: #ffffff !important;
+}
+
+/* Dark theme AddItem component */
+.dark-theme .bg-base-200 h4,
+.dark-theme .bg-base-200 .label-text,
+.dark-theme .bg-base-200 span {
+  color: #ffffff !important;
+}
+
+.dark-theme .bg-base-200 .btn-ghost svg {
+  color: #ffffff !important;
+}
+
+/* AddItem input styling with primary theme colors */
+.bg-base-200 input {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.bg-base-200 input::placeholder {
+  color: var(--primary-60) !important;
+}
+
+.bg-base-200 select {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+/* Icons next to inputs */
+.bg-base-200 .btn svg,
+.bg-base-200 button svg {
   color: var(--primary) !important;
 }
 
@@ -555,7 +820,7 @@ select:focus {
   transform: none !important;
   will-change: auto !important;
 }
-html,body{background-color: var(--secondary);}
+html,body{background-color: var(--app-background);}
 
 /* Global print styles - hide navigation and UI elements when printing */
 @media print {

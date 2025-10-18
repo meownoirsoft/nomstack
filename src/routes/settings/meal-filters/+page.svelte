@@ -169,7 +169,7 @@
 
 </script>
 
-<div class="bg-base-200">
+<div style="background-color: var(--app-background, #ffffff);">
   <div class="max-w-4xl mx-auto px-4 py-4">
     <div class="mb-4">
       <h1 class="text-2xl font-bold text-primary mb-1">Meal Filter Settings</h1>

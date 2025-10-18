@@ -285,7 +285,7 @@
                             </div>
                         {:else}
                             <button 
-                                class="btn btn-sm btn-outline btn-primary w-full"
+                                class="btn btn-sm btn-outline w-full"
                                 on:click={toggleAddCategory}
                             >
                                 <Plus class="h-4 w-4 mr-1" />

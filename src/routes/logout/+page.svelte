@@ -7,7 +7,7 @@
     });
 </script>
 
-<div class="min-h-screen bg-secondary flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
   <div class="card w-full max-w-md bg-base-100 shadow-xl">
     <div class="card-body text-center">
       <h1 class="text-2xl font-bold text-primary mb-4">Logging out...</h1>

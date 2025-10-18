@@ -47,7 +47,7 @@
     }
   </script>
 
-<div class="min-h-screen bg-secondary flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
   <div class="card w-full max-w-md bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title text-2xl font-bold text-center mb-6">Welcome to nomStack</h2>
@@ -129,7 +129,7 @@
         <p class="text-sm text-primary/70 mb-2">Don't have an account?</p>
         <button 
           type="button" 
-          class="btn btn-outline btn-primary w-full"
+          class="btn btn-outline w-full"
           on:click={goToSignup}
           disabled={isLoading}
         >
