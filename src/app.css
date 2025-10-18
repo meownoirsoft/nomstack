@@ -281,6 +281,35 @@
   color: var(--primary) !important;
 }
 
+/* Mobile menu and toast backgrounds */
+.menu {
+  background-color: #ffffff !important;
+}
+
+.toast {
+  background-color: #ffffff !important;
+  padding-top: 1rem !important;
+}
+
+/* Toast close button */
+.toast .btn-ghost {
+  padding: 0.5rem !important;
+}
+
+.toast .btn-ghost svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+/* Ensure mobile menu items are visible */
+.menu a {
+  color: var(--primary) !important;
+}
+
+.menu a:hover {
+  background-color: var(--primary-10) !important;
+}
+
 .border-primary {
   border-color: var(--primary) !important;
 }
