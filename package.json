@@ -32,6 +32,7 @@
 		"vite-plugin-pwa": "^1.0.3"
 	},
 	"dependencies": {
+		"@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
 		"@supabase/supabase-js": "^2.48.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@vercel/analytics": "^1.4.1",

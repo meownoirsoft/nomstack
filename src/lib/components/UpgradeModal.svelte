@@ -12,74 +12,79 @@
   const messages = {
     'meal-limit': {
       title: "You've built an amazing meal collection!",
-      subtitle: "You've reached the 50-meal limit on the free plan.",
-      description: "You've created a great list of meals, but you're out of space on the free plan. Here's why the Plus plan is worth it for you:",
+      subtitle: "You've hit the 50-meal limit on the free plan.",
+      description: "You're clearly loving NomStack! Here's what Plus unlocks so you can keep going:",
       benefits: [
         "Unlimited meals and recipes",
-        "Photo recipe import - just snap and go!",
-        "Advanced meal planning features",
+        "Photo recipe import — just snap and go!",
+        "Smarter meal planning tools",
         "Priority support"
       ],
-      cta: "Start your free trial and keep building your meal collection"
+      cta: "Start your free trial and keep stacking meals"
     },
-    'photo-import': {
-      title: "Never type another recipe ever again!",
-      subtitle: "Plus includes unlimited recipe photo imports.",
-      description: "Save hours of typing with a photo of any recipe. nomStack Plus instantly extracts recipe details for you (edit if you want).",
-      benefits: [
-        "Works with website photos, PDFs, Docs, cookbooks, handwriting, index cards, etc.",
-        "Extracts ingredients, instructions, notes, servings, and cooking/prep times",
-        "Automatically adds to your meal plan and shopping list (including ingredients)",
 
+    'photo-import': {
+      title: "Never type another recipe again!",
+      subtitle: "Plus unlocks unlimited photo imports.",
+      description: "Snap a photo of any recipe — NomStack instantly extracts the ingredients, steps, and times for you.",
+      benefits: [
+        "Works with websites, PDFs, cookbooks, or handwritten cards",
+        "Captures ingredients, instructions, notes, and prep times",
+        "Adds meals straight to your plan and shopping list"
       ],
-      cta: "Try photo import free for 14 days"
+      cta: "Try Photo Import free for 14 days"
     },
+
     'meal-plan-limit': {
-      title: "We got a meal planning pro over here. Look out!",
-      subtitle: "We thought 3 meal plans would be enough. Nope!",
-      description: "You've created killer meal plans, but you're out of space. We recommend our shiny action-packed Plus plan!",
+      title: "We've got a meal-planning pro over here!",
+      subtitle: "You've maxed out your meal plans on the free plan.",
+      description: "You're clearly in the zone. Here's what you get with Plus:",
       benefits: [
         "Unlimited meal plans with full history",
         "Organize by week, month, or special events",
-        "Templates for effortless planning"
+        "Reusable templates for easy planning"
       ],
-      cta: "Try Plus free for 14 days"
+      cta: "Upgrade to Plus — free for 14 days"
     },
+
     'store-limit': {
-      title: "Save yourself time and frustration at the store!",
-      subtitle: "You've reached the store limit on the free plan.",
-      description: "If you shop at multiple stores, you'll need more slots to create lists for each one. nomStack Plus has you covered there.",
+      title: "Shopping smarter starts here!",
+      subtitle: "You've reached the one-store limit on the free plan.",
+      description: "If you hit more than one store, Plus keeps your lists organized and stress-free:",
       benefits: [
-        "Each store gets its own shopping list you can instantly edit on the go",
-        "Move items to other stores as needed, if they were out of something or on sale elsewhere",
-        "Add one-off items the kids JUST remembered while you're at the store"
+        "Each store gets its own shopping list you can edit on the go",
+        "Move items between stores for sales or out-of-stock swaps",
+        "Add last-minute items the kids just remembered"
       ],
       cta: "Try Plus free for 14 days"
     },
+
     'advanced-features': {
-      title: "Unlock advanced features!",
-      subtitle: "This feature is available with nomStack Plus.",
-      description: "Get access to powerful features that make meal planning even easier and more organized.",
+      title: "Unlock more power with Plus!",
+      subtitle: "This feature is part of NomStack Plus.",
+      description: "Take meal planning from organized to effortless with advanced features:",
       benefits: [
-        "Advanced meal filters and organization",
+        "Smart filters and advanced organization",
         "Data export and backup",
         "All theme colors and customization",
         "Priority support"
       ],
-      cta: "Try Plus free for 14 days"
+      cta: "Start your 14-day free trial"
     },
+
     'default': {
-      title: "Upgrade to nomStack Plus!",
+      title: "Upgrade to NomStack Plus!",
       subtitle: "Unlock unlimited possibilities.",
-      description: "Get unlimited recipes, advanced features, and priority support to take your meal planning to the next level.",
+      description: "Go beyond the basics with powerful tools that save time and keep you organized:",
       benefits: [
         "Unlimited meals and recipes",
         "Photo recipe import",
-        "Advanced features and filters",
+        "Smart planning features and filters",
         "Priority support"
       ],
       cta: "Try Plus free for 14 days"
     }
+
   };
 
   $: currentMessage = messages[triggerSource] || messages.default;

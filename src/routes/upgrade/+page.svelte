@@ -67,14 +67,14 @@
     error = null;
 
     try {
-      // Create Stripe checkout session
-      const response = await fetch('/api/subscription/create-checkout', {
+      // Create LemonSqueezy checkout session
+      const response = await fetch('/api/lemonsqueezy/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          priceId: 'price_plus_monthly', // This would be your actual Stripe price ID
+          variantId: import.meta.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID, // Your LemonSqueezy variant ID
           successUrl: `${window.location.origin}/upgrade/success`,
           cancelUrl: `${window.location.origin}/upgrade`
         })
@@ -112,10 +112,10 @@
   <div class="text-center mb-12">
     <div class="flex items-center justify-center gap-3 mb-4">
       <Crown class="h-8 w-8 text-primary" />
-      <h1 class="text-3xl font-bold text-primary">Upgrade to nomStack Plus</h1>
+      <h1 class="text-3xl font-bold text-primary">Upgrade to Plus</h1>
     </div>
     <p class="text-primary/70 text-lg max-w-2xl mx-auto">
-      Unlock unlimited recipes, advanced features, and everything you need for effortless meal planning.
+      Go limitless — unlock photo recipe import, smart planning tools, and stress-free meals every week.
     </p>
   </div>
 
@@ -125,10 +125,91 @@
       <Star class="h-5 w-5" />
       <div>
         <h3 class="font-bold">You're already a Plus subscriber!</h3>
-        <p>Enjoy all the premium features nomStack has to offer.</p>
+        <p>Enjoy every premium feature NomStack has to offer.</p>
       </div>
     </div>
   {/if}
+
+  <!-- Photo Import Showcase -->
+  <div class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-8 mb-8">
+    <div class="text-center mb-6">
+      <div class="p-4 bg-white/20 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+        <Camera class="h-10 w-10 text-white" />
+      </div>
+      <h2 class="text-2xl font-bold text-white mb-2">Photo Recipe Import</h2>
+      <p class="text-white/80 text-lg">
+        The fastest, most magical way to add recipes.
+      </p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <h3 class="text-xl font-semibold text-white mb-4">Here’s how:</h3>
+        <div class="space-y-3">
+          <div class="flex items-start gap-3">
+            <div class="w-6 h-6 bg-white text-primary rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</div>
+            <p class="text-white/90">Snap any recipe — from a book, magazine, or handwritten card.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-6 h-6 bg-white text-primary rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</div>
+            <p class="text-white/90">NomStack’s AI pulls out the ingredients, steps, and cook time.</p>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-6 h-6 bg-white text-primary rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</div>
+            <p class="text-white/90">It drops right into your meal plan and shopping list — done.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg p-6 shadow-lg">
+        <div class="text-center">
+          <div class="w-32 h-32 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
+            <Camera class="h-12 w-12 text-gray-400" />
+          </div>
+          <p class="text-primary/60 text-sm italic">
+            "Stop typing. Start stacking."
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefits Section -->
+  <div class="bg-white rounded-lg shadow-lg border border-primary/20 p-8 mb-8">
+    <h2 class="text-2xl font-bold text-primary text-center mb-8">Why Go Plus?</h2>
+    
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <Zap class="h-8 w-8 text-primary" />
+        </div>
+        <h3 class="text-lg font-semibold text-primary mb-2">Unlimited Everything</h3>
+        <p class="text-primary/70 text-sm">
+          No caps on meals, plans, or stores — plan freely and keep every recipe you love.
+        </p>
+      </div>
+      
+      <div class="text-center">
+        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <Shield class="h-8 w-8 text-primary" />
+        </div>
+        <h3 class="text-lg font-semibold text-primary mb-2">Advanced Tools</h3>
+        <p class="text-primary/70 text-sm">
+          Smart filters, data backup, and quick support when you need it.
+        </p>
+      </div>
+      
+      <div class="text-center">
+        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <Heart class="h-8 w-8 text-primary" />
+        </div>
+        <h3 class="text-lg font-semibold text-primary mb-2">Keep NomStack Growing</h3>
+        <p class="text-primary/70 text-sm">
+          Your upgrade helps us ship new features and keep NomStack ad-free.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <!-- Pricing Cards -->
   <div class="grid md:grid-cols-2 gap-8 mb-12">
@@ -173,7 +254,7 @@
 
           <!-- Action Button -->
           {#if plan.tier === getCurrentPlan()}
-            <button class="btn btn-outline btn-primary w-full" disabled>
+            <button class="btn btn-outline w-full" disabled>
               <Check class="h-4 w-4" />
               Current Plan
             </button>
@@ -192,94 +273,13 @@
               {/if}
             </button>
           {:else}
-            <button class="btn btn-ghost w-full" disabled>
+            <button class="btn btn-ghost w-full text-gray-700 hover:text-gray-700" disabled>
               Free Plan
             </button>
           {/if}
         </div>
       </div>
     {/each}
-  </div>
-
-  <!-- Photo Import Showcase -->
-  <div class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-8 mb-8">
-    <div class="text-center mb-6">
-      <div class="p-4 bg-primary/10 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-        <Camera class="h-10 w-10 text-primary" />
-      </div>
-      <h2 class="text-2xl font-bold text-primary mb-2">Photo Recipe Import</h2>
-      <p class="text-primary/70 text-lg">
-        The most powerful feature in nomStack Plus
-      </p>
-    </div>
-    
-    <div class="grid md:grid-cols-2 gap-8 items-center">
-      <div>
-        <h3 class="text-xl font-semibold text-primary mb-4">How it works:</h3>
-        <div class="space-y-3">
-          <div class="flex items-start gap-3">
-            <div class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</div>
-            <p class="text-primary/80">Take a photo of any recipe from a cookbook, magazine, or handwritten card</p>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</div>
-            <p class="text-primary/80">Our AI instantly extracts ingredients, instructions, and cooking times</p>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</div>
-            <p class="text-primary/80">Your recipe is automatically added to your meal plan and shopping list</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-lg p-6 shadow-lg">
-        <div class="text-center">
-          <div class="w-32 h-32 bg-gray-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
-            <Camera class="h-12 w-12 text-gray-400" />
-          </div>
-          <p class="text-primary/60 text-sm italic">
-            "Save hours of typing - just snap and go!"
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Benefits Section -->
-  <div class="bg-white rounded-lg shadow-lg border border-primary/20 p-8 mb-8">
-    <h2 class="text-2xl font-bold text-primary text-center mb-8">Why Upgrade to Plus?</h2>
-    
-    <div class="grid md:grid-cols-3 gap-8">
-      <div class="text-center">
-        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <Zap class="h-8 w-8 text-primary" />
-        </div>
-        <h3 class="text-lg font-semibold text-primary mb-2">Unlimited Everything</h3>
-        <p class="text-primary/70 text-sm">
-          No more limits on recipes, meal plans, or stores. Plan as many meals as you want.
-        </p>
-      </div>
-      
-      <div class="text-center">
-        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <Shield class="h-8 w-8 text-primary" />
-        </div>
-        <h3 class="text-lg font-semibold text-primary mb-2">Advanced Features</h3>
-        <p class="text-primary/70 text-sm">
-          Access advanced meal filters, data export, and priority support.
-        </p>
-      </div>
-      
-      <div class="text-center">
-        <div class="p-4 bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <Heart class="h-8 w-8 text-primary" />
-        </div>
-        <h3 class="text-lg font-semibold text-primary mb-2">Support Development</h3>
-        <p class="text-primary/70 text-sm">
-          Help us continue improving nomStack with new features and updates.
-        </p>
-      </div>
-    </div>
   </div>
 
   <!-- Error Message -->
@@ -293,7 +293,8 @@
   <div class="text-center">
     <button class="btn btn-ghost" on:click={() => goto('/')}>
       <ArrowLeft class="h-4 w-4" />
-      Back to nomStack
+      Back to NomStack
     </button>
   </div>
 </main>
+

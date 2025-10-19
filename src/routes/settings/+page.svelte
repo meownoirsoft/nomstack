@@ -78,7 +78,7 @@
         <h2 class="text-xl font-bold text-primary">Subscription</h2>
       </div>
       
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <p class="text-primary/70 text-sm">Current Plan</p>
           <p class="text-primary font-medium">
@@ -89,18 +89,29 @@
             {/if}
           </p>
         </div>
-        <button
-          class="btn btn-primary btn-sm"
-          on:click={toggleTier}
-        >
+        <div class="flex flex-col sm:flex-row gap-2">
           {#if $userTier === TIER_TYPES.FREE}
-            <Crown class="h-4 w-4" />
-            Test: Switch to Plus
-          {:else}
-            <ToggleLeft class="h-4 w-4" />
-            Test: Switch to Free
+            <button
+              class="btn btn-primary btn-sm w-full sm:w-auto"
+              on:click={() => goto('/upgrade')}
+            >
+              <Crown class="h-4 w-4" />
+              Upgrade to Plus
+            </button>
           {/if}
-        </button>
+          <button
+            class="btn btn-outline btn-sm w-full sm:w-auto"
+            on:click={toggleTier}
+          >
+            {#if $userTier === TIER_TYPES.FREE}
+              <ToggleRight class="h-4 w-4" />
+              Test: Switch to Plus
+            {:else}
+              <ToggleLeft class="h-4 w-4" />
+              Test: Switch to Free
+            {/if}
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -151,7 +151,7 @@ export async function loadSubscriptionStatus() {
   if (!user) return;
   
   try {
-    const response = await fetch('/api/subscription/status');
+    const response = await fetch('/api/lemonsqueezy/status');
     if (response.ok) {
       const data = await response.json();
       subscriptionStatus.set(data);
