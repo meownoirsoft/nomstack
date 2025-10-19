@@ -12,9 +12,19 @@ export async function POST({ request }) {
       onError: (error) => console.error('LemonSqueezy Error:', error)
     });
 
-    const { variantId, successUrl, cancelUrl } = await request.json();
+    const requestData = await request.json();
+    const { variantId, successUrl, cancelUrl } = requestData;
+    
+    console.log('Full request data:', requestData);
+    console.log('Checkout request data:', { variantId, successUrl, cancelUrl });
+    console.log('Environment variables:', {
+      hasApiKey: !!process.env.LEMONSQUEEZY_API_KEY,
+      hasStoreId: !!process.env.LEMONSQUEEZY_STORE_ID,
+      nodeEnv: process.env.NODE_ENV
+    });
 
     if (!variantId) {
+      console.error('Variant ID is missing from request:', requestData);
       return json({ error: 'Variant ID is required' }, { status: 400 });
     }
 
@@ -49,8 +59,8 @@ export async function POST({ request }) {
       return json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
-    // Create LemonSqueezy checkout
-    const checkout = await lemonSqueezySetup.createCheckout({
+    // Create LemonSqueezy checkout using the correct API
+    const checkout = await lemonSqueezySetup.checkout.create({
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId: variantId,
       checkoutData: {
@@ -65,7 +75,7 @@ export async function POST({ request }) {
         logo: true
       },
       preview: false,
-      testMode: process.env.NODE_ENV === 'development'
+      testMode: process.env.NODE_ENV !== 'production'
     });
 
     if (checkout.error) {

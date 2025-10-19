@@ -67,6 +67,14 @@
     error = null;
 
     try {
+      const variantId = import.meta.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID;
+      console.log('Variant ID from env:', variantId);
+      console.log('All env vars:', import.meta.env);
+      
+      if (!variantId) {
+        throw new Error('LemonSqueezy variant ID is not configured. Please set PUBLIC_LEMONSQUEEZY_VARIANT_ID environment variable.');
+      }
+
       // Create LemonSqueezy checkout session
       const response = await fetch('/api/lemonsqueezy/checkout', {
         method: 'POST',
@@ -74,7 +82,7 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          variantId: import.meta.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID, // Your LemonSqueezy variant ID
+          variantId: variantId,
           successUrl: `${window.location.origin}/upgrade/success`,
           cancelUrl: `${window.location.origin}/upgrade`
         })

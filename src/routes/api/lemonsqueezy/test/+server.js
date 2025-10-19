@@ -1,16 +1,18 @@
 import { json } from '@sveltejs/kit';
-import { lemonSqueezySetup } from '@lemonsqueezy/lemonsqueezy.js';
-
-// Initialize LemonSqueezy
-lemonSqueezySetup({
-  apiKey: process.env.LEMONSQUEEZY_API_KEY,
-  onError: (error) => console.error('LemonSqueezy Error:', error)
-});
 
 export async function GET() {
   try {
+    // Dynamic import of LemonSqueezy
+    const { lemonSqueezySetup } = await import('@lemonsqueezy/lemonsqueezy.js');
+    
+    // Initialize LemonSqueezy
+    lemonSqueezySetup({
+      apiKey: process.env.LEMONSQUEEZY_API_KEY,
+      onError: (error) => console.error('LemonSqueezy Error:', error)
+    });
+
     // Test LemonSqueezy API connection
-    const stores = await lemonSqueezySetup.getStores();
+    const stores = await lemonSqueezySetup.stores.get();
     
     if (stores.error) {
       return json({ 
@@ -34,7 +36,7 @@ export async function GET() {
     }
 
     // Get variants for the store
-    const variants = await lemonSqueezySetup.getVariants({ storeId });
+    const variants = await lemonSqueezySetup.variants.get({ storeId });
     
     return json({
       success: true,
@@ -53,7 +55,11 @@ export async function GET() {
         hasApiKey: !!process.env.LEMONSQUEEZY_API_KEY,
         hasWebhookSecret: !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET,
         hasStoreId: !!process.env.LEMONSQUEEZY_STORE_ID,
-        hasVariantId: !!process.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID
+        hasVariantId: !!process.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID,
+        apiKeyLength: process.env.LEMONSQUEEZY_API_KEY?.length || 0,
+        storeId: process.env.LEMONSQUEEZY_STORE_ID,
+        variantId: process.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID,
+        nodeEnv: process.env.NODE_ENV
       }
     });
 
