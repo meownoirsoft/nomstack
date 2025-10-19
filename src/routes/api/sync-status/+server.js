@@ -14,7 +14,7 @@ export async function GET({ request }) {
     // Create a new Supabase client with the user's token for RLS context
     const { createClient } = await import('@supabase/supabase-js');
     const supabaseWithAuth = createClient(
-      process.env.PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_URL,
       process.env.PUBLIC_SUPABASE_ANON_KEY,
       {
         global: {

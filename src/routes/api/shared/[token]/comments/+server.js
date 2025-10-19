@@ -32,7 +32,7 @@ export async function POST({ params, request }) {
     // Create a Supabase client with service role to bypass RLS
     const { createClient } = await import('@supabase/supabase-js');
     const supabaseAdmin = createClient(
-      process.env.PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY,
       {
         auth: {
