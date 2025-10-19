@@ -2,14 +2,14 @@ import { writable } from 'svelte/store';
 
 // Available theme colors
 export const availableThemes = [
-  { name: 'Purple', value: 'purple', color: '#8b5cf6' },
-  { name: 'Blue', value: 'blue', color: '#3b82f6' },
-  { name: 'Green', value: 'green', color: '#10b981' },
-  { name: 'Red', value: 'red', color: '#ef4444' },
-  { name: 'Orange', value: 'orange', color: '#f97316' },
-  { name: 'Pink', value: 'pink', color: '#ec4899' },
-  { name: 'Indigo', value: 'indigo', color: '#6366f1' },
-  { name: 'Cyan', value: 'cyan', color: '#06b6d4' }
+  { name: 'Grape', value: 'purple', color: '#8b5cf6' },
+  { name: 'Berry', value: 'blue', color: '#3b82f6' },
+  { name: 'Apple', value: 'green', color: '#10b981' },
+  { name: 'Cherry', value: 'red', color: '#ef4444' },
+  { name: 'Tangerine', value: 'orange', color: '#f97316' },
+  { name: 'Grapefruit', value: 'pink', color: '#ec4899' },
+  { name: 'Blackberry', value: 'indigo', color: '#6366f1' },
+  { name: 'Acai', value: 'cyan', color: '#06b6d4' }
 ];
 
 // Default theme
@@ -224,7 +224,12 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// Initialize theme on load
-if (typeof window !== 'undefined') {
-  updateTheme(loadTheme());
+// Initialize theme on load - only in browser
+let themeInitialized = false;
+
+export function initializeTheme() {
+  if (typeof window !== 'undefined' && !themeInitialized) {
+    themeInitialized = true;
+    updateTheme(loadTheme());
+  }
 }

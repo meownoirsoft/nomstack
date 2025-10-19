@@ -291,8 +291,8 @@
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary/60" />
             <input
                 type="text"
-                placeholder="Search meals, categories, notes..."
-                class="input input-sm input-bordered border-primary/40 pl-9 pr-6 py-0 text-sm w-full focus:outline-none focus:ring-1 focus:ring-primary/40"
+                placeholder="Search meals by name or category..."
+                class="input input-sm input-bordered border-primary/40 pl-9 pr-6 py-4 text-sm w-full focus:outline-none"
                 value={searchTerm}
                 on:input={updateSearch}
                 aria-label="Search meals by name, category, or notes"

@@ -16,17 +16,17 @@ export async function POST({ request }) {
       return json({ error: 'Photo is required' }, { status: 400 });
     }
 
-    // Check if OpenAI API key is available
-    if (!process.env.OPENAI_API_KEY) {
-      return json({ error: 'OpenAI API key not configured' }, { status: 500 });
+    // Check if Gemini API key is available (with OpenAI fallback)
+    if (!process.env.GOOGLE_AI_API_KEY && !process.env.OPENAI_API_KEY) {
+      return json({ error: 'No AI API key configured (Google AI or OpenAI required)' }, { status: 500 });
     }
 
-    // Convert photo to base64 for OpenAI Vision API
+    // Convert photo to base64 for Gemini Vision API
     const photoBuffer = await photo.arrayBuffer();
     const photoBase64 = Buffer.from(photoBuffer).toString('base64');
     const photoMimeType = photo.type || 'image/jpeg';
 
-    // Prepare the prompt for GPT-4 Vision
+    // Prepare the prompt for Gemini Vision
     const prompt = `Extract recipe information from this image. Return ONLY a JSON object with this exact structure:
 
 {
@@ -69,46 +69,104 @@ Other Rules:
 - For notes: Include any cooking tips, variations, serving suggestions, or additional information found in the recipe
 - Return ONLY the JSON, no other text`;
 
-    // Call OpenAI Vision API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
+    let aiResponse;
+    
+    // Try Gemini first if API key is available
+    if (process.env.GOOGLE_AI_API_KEY) {
+      try {
+        console.log('Attempting to parse recipe with Gemini Pro Vision...');
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
               {
-                type: 'text',
-                text: prompt
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${photoMimeType};base64,${photoBase64}`,
-                  detail: 'high'
-                }
+                parts: [
+                  {
+                    text: prompt
+                  },
+                  {
+                    inline_data: {
+                      mime_type: photoMimeType,
+                      data: photoBase64
+                    }
+                  }
+                ]
               }
-            ]
-          }
-        ],
-        temperature: 0.1, // Low temperature for consistent parsing
-        max_tokens: 1500
-      })
-    });
+            ],
+            generationConfig: {
+              temperature: 0.1, // Low temperature for consistent parsing
+              maxOutputTokens: 1500
+            }
+          })
+        });
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI Vision API error:', response.status, errorData);
-      return json({ error: 'Failed to parse recipe from photo' }, { status: 500 });
+        if (geminiResponse.ok) {
+          const geminiData = await geminiResponse.json();
+          aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+          console.log('Successfully parsed recipe with Gemini Pro Vision');
+        } else {
+          const errorData = await geminiResponse.text();
+          console.error('Gemini Vision API error:', geminiResponse.status, errorData);
+          throw new Error('Gemini API failed');
+        }
+      } catch (geminiError) {
+        console.error('Gemini parsing failed, falling back to OpenAI:', geminiError.message);
+        aiResponse = null;
+      }
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0]?.message?.content;
+    // Fallback to OpenAI if Gemini failed or isn't available
+    if (!aiResponse && process.env.OPENAI_API_KEY) {
+      try {
+        console.log('Attempting to parse recipe with OpenAI GPT-4o...');
+        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: prompt
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: {
+                      url: `data:${photoMimeType};base64,${photoBase64}`,
+                      detail: 'high'
+                    }
+                  }
+                ]
+              }
+            ],
+            temperature: 0.1,
+            max_tokens: 1500
+          })
+        });
+
+        if (openaiResponse.ok) {
+          const openaiData = await openaiResponse.json();
+          aiResponse = openaiData.choices[0]?.message?.content;
+          console.log('Successfully parsed recipe with OpenAI GPT-4o');
+        } else {
+          const errorData = await openaiResponse.text();
+          console.error('OpenAI Vision API error:', openaiResponse.status, errorData);
+          throw new Error('OpenAI API failed');
+        }
+      } catch (openaiError) {
+        console.error('OpenAI parsing also failed:', openaiError.message);
+        return json({ error: 'Failed to parse recipe from photo with both AI services' }, { status: 500 });
+      }
+    }
 
     if (!aiResponse) {
       return json({ error: 'No response from AI' }, { status: 500 });

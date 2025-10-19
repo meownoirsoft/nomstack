@@ -16,7 +16,7 @@
   <div class="space-y-8">
     
     <!-- About Section -->
-    <section class="card bg-base-100 shadow-lg border border-primary/30">
+    <section class="card bg-white shadow-lg border border-primary/30">
       <div class="card-body">
         <div class="flex items-center gap-3 mb-4">
           <Star class="h-6 w-6 text-primary" />
@@ -44,7 +44,7 @@
     </section>
 
     <!-- Icon Legend -->
-    <section class="card bg-base-100 shadow-lg border border-primary/30">
+    <section class="card bg-white shadow-lg border border-primary/30">
       <div class="card-body">
         <div class="flex items-center gap-3 mb-6">
           <HelpCircle class="h-6 w-6 text-primary" />
@@ -202,7 +202,7 @@
     </section>
 
     <!-- Version 1.1.0 -->
-    <section class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+    <section class="card bg-white shadow-lg border border-primary/30 mb-6">
       <div class="card-body">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold text-primary">Version 1.1.0</h2>
@@ -289,7 +289,7 @@
     </section>
 
     <!-- Version 1.0.0 -->
-    <section class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+    <section class="card bg-white shadow-lg border border-primary/30 mb-6">
       <div class="card-body">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-bold text-primary">Version 1.0.0</h2>
@@ -335,7 +335,7 @@
     </section>
 
     <!-- Coming Soon -->
-    <section class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+    <section class="card bg-white shadow-lg border border-primary/30 mb-6">
       <div class="card-body">
         <div class="flex items-center gap-2 mb-4">
           <AlertCircle class="h-6 w-6 text-orange-500" />

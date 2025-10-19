@@ -12,7 +12,7 @@
   import { user, loading } from '$lib/stores/auth.js';
   import { eatingMode } from '$lib/stores/eatingMode.js';
   import { initializeOfflineSystem } from '$lib/offline/index.js';
-  import { updateTheme } from '$lib/stores/theme.js';
+  import { updateTheme, initializeTheme } from '$lib/stores/theme.js';
   export let data;
   export let error;
   let currentPage;
@@ -60,9 +60,8 @@
 
   // Initialize theme on mount
   onMount(() => {
-    // Load saved theme from localStorage
-    const savedTheme = localStorage.getItem('nomstack-theme') || 'purple';
-    updateTheme(savedTheme);
+    // Initialize theme system (loads from localStorage and applies)
+    initializeTheme();
   });
 
   // Initialize offline system when user is authenticated

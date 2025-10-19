@@ -72,6 +72,78 @@ export async function POST({ request, locals }) {
   }
 }
 
+export async function PATCH({ request, locals }) {
+  try {
+    const userId = await getUserIdFromRequest(request, locals);
+    if (!userId) {
+      return json({ success: false, error: 'Not authenticated' }, { status: 401 });
+    }
+
+    const { id, name, category } = await request.json();
+
+    if (!id) {
+      return json({ success: false, error: 'ID is required' }, { status: 400 });
+    }
+
+    if (!name || !name.trim()) {
+      return json({ success: false, error: 'Name is required' }, { status: 400 });
+    }
+
+    // Get the old pantry item name before updating
+    const { data: oldPantryItem, error: fetchError } = await supabaseAdmin
+      .from('pantry_items')
+      .select('name')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      return json({ success: false, error: 'Pantry item not found' }, { status: 404 });
+    }
+
+    // Update the pantry item
+    const { data: updatedPantryItem, error } = await supabaseAdmin
+      .from('pantry_items')
+      .update({
+        name: name.trim(),
+        category: category || null
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating pantry item:', error);
+      if (error.code === '23505') { // Unique constraint violation
+        return json({ success: false, error: 'This item already exists in your pantry' }, { status: 409 });
+      }
+      return json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    // Update any existing ingredients with the old name to not be marked as pantry
+    if (oldPantryItem.name !== name.trim()) {
+      await supabaseAdmin
+        .from('ingredients')
+        .update({ is_pantry: false })
+        .eq('user_id', userId)
+        .ilike('name', oldPantryItem.name);
+
+      // Update any existing ingredients with the new name to be marked as pantry
+      await supabaseAdmin
+        .from('ingredients')
+        .update({ is_pantry: true })
+        .eq('user_id', userId)
+        .ilike('name', name.trim());
+    }
+
+    return json({ success: true, data: updatedPantryItem });
+  } catch (error) {
+    console.error('Error in pantry PATCH:', error);
+    return json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function DELETE({ request, locals }) {
   try {
     const userId = await getUserIdFromRequest(request, locals);

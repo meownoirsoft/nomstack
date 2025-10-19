@@ -80,33 +80,40 @@
       console.log('loadIngredientsForPlan: Loading ingredients for meal plan:', $currentMealPlan.id);
       console.log('loadIngredientsForPlan: Meal plan object:', $currentMealPlan);
       
-      // First, check if ingredients already exist for this plan
-      const existingIngredientsResult = await api.getIngredients({ plan_id: $currentMealPlan.id });
-      console.log('loadIngredientsForPlan: Existing ingredients check:', existingIngredientsResult);
-      console.log('loadIngredientsForPlan: API response success:', existingIngredientsResult.success);
-      console.log('loadIngredientsForPlan: API response data length:', existingIngredientsResult.data?.length);
+      // Load existing ingredients for this plan
+      const ingredientsResult = await api.getIngredients({ plan_id: $currentMealPlan.id });
+      console.log('loadIngredientsForPlan: Existing ingredients check:', ingredientsResult);
+      console.log('loadIngredientsForPlan: API response success:', ingredientsResult.success);
+      console.log('loadIngredientsForPlan: API response data length:', ingredientsResult.data?.length);
       
-      // Always regenerate ingredients to ensure they match the selected meals
-      console.log('loadIngredientsForPlan: Regenerating ingredients to ensure accuracy...');
-      try {
-        const regenerateResult = await api.regenerateIngredients($currentMealPlan.id);
-        console.log('loadIngredientsForPlan: Regenerate result:', regenerateResult);
-        if (regenerateResult.success) {
-          console.log('loadIngredientsForPlan: Ingredients regenerated successfully');
-          // Now load the regenerated ingredients
-          const ingredientsResult = await api.getIngredients({ plan_id: $currentMealPlan.id });
-          if (ingredientsResult.success) {
-            ingredients = ingredientsResult.data;
-            lastLoadedPlanId = $currentMealPlan.id;
-            console.log('loadIngredientsForPlan: Loaded regenerated ingredients:', ingredients.length, 'items');
+      if (ingredientsResult.success) {
+        ingredients = ingredientsResult.data;
+        lastLoadedPlanId = $currentMealPlan.id;
+        console.log('loadIngredientsForPlan: Loaded existing ingredients:', ingredients.length, 'items');
+        
+        // Only regenerate if no ingredients exist (first time loading this plan)
+        if (ingredients.length === 0) {
+          console.log('loadIngredientsForPlan: No ingredients found, regenerating...');
+          try {
+            const regenerateResult = await api.regenerateIngredients($currentMealPlan.id);
+            console.log('loadIngredientsForPlan: Regenerate result:', regenerateResult);
+            if (regenerateResult.success) {
+              console.log('loadIngredientsForPlan: Ingredients regenerated successfully');
+              // Load the regenerated ingredients
+              const regeneratedResult = await api.getIngredients({ plan_id: $currentMealPlan.id });
+              if (regeneratedResult.success) {
+                ingredients = regeneratedResult.data;
+                console.log('loadIngredientsForPlan: Loaded regenerated ingredients:', ingredients.length, 'items');
+              }
+            } else {
+              console.error('loadIngredientsForPlan: Failed to regenerate ingredients:', regenerateResult.error);
+            }
+          } catch (error) {
+            console.error('loadIngredientsForPlan: Error regenerating ingredients:', error);
           }
-        } else {
-          console.error('loadIngredientsForPlan: Failed to regenerate ingredients:', regenerateResult.error);
-          ingredients = [];
-          lastLoadedPlanId = $currentMealPlan.id;
         }
-      } catch (error) {
-        console.error('loadIngredientsForPlan: Error regenerating ingredients:', error);
+      } else {
+        console.error('loadIngredientsForPlan: Failed to load ingredients:', ingredientsResult.error);
         ingredients = [];
         lastLoadedPlanId = $currentMealPlan.id;
       }
@@ -401,6 +408,7 @@
             {ingredients}
             currentMealPlan={$currentMealPlan}
             on:ingredient-updated={handleIngredientUpdated}
+            on:ingredientsChanged={refreshIngredients}
             key={forceUpdate}
           />
         {/if}

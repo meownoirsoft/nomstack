@@ -199,7 +199,7 @@
 </script>
 {#if showModal}
   <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6 sm:py-10">
-    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-base-200 px-6 py-6">
             <div class="flex items-center h-8 m-0">
                 <h3 class="flex-1 font-bold text-lg mt-0">Add Meal</h3>
                 <div class="ml-auto modal-action mt-0">
@@ -323,13 +323,13 @@
 {/if}
 
 {#if saveSuccess}
-  <div class="fixed inset-0 z-[110] flex items-center justify-center bg-white/70">
+  <div class="fixed inset-0 z-[110] flex items-center justify-center bg-white">
     <CheckCircle class="h-16 w-16 mt-8 text-green-500 animate-fade-in-out" />
   </div>
 {/if}
 
 {#if saveError}
-  <div class="fixed inset-0 z-[110] flex items-center justify-center bg-white/70">
+  <div class="fixed inset-0 z-[110] flex items-center justify-center bg-white">
     <XCircle class="h-16 w-16 mt-8 text-red-600 animate-fade-in-out" />
   </div>
 {/if}

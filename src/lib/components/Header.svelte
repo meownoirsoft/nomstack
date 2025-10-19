@@ -3,6 +3,7 @@
     import Nav from '$lib/components/Nav.svelte';
     import { eatingMode, toggleEatingMode } from '$lib/stores/eatingMode.js';
     import { openModal, MODAL_TYPES } from '$lib/stores/modal.js';
+    import { currentTheme } from '$lib/stores/theme.js';
     import { browser } from '$app/environment';
     
     export let page;
@@ -11,6 +12,22 @@
     
     // Dynamically import icons to reduce SSR load
     let LayersIcon, StoreIcon, HomeIcon, MenuIcon;
+    
+    // Theme to logo mapping
+    const themeToLogo = {
+        'purple': 'grape',
+        'blue': 'berry', 
+        'green': 'apple',
+        'red': 'cherry',
+        'orange': 'tangerine',
+        'pink': 'grapefruit',
+        'indigo': 'blackberry',
+        'cyan': 'acai',
+        'dark': 'grape' // Fallback to grape for dark theme
+    };
+    
+    // Reactive statement to get current logo path
+    $: logoPath = `/logo/nomstack-logo-${themeToLogo[$currentTheme] || 'grape'}.webp`;
     
     onMount(async () => {
         if (browser) {
@@ -52,16 +69,17 @@
     }
   }
 </style>
-<header class="bg-base-100/80 backdrop-blur border-b border-primary/10">
+<header class="bg-white border-b border-primary/10">
   <div class="max-w-5xl mx-auto flex flex-col gap-1 px-4 sm:px-6 lg:px-8 py-3">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 screen-only">
         <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
-          {#if LayersIcon}
-            <svelte:component this={LayersIcon} class="h-6 w-6" />
-          {:else}
-            <div class="h-6 w-6 bg-primary/20 rounded"></div>
-          {/if}
+          <img 
+            src={logoPath} 
+            alt="nomStack logo" 
+            class="h-6 w-6 object-contain"
+            loading="eager"
+          />
           <span class="tracking-tight">nomStack</span>
           {#if pageTitle}
             <span class="text-primary/60 font-normal">• {pageTitle}</span>
@@ -71,11 +89,12 @@
       <!-- Print-only title -->
       <div class="flex items-center gap-3 print-only">
         <h1 class="flex items-center gap-2 text-xl font-semibold text-primary">
-          {#if LayersIcon}
-            <svelte:component this={LayersIcon} class="h-6 w-6" />
-          {:else}
-            <div class="h-6 w-6 bg-primary/20 rounded"></div>
-          {/if}
+          <img 
+            src={logoPath} 
+            alt="nomStack logo" 
+            class="h-6 w-6 object-contain"
+            loading="eager"
+          />
           <span class="tracking-tight">nomStack</span>
           {#if pageTitle}
             <span class="text-primary/60 font-normal">• {pageTitle}</span>

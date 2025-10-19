@@ -369,7 +369,7 @@
 <!-- Add Restaurant Modal -->
 {#if showAddModal}
   <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6 sm:py-10">
-    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-primary/20 px-6 py-6">
+    <div class="relative mt-24 sm:mt-28 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-primary/20 px-6 py-6">
       <div class="flex items-center h-8 m-0">
         <h3 class="flex-1 font-bold text-lg mt-0 text-primary">Add Restaurant</h3>
         <button 

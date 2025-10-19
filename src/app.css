@@ -927,3 +927,29 @@ html,body{background-color: var(--app-background);}
 .animate-fade-in-out {
   animation: fade-in-out 2s ease-in-out;
 }
+
+/* Force white backgrounds for inputs and selects */
+.input,
+.input-bordered,
+select,
+.select,
+.select-bordered,
+textarea,
+.textarea,
+.textarea-bordered {
+  background-color: #ffffff !important;
+  border-color: var(--primary) !important;
+}
+
+.input:focus,
+.input-bordered:focus,
+select:focus,
+.select:focus,
+.select-bordered:focus,
+textarea:focus,
+.textarea:focus,
+.textarea-bordered:focus {
+  background-color: #ffffff !important;
+  border-color: var(--primary) !important;
+  outline-color: var(--primary) !important;
+}

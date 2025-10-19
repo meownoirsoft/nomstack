@@ -402,7 +402,7 @@
       <ul class="space-y-1">
         {#each displayMeals as meal}
           <li class="w-full">
-            <div class="flex items-center gap-3 rounded-xl bg-base-100 pl-3 pr-1 py-3 shadow-sm border border-primary/30">
+            <div class="flex items-center gap-3 rounded-xl bg-white pl-3 pr-1 py-3 shadow-sm border border-primary/30">
               {#if $currentMealPlan}
                 <Checkbox type="sels" label={meal.name} value={meal.id} {page} bind:selectedItems lblClass="font-medium text-primary" />
               {:else}

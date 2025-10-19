@@ -409,9 +409,38 @@
     try {
       const categoryIngredients = ingredientsByCategory[fromStoreId][category] || [];
       
-      // Move each ingredient in the category to the new store
+      // For each ingredient in the category, move all individual ingredients that make it up
       for (const ingredient of categoryIngredients) {
-        await moveIngredient(ingredient.id, toStoreId, true); // Suppress individual toasts
+        if (ingredient.sourceRecipes && ingredient.sourceRecipes.length > 1) {
+          // This is a combined ingredient - move all individual ingredients
+          console.log(`Moving combined ingredient: ${ingredient.name} (${ingredient.sourceRecipes.length} meals)`);
+          
+          // Find all individual ingredients that make up this combined ingredient
+          const coreName = extractCoreIngredient(ingredient.name);
+          const individualIngredients = ingredients.filter(ing => {
+            const ingCoreName = extractCoreIngredient(ing.name);
+            return ingCoreName === coreName;
+          });
+          
+          console.log(`Found ${individualIngredients.length} individual ingredients to move (all stores)`);
+          console.log('Individual ingredients:', individualIngredients.map(ing => `${ing.name} (store: ${ing.store_id})`));
+          
+          // Move each individual ingredient that's currently in the fromStoreId
+          // Handle null store_id as 'unassigned'
+          const ingredientsToMove = individualIngredients.filter(ing => {
+            const ingStoreId = ing.store_id || 'unassigned';
+            return ingStoreId === fromStoreId;
+          });
+          console.log(`Moving ${ingredientsToMove.length} ingredients from store ${fromStoreId}`);
+          
+          for (const individualIngredient of ingredientsToMove) {
+            await moveIngredient(individualIngredient.id, toStoreId, true); // Suppress individual toasts
+          }
+        } else {
+          // This is a single ingredient - move it directly
+          console.log(`Moving single ingredient: ${ingredient.name}`);
+          await moveIngredient(ingredient.id, toStoreId, true); // Suppress individual toasts
+        }
       }
       
       const destinationName = toStoreId ? stores.find(s => s.id === toStoreId)?.name || 'selected store' : 'List';
@@ -477,7 +506,7 @@
 
 <div class="space-y-6 mb-16">
   <!-- Store Tabs -->
-  <div class="bg-base-100 rounded-lg shadow-md">
+  <div id="store-tabs" class="bg-base-100 rounded-lg shadow-md bg-white">
     <div class="border-b border-gray-200">
       <div class="relative flex items-center">
         <!-- Left Chevron -->
@@ -567,20 +596,21 @@
           {#each orderedCategoriesByStore[activeStoreId] || [] as category}
             {@const categoryIngredients = ingredientsByCategory[activeStoreId][category]}
             {#if categoryIngredients}
-              <div class="mb-6">
+              <div class="mb-6" data-testid="category-section-{category}">
               <div class="flex items-center gap-2 mb-1 border-b border-gray-200 pb-1">
                 <h4 class="text-md font-medium text-primary flex items-center gap-2">
                   {category}
-                  <span class="text-sm font-normal text-primary/60">({categoryIngredients.length})</span>
+                  <span class="text-sm font-normal text-primary/60" data-testid="category-count-{category}">({categoryIngredients.length})</span>
                 </h4>
-                <div class="dropdown dropdown-bottom dropdown-center" class:dropdown-open={openDropdowns.has(`category-${category}`)}>
-                  <button 
-                    class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
-                    on:click={() => toggleDropdown(`category-${category}`)}
-                    title="Move entire category to another store"
-                  >
-                    <SquareArrowRight class="h-5 w-5 text-primary" />
-                  </button>
+                  <div class="dropdown dropdown-bottom dropdown-center" class:dropdown-open={openDropdowns.has(`category-${category}`)}>
+                    <button 
+                      class="btn btn-ghost btn-sm p-2 text-primary hover:bg-primary/10"
+                      on:click={() => toggleDropdown(`category-${category}`)}
+                      title="Move entire category to another store"
+                      data-testid="move-category-{category}"
+                    >
+                      <SquareArrowRight class="h-5 w-5 text-primary" />
+                    </button>
                   <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow border border-primary/30">
                     {#if activeStoreId !== 'unassigned'}
                       <li>
@@ -590,6 +620,7 @@
                             moveCategoryToStore(activeStoreId, category, null);
                             toggleDropdown(`category-${category}`);
                           }}
+                          data-testid="move-category-to-list-{category}"
                         >
                           <ListChecks class="h-4 w-4" />
                           List
@@ -604,6 +635,7 @@
                             moveCategoryToStore(activeStoreId, category, store.id);
                             toggleDropdown(`category-${category}`);
                           }}
+                          data-testid="move-category-to-{store.id}-{category}"
                         >
                           <Store class="h-4 w-4" />
                           {store.name}
@@ -641,7 +673,7 @@
               
               <div class="space-y-1" style="gap: 1px;">
                 {#each categoryIngredients as ingredient}
-                  <div class="flex items-start gap-3 px-0 py-0 bg-base-200 rounded-lg">
+                  <div class="flex items-start gap-3 px-0 py-0 bg-white rounded-lg" data-testid="ingredient-{ingredient.id}">
 
                     <!-- Ingredient Info -->
                     <div class="flex-1 min-w-0">
@@ -652,7 +684,7 @@
                               {formatAmount(ingredient.amount)}&nbsp;{ingredient.unit || ''}
                             </span>
                           {/if}
-                          <span class="text-sm text-primary/70">
+                          <span class="text-sm text-primary/70" data-testid="ingredient-name-{ingredient.id}">
                             {extractCoreIngredient(ingredient.name)}
                           </span>
                           {#if ingredient.is_custom}
@@ -675,6 +707,7 @@
                         class="btn btn-ghost btn-sm p-1 text-primary hover:bg-primary/10"
                         on:click={() => toggleIngredient(ingredient.id, 'checked')}
                         title={ingredient.checked ? 'Mark as need to buy' : 'Mark as already have'}
+                        data-testid="toggle-have-{ingredient.id}"
                       >
                         <ListChecks class="h-5 w-5 text-primary" />
                       </button>

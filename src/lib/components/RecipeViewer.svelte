@@ -33,7 +33,7 @@
   
   // Force re-processing of ingredients when pantry items change
   $: if (recipe && pantryItems.length > 0) {
-    console.log('PANTRY DEBUG: Pantry items loaded, forcing ingredient re-evaluation');
+    //console.log('PANTRY DEBUG: Pantry items loaded, forcing ingredient re-evaluation');
     // Force a re-render by updating adjustedIngredients
     adjustedIngredients = adjustedIngredients.length > 0 ? [...adjustedIngredients] : [];
   }
@@ -46,7 +46,7 @@
       const result = await api.getPantryItems();
       if (result.success) {
         pantryItems = result.data;
-        console.log('PANTRY DEBUG: Loaded pantry items:', pantryItems);
+        //console.log('PANTRY DEBUG: Loaded pantry items:', pantryItems);
       }
     } catch (error) {
       console.error('Error loading pantry items:', error);
@@ -55,36 +55,64 @@
     }
   }
 
+  // Smart ingredient matching that handles adjectives vs nouns
+  function smartIngredientMatch(ingredientName, pantryName) {
+    // Split ingredient into words
+    const ingredientWords = ingredientName.split(/\s+/);
+    const pantryWords = pantryName.split(/\s+/);
+    
+    // Check if any pantry word appears as a complete word in the ingredient
+    // This prevents "unsalted butter" from matching "salt"
+    for (const pantryWord of pantryWords) {
+      // Look for the pantry word as a complete word in the ingredient
+      const wordBoundaryRegex = new RegExp(`\\b${pantryWord}\\b`, 'i');
+      if (wordBoundaryRegex.test(ingredientName)) {
+        return true;
+      }
+    }
+    
+    // Check if any ingredient word appears as a complete word in the pantry item
+    for (const ingredientWord of ingredientWords) {
+      const wordBoundaryRegex = new RegExp(`\\b${ingredientWord}\\b`, 'i');
+      if (wordBoundaryRegex.test(pantryName)) {
+        return true;
+      }
+    }
+    
+    // Special cases for common ingredient variations
+    const variations = {
+      'olive oil': ['extra virgin olive oil', 'virgin olive oil', 'light olive oil'],
+      'butter': ['unsalted butter', 'salted butter', 'sweet butter'],
+      'flour': ['all purpose flour', 'all-purpose flour', 'plain flour'],
+      'sugar': ['white sugar', 'granulated sugar', 'cane sugar'],
+      'salt': ['sea salt', 'kosher salt', 'table salt'],
+      'pepper': ['black pepper', 'white pepper', 'ground pepper']
+    };
+    
+    // Check if ingredient is a variation of a pantry item
+    for (const [baseIngredient, variants] of Object.entries(variations)) {
+      if (pantryName === baseIngredient && variants.includes(ingredientName)) {
+        return true;
+      }
+      if (ingredientName === baseIngredient && variants.includes(pantryName)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   // Make this a reactive statement so it updates when pantryItems changes
   $: isIngredientInPantry = (ingredientName) => {
-    console.log('PANTRY DEBUG: Checking ingredient:', ingredientName, 'against', pantryItems.length, 'pantry items');
-    console.log('PANTRY DEBUG: pantryItems array:', pantryItems);
     const isInPantry = pantryItems.some(item => {
       const pantryName = item.name.toLowerCase().trim();
       const ingredientNameLower = ingredientName.toLowerCase().trim();
       
-      // Debug logging for vanilla extract
-      if (ingredientNameLower.includes('vanilla') || pantryName.includes('vanilla')) {
-        console.log('VANILLA DEBUG:');
-        console.log('  Ingredient name:', `"${ingredientName}"`);
-        console.log('  Ingredient lower:', `"${ingredientNameLower}"`);
-        console.log('  Pantry name:', `"${item.name}"`);
-        console.log('  Pantry lower:', `"${pantryName}"`);
-        console.log('  Exact match:', pantryName === ingredientNameLower);
-        console.log('  Ingredient contains pantry:', ingredientNameLower.includes(pantryName));
-        console.log('  Pantry contains ingredient:', pantryName.includes(ingredientNameLower));
-      }
-      
       // Exact match
       if (pantryName === ingredientNameLower) return true;
       
-      // Check if ingredient contains the pantry item name (for variations like "extra virgin olive oil" vs "olive oil")
-      if (ingredientNameLower.includes(pantryName)) return true;
-      
-      // Check if pantry item contains the ingredient name (for base ingredients)
-      if (pantryName.includes(ingredientNameLower)) return true;
-      
-      return false;
+      // Use smart matching instead of simple includes
+      return smartIngredientMatch(ingredientNameLower, pantryName);
     });
     
     return isInPantry;
@@ -524,7 +552,7 @@
 </script>
 
 <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6">
-  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-4 py-4">
+  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-base-200 px-4 py-4">
     <!-- Header -->
     <div class="flex items-center justify-between mb-2">
       <div>
@@ -664,8 +692,8 @@
                 bind:checked={rememberServings}
                 id="remember-servings"
               />
-              <label for="remember-servings" class="text-sm text-gray-600 cursor-pointer">
-                Remember scaled servings for this recipe
+              <label for="remember-servings" class="text-sm cursor-pointer">
+                Use scaled servings as default for this recipe
               </label>
             </div>
           {/if}
@@ -821,7 +849,7 @@
 
     <!-- Delete Confirmation Modal -->
     {#if showDeleteConfirm}
-      <div class="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 px-4">
+      <div class="fixed inset-0 z-[110] flex items-center justify-center bg-black px-4">
         <div class="bg-base-100 rounded-lg p-6 max-w-sm w-full">
           <h4 class="text-lg font-bold mb-4">Delete Recipe?</h4>
           <p class="text-gray-600 mb-6">This will permanently delete the recipe for {mealName}. This action cannot be undone.</p>

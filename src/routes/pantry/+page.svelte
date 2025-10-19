@@ -11,7 +11,8 @@
     ArrowLeft,
     Search,
     X,
-    Check
+    Check,
+    Edit3
   } from 'lucide-svelte';
 
   let pantryItems = [];
@@ -21,6 +22,8 @@
   let newItemName = '';
   let searchTerm = '';
   let filteredItems = [];
+  let editingItemId = null;
+  let editingItemName = '';
 
   onMount(async () => {
     await loadPantryItems();
@@ -123,6 +126,43 @@
     }
   }
 
+  function startEdit(item) {
+    editingItemId = item.id;
+    editingItemName = item.name;
+  }
+
+  function cancelEdit() {
+    editingItemId = null;
+    editingItemName = '';
+  }
+
+  async function saveEdit() {
+    if (!editingItemName.trim()) {
+      notifyError('Please enter an item name');
+      return;
+    }
+
+    try {
+      const result = await api.updatePantryItem(editingItemId, editingItemName.trim());
+      if (result.success) {
+        // Update the item in the local array
+        const itemIndex = pantryItems.findIndex(item => item.id === editingItemId);
+        if (itemIndex >= 0) {
+          pantryItems[itemIndex] = result.data;
+          filterItems();
+        }
+        editingItemId = null;
+        editingItemName = '';
+        notifySuccess('Item updated');
+      } else {
+        notifyError(result.error);
+      }
+    } catch (err) {
+      console.error('Error updating pantry item:', err);
+      notifyError(err.message || 'Failed to update item');
+    }
+  }
+
 </script>
 
 <svelte:head>
@@ -147,25 +187,7 @@
     </div>
   {:else}
     <!-- Header -->
-    <div class="p-4">
-      <div class="max-w-4xl mx-auto">
-        <div class="flex items-start justify-end">
-          <div class="flex items-center gap-4">
-            <button
-              class="text-primary hover:text-primary-focus text-sm flex items-center gap-1"
-              on:click={() => showAddForm = !showAddForm}
-            >
-              <Plus class="h-4 w-4" />
-              Add Item
-            </button>
-            <a href="/shopping" class="text-primary hover:text-primary-focus flex items-center gap-1 text-sm">
-              <ArrowLeft class="h-4 w-4" />
-              Back
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <!-- Main Content -->
     <div class="max-w-4xl mx-auto px-4 py-2">
@@ -181,97 +203,149 @@
             class="input input-bordered w-full pl-10 border-primary focus:border-primary focus:outline-primary text-primary"
           />
         </div>
-      
-      <div class="px-1 py-3">
+      </div>
+      <div class="px-4 py-2">
+        <div class="max-w-4xl mx-auto">
+          <div class="flex items-start justify-end">
+            <button
+              class="text-primary hover:text-primary-focus text-sm flex items-center gap-1"
+              on:click={() => showAddForm = !showAddForm}
+            >
+              <Plus class="h-4 w-4" />
+              Add Item
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Add Item Form -->
+      {#if showAddForm}
+        <div class="flex items-center gap-0.5 mt-4 mb-4">
+          <input
+            type="text"
+            placeholder="Item name (e.g., olive oil, salt, flour)"
+            bind:value={newItemName}
+            class="input input-bordered flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
+            on:keydown={(e) => e.key === 'Enter' && addPantryItem()}
+          />
+          <button
+            class="btn btn-success btn-sm"
+            on:click={addPantryItem}
+            disabled={!newItemName.trim()}
+            title="Add item"
+          >
+            <Check class="h-4 w-4 text-white" />
+          </button>
+          <button
+            class="btn btn-ghost btn-sm"
+            on:click={() => {
+              showAddForm = false;
+              newItemName = '';
+            }}
+            title="Cancel"
+          >
+            <X class="h-4 w-4 text-primary" />
+          </button>
+        </div>
+      {/if}
 
-          <!-- Add Item Form -->
-          {#if showAddForm}
-            <div class="flex items-center gap-0.5 mt-4 mb-4">
-              <input
-                type="text"
-                placeholder="Item name (e.g., olive oil, salt, flour)"
-                bind:value={newItemName}
-                class="input input-bordered flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
-                on:keydown={(e) => e.key === 'Enter' && addPantryItem()}
-              />
-              <button
-                class="btn btn-success btn-sm"
-                on:click={addPantryItem}
-                disabled={!newItemName.trim()}
-                title="Add item"
-              >
-                <Check class="h-4 w-4 text-white" />
-              </button>
-              <button
-                class="btn btn-ghost btn-sm"
-                on:click={() => {
-                  showAddForm = false;
-                  newItemName = '';
-                }}
-                title="Cancel"
-              >
-                <X class="h-4 w-4 text-primary" />
-              </button>
-            </div>
+      <!-- Pantry Items List -->
+      {#if filteredItems.length === 0}
+        <div class="text-center py-8">
+          <TableCellsSplit class="h-16 w-16 mx-auto text-primary/40 mb-4" />
+          <h3 class="text-lg font-semibold text-primary mb-2">
+            {searchTerm ? 'No items found' : 'Your pantry is empty'}
+          </h3>
+          <p class="text-primary/60 mb-6">
+            {#if searchTerm}
+              Try adjusting your search terms
+            {:else}
+              {@html 'Add items you don\'t need to<br>shop for every time'}
+            {/if}
+          </p>
+          {#if !searchTerm}
+            <button
+              class="btn btn-primary"
+              on:click={() => showAddForm = true}
+            >
+              <Plus class="h-4 w-4" />
+              Add Your First Item
+            </button>
           {/if}
         </div>
-
-        <!-- Pantry Items List -->
-        {#if filteredItems.length === 0}
-          <div class="text-center py-8">
-            <TableCellsSplit class="h-16 w-16 mx-auto text-primary/40 mb-4" />
-            <h3 class="text-lg font-semibold text-primary mb-2">
-              {searchTerm ? 'No items found' : 'Your pantry is empty'}
-            </h3>
-            <p class="text-primary/60 mb-6">
-              {#if searchTerm}
-                Try adjusting your search terms
-              {:else}
-                {@html 'Add items you don\'t need to<br>shop for every time'}
-              {/if}
-            </p>
-            {#if !searchTerm}
-              <button
-                class="btn btn-primary"
-                on:click={() => showAddForm = true}
-              >
-                <Plus class="h-4 w-4" />
-                Add Your First Item
-              </button>
-            {/if}
-          </div>
-        {:else}
-          <div class="space-y-1">
-            {#each filteredItems as item}
-              <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-50 transition-colors">
-                <div class="flex-1">
-                  <h3 class="font-semibold text-primary">{item.name}</h3>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                  {#if $currentMealPlan}
+      {:else}
+        <div class="space-y-1">
+          {#each filteredItems as item}
+            <div class="flex items-center gap-3 px-2 rounded-lg hover:bg-base-50 transition-colors">
+              <div class="flex-1">
+                {#if editingItemId === item.id}
+                  <!-- Edit Mode -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="text"
+                      bind:value={editingItemName}
+                      class="input input-sm input-bordered flex-1 border-primary focus:border-primary focus:outline-primary text-primary"
+                      on:keydown={(e) => {
+                        if (e.key === 'Enter') saveEdit();
+                        if (e.key === 'Escape') cancelEdit();
+                      }}
+                      autofocus
+                    />
                     <button
-                      class="btn btn-sm btn-outline"
-                      on:click={() => addToShoppingList(item)}
-                      title="Add to current shopping list"
+                      class="btn btn-sm btn-ghost"
+                      on:click={saveEdit}
+                      title="Save changes"
                     >
-                      <ShoppingCart class="h-4 w-4" />
-                      Buy
+                      <Check class="h-4 w-4 text-green-500" />
                     </button>
-                  {/if}
-                  <button
-                    class="btn btn-sm btn-ghost"
-                    on:click={() => deletePantryItem(item.id)}
-                    title="Remove from pantry"
-                  >
-                    <Trash2 class="h-4 w-4 text-red-500" />
-                  </button>
-                </div>
+                    <button
+                      class="btn btn-sm btn-ghost"
+                      on:click={cancelEdit}
+                      title="Cancel"
+                    >
+                      <X class="h-4 w-4 text-primary" />
+                    </button>
+                  </div>
+                {:else}
+                  <div class="flex items-center gap-2 -ml-2">
+                    <!-- View Mode -->
+                    <TableCellsSplit class="h-6 w-6 text-primary mr-0" />
+                    <h3 class="font-semibold text-primary">{item.name}</h3>
+                  </div>
+                {/if}
               </div>
-            {/each}
-          </div>
-        {/if}
-      </div>
+              
+              <div class="flex items-center">
+                {#if editingItemId !== item.id}
+                  <button
+                    class="btn btn-sm btn-ghost text-primary mr-0"
+                    on:click={() => addToShoppingList(item)}
+                    title={$currentMealPlan ? "Add to current shopping list" : "Create a meal plan first to add to shopping list"}
+                  >
+                    <ShoppingCart class="h-4 w-4" />
+                    Buy
+                  </button>
+                  <div class="flex items-center ml-auto -mr-4">
+                    <button
+                      class="btn btn-sm btn-ghost py-0 px-1"
+                      on:click={() => startEdit(item)}
+                      title="Edit item name"
+                    >
+                      <Edit3 class="h-6 w-6 text-primary" />
+                    </button>
+                    <button
+                      class="btn btn-sm btn-ghost py-0 px-1"
+                      on:click={() => deletePantryItem(item.id)}
+                      title="Remove from pantry"
+                    >
+                      <Trash2 class="h-6 w-6 text-red-500" />
+                    </button>
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/each}
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

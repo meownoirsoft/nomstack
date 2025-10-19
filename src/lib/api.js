@@ -382,6 +382,13 @@ export const api = {
     });
   },
 
+  async updatePantryItem(id, name, category) {
+    return apiRequest('/api/pantry', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, name, category })
+    });
+  },
+
   async deletePantryItem(id) {
     return apiRequest('/api/pantry', {
       method: 'DELETE',

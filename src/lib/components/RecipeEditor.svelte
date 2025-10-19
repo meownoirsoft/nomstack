@@ -179,7 +179,7 @@
 </script>
 
 <div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6">
-  <div class="relative mt-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-base-100 shadow-xl border border-base-200 px-6 py-6">
+  <div class="relative mt-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-base-200 px-6 py-6">
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>

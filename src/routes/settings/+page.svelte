@@ -2,10 +2,22 @@
   import { onMount } from 'svelte';
   import { settings, updateSetting } from '$lib/stores/settings.js';
   import { currentTheme, availableThemes, updateTheme } from '$lib/stores/theme.js';
-  import { Settings, Filter, Store, Tag, Palette } from 'lucide-svelte';
+  import { user } from '$lib/stores/auth.js';
+  import { Settings, Filter, Store, Tag, Palette, User, LogOut } from 'lucide-svelte';
   import { notifySuccess } from '$lib/stores/notifications.js';
+  import { goto } from '$app/navigation';
 
   // Recipe toggle removed - recipes are always enabled
+
+  async function logout() {
+    try {
+      const { supabase } = await import('$lib/supabaseClient.js');
+      await supabase.auth.signOut();
+      goto('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  }
 </script>
 
 <svelte:head>
@@ -17,8 +29,32 @@
   <div class="mt-4 mb-6">
   </div>
 
+  <!-- Account Card -->
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
+    <div class="card-body">
+      <div class="flex items-center gap-3 mb-4">
+        <User class="h-6 w-6 text-primary" />
+        <h2 class="text-xl font-bold text-primary">Account</h2>
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-primary/70 text-sm">Signed in as</p>
+          <p class="text-primary font-medium">{$user?.email || 'Loading...'}</p>
+        </div>
+        <button
+          class="btn btn-outline btn-sm text-primary border-primary hover:bg-primary hover:text-white"
+          on:click={logout}
+        >
+          <LogOut class="h-4 w-4" />
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Meal Categories Management -->
-  <div class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <Tag class="h-6 w-6 text-primary" />
@@ -37,7 +73,7 @@
   </div>
 
   <!-- Meal Filter Settings -->
-  <div class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <Filter class="h-6 w-6 text-primary" />
@@ -56,7 +92,7 @@
   </div>
 
   <!-- Stores Management -->
-  <div class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <Store class="h-6 w-6 text-primary" />
@@ -75,7 +111,7 @@
   </div>
 
   <!-- Theme Color Picker -->
-  <div class="card bg-base-100 shadow-lg border border-primary/30 mb-6">
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <Palette class="h-6 w-6 text-primary" />
