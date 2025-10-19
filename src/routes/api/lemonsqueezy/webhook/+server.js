@@ -1,13 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
-import { lemonSqueezySetup } from '@lemonsqueezy/lemonsqueezy.js';
 import crypto from 'crypto';
-
-// Initialize LemonSqueezy
-lemonSqueezySetup({
-  apiKey: process.env.LEMONSQUEEZY_API_KEY,
-  onError: (error) => console.error('LemonSqueezy Error:', error)
-});
 
 // Create Supabase admin client
 const supabaseAdmin = createClient(
@@ -30,6 +23,15 @@ function verifyWebhookSignature(payload, signature, secret) {
 
 export async function POST({ request }) {
   try {
+    // Dynamic import of LemonSqueezy
+    const { lemonSqueezySetup } = await import('@lemonsqueezy/lemonsqueezy.js');
+    
+    // Initialize LemonSqueezy
+    lemonSqueezySetup({
+      apiKey: process.env.LEMONSQUEEZY_API_KEY,
+      onError: (error) => console.error('LemonSqueezy Error:', error)
+    });
+
     const body = await request.text();
     const signature = request.headers.get('x-signature');
     

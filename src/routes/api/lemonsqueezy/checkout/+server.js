@@ -1,15 +1,17 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
-import { lemonSqueezySetup } from '@lemonsqueezy/lemonsqueezy.js';
-
-// Initialize LemonSqueezy
-lemonSqueezySetup({
-  apiKey: process.env.LEMONSQUEEZY_API_KEY,
-  onError: (error) => console.error('LemonSqueezy Error:', error)
-});
 
 export async function POST({ request }) {
   try {
+    // Dynamic import of LemonSqueezy
+    const { lemonSqueezySetup } = await import('@lemonsqueezy/lemonsqueezy.js');
+    
+    // Initialize LemonSqueezy
+    lemonSqueezySetup({
+      apiKey: process.env.LEMONSQUEEZY_API_KEY,
+      onError: (error) => console.error('LemonSqueezy Error:', error)
+    });
+
     const { variantId, successUrl, cancelUrl } = await request.json();
 
     if (!variantId) {
