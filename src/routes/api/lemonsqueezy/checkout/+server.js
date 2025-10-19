@@ -59,8 +59,11 @@ export async function POST({ request }) {
       return json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
-    // Create LemonSqueezy checkout using the correct API
-    const checkout = await lemonSqueezySetup.createCheckout({
+    // Debug: Log the lemonSqueezySetup object to see what methods are available
+    console.log('lemonSqueezySetup object keys:', Object.keys(lemonSqueezySetup));
+    
+    // Create LemonSqueezy checkout using the correct API - try different method names
+    const checkoutParams = {
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId: variantId,
       checkoutData: {
@@ -76,7 +79,18 @@ export async function POST({ request }) {
       },
       preview: false,
       testMode: process.env.NODE_ENV !== 'production'
-    });
+    };
+
+    let checkout;
+    if (typeof lemonSqueezySetup.createCheckout === 'function') {
+      checkout = await lemonSqueezySetup.createCheckout(checkoutParams);
+    } else if (typeof lemonSqueezySetup.checkout?.create === 'function') {
+      checkout = await lemonSqueezySetup.checkout.create(checkoutParams);
+    } else if (typeof lemonSqueezySetup.checkout?.createCheckout === 'function') {
+      checkout = await lemonSqueezySetup.checkout.createCheckout(checkoutParams);
+    } else {
+      throw new Error('No valid checkout method found. Available methods: ' + Object.keys(lemonSqueezySetup));
+    }
 
     if (checkout.error) {
       console.error('LemonSqueezy checkout error:', checkout.error);

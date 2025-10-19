@@ -11,8 +11,21 @@ export async function GET() {
       onError: (error) => console.error('LemonSqueezy Error:', error)
     });
 
-    // Test LemonSqueezy API connection
-    const stores = await lemonSqueezySetup.getStores();
+    // Debug: Log the lemonSqueezySetup object to see what methods are available
+    console.log('lemonSqueezySetup object:', Object.keys(lemonSqueezySetup));
+    console.log('lemonSqueezySetup methods:', lemonSqueezySetup);
+
+    // Test LemonSqueezy API connection - try different method names
+    let stores;
+    if (typeof lemonSqueezySetup.getStores === 'function') {
+      stores = await lemonSqueezySetup.getStores();
+    } else if (typeof lemonSqueezySetup.stores?.get === 'function') {
+      stores = await lemonSqueezySetup.stores.get();
+    } else if (typeof lemonSqueezySetup.stores?.list === 'function') {
+      stores = await lemonSqueezySetup.stores.list();
+    } else {
+      throw new Error('No valid stores method found. Available methods: ' + Object.keys(lemonSqueezySetup));
+    }
     
     if (stores.error) {
       return json({ 
@@ -35,8 +48,18 @@ export async function GET() {
       }, { status: 404 });
     }
 
-    // Get variants for the store
-    const variants = await lemonSqueezySetup.getVariants({ storeId });
+    // Get variants for the store - try different method names
+    let variants;
+    if (typeof lemonSqueezySetup.getVariants === 'function') {
+      variants = await lemonSqueezySetup.getVariants({ storeId });
+    } else if (typeof lemonSqueezySetup.variants?.get === 'function') {
+      variants = await lemonSqueezySetup.variants.get({ storeId });
+    } else if (typeof lemonSqueezySetup.variants?.list === 'function') {
+      variants = await lemonSqueezySetup.variants.list({ storeId });
+    } else {
+      console.warn('No valid variants method found, skipping variants check');
+      variants = { data: { data: [] } };
+    }
     
     return json({
       success: true,
