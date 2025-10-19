@@ -2,10 +2,13 @@
   import { currentMealPlan, mealPlans, loadMealPlans, createMealPlan, updateMealPlan, setCurrentMealPlan } from '$lib/stores/mealPlan.js';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { Edit3, Plus, Trash2, Save, X, Calendar } from 'lucide-svelte';
+  import { Edit3, Plus, Trash2, Save, X, Calendar, Crown } from 'lucide-svelte';
+  import { userTier, TIER_TYPES, getLimit, needsUpgradeForLimit } from '$lib/stores/userTier.js';
+  import UpgradeModal from '$lib/components/UpgradeModal.svelte';
 
   export let isOpen = false;
   export let onClose = () => {};
+  export let showUpgradeModal = false;
 
   let editingPlan = null;
   let tempTitle = '';
@@ -52,6 +55,16 @@
   }
 
   async function startCreating() {
+    // Check if user has reached the meal plan limit
+    if (needsUpgradeForLimit('maxMealPlans', $mealPlans.length)) {
+      // Show upgrade modal first, then close meal plan modal after a delay
+      showUpgradeModal = true;
+      setTimeout(() => {
+        onClose();
+      }, 500);
+      return;
+    }
+    
     creating = true;
     newPlanTitle = '';
   }
@@ -183,6 +196,9 @@
           >
             <Plus class="h-4 w-4 text-primary" />
             <span class="text-primary">Meal Plan</span>
+            {#if needsUpgradeForLimit('maxMealPlans', $mealPlans.length)}
+              <span class="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">Plus Only</span>
+            {/if}
           </button>
         {/if}
 
@@ -271,4 +287,5 @@
       </div>
     </div>
   </div>
+
 {/if}

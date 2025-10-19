@@ -1,10 +1,12 @@
 <script>
   import { onMount } from 'svelte';
   import { api } from '$lib/api.js';
-  import { ChevronUp, ChevronDown, Plus, X } from 'lucide-svelte';
+  import { ChevronUp, ChevronDown, Plus, X, Crown } from 'lucide-svelte';
   import { notifySuccess, notifyError } from '$lib/stores/notifications.js';
   import { user, loading as authLoading, accessToken } from '$lib/stores/auth.js';
-  import { loadMealFilters } from '$lib/stores/mealFilters.js';
+  import { loadMealFilters, canCustomizeMealFilters } from '$lib/stores/mealFilters.js';
+  import { userTier, TIER_TYPES } from '$lib/stores/userTier.js';
+  import { goto } from '$app/navigation';
 
   let categories = [];
   let mealFilters = [];
@@ -172,8 +174,19 @@
 <div style="background-color: var(--app-background, #ffffff);">
   <div class="max-w-4xl mx-auto px-4 py-4">
     <div class="mb-4">
-      <h1 class="text-2xl font-bold text-primary mb-1">Meal Filter Settings</h1>
-      <p class="text-gray-600 text-sm">Configure the category filters that appear at the top of the meals list page.</p>
+      <div class="flex items-center gap-3 mb-1">
+        <h1 class="text-2xl font-bold text-primary">Meal Filter Settings</h1>
+        {#if $userTier === TIER_TYPES.FREE}
+          <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Plus Only</span>
+        {/if}
+      </div>
+      <p class="text-gray-600 text-sm">
+        {#if $userTier === TIER_TYPES.FREE}
+          Free users get standard meal filters (All, Breakfast, Lunch, Dinner, Snack, Dessert, Side). Upgrade to Plus to customize your filters.
+        {:else}
+          Configure the category filters that appear at the top of the meals list page.
+        {/if}
+      </p>
     </div>
 
     {#if loading}
@@ -181,33 +194,67 @@
         <div class="loading loading-spinner loading-lg text-primary"></div>
       </div>
     {:else}
-      <div class="bg-base-100 rounded-lg shadow-md py-4 px-3">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold">Filter Order</h2>
-          <div class="relative">
-            <button 
-              class="btn btn-outline btn-sm"
-              on:click={toggleAddFilterDropdown}
-              disabled={getAvailableOptions().length === 0}
-            >
-              <Plus class="h-4 w-4" />
-              Filter
-            </button>
+      {#if $userTier === TIER_TYPES.FREE}
+        <!-- Free user view - show upgrade prompt -->
+        <div class="bg-white rounded-lg shadow-md py-8 px-6 text-center">
+          <div class="mb-6">
+            <Crown class="h-16 w-16 text-primary mx-auto mb-4" />
+            <h2 class="text-xl font-bold text-primary mb-2">Customize Your Meal Filters</h2>
+            <p class="text-gray-600 mb-4">
+              Free users get standard meal filters (All, Breakfast, Lunch, Dinner, Snack, Dessert, Side). 
+              Upgrade to Plus to create custom filters and organize your meals exactly how you want.
+            </p>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="bg-primary/5 rounded-lg p-4">
+              <h3 class="font-semibold text-primary mb-2">Plus Features:</h3>
+              <ul class="text-sm text-gray-600 space-y-1">
+                <li>• Create custom meal filters</li>
+                <li>• Reorder filters to match your workflow</li>
+                <li>• Add category-based filters</li>
+                <li>• Remove filters you don't need</li>
+              </ul>
+            </div>
             
-            {#if showAddFilterDropdown}
-              <div class="absolute top-full right-0 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg z-10 min-w-48">
-                {#each getAvailableOptions() as option}
-                  <button 
-                    class="w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg"
-                    on:click={() => addFilter(option)}
-                  >
-                    {option.name}
-                  </button>
-                {/each}
-              </div>
-            {/if}
+            <button 
+              class="btn btn-primary"
+              on:click={() => goto('/upgrade')}
+            >
+              <Crown class="h-4 w-4" />
+              Upgrade to Plus
+            </button>
           </div>
         </div>
+      {:else}
+        <!-- Plus user view - full functionality -->
+        <div class="bg-base-100 rounded-lg shadow-md py-4 px-3">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Filter Order</h2>
+            <div class="relative">
+              <button 
+                class="btn btn-outline btn-sm"
+                on:click={toggleAddFilterDropdown}
+                disabled={getAvailableOptions().length === 0}
+              >
+                <Plus class="h-4 w-4" />
+                Filter
+              </button>
+              
+              {#if showAddFilterDropdown}
+                <div class="absolute top-full right-0 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg z-10 min-w-48">
+                  {#each getAvailableOptions() as option}
+                    <button 
+                      class="w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg"
+                      on:click={() => addFilter(option)}
+                    >
+                      {option.name}
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
 
 
         <div class="space-y-1">
@@ -286,7 +333,8 @@
             Save Filters
           </button>
         </div>
-      </div>
+        </div>
+      {/if}
     {/if}
   </div>
 </div>

@@ -4,6 +4,7 @@
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
   import { user } from '$lib/stores/auth.js';
+  import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
   export let mealId;
   export let mealName = '';
@@ -551,8 +552,8 @@
   }
 </script>
 
-<div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6">
-  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-base-200 px-4 py-4">
+<div class="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-base-300/60 backdrop-blur-sm text-primary px-4 py-6" on:click={() => dispatch('close')}>
+  <div class="relative mt-6 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-base-200 px-4 py-4" on:click|stopPropagation>
     <!-- Header -->
     <div class="flex items-center justify-between mb-2">
       <div>
@@ -716,7 +717,9 @@
                 <tr>
                   <th class="text-sm font-medium text-left pr-1 w-20 text-gray-600">Amount</th>
                   <th class="text-sm font-medium text-left text-gray-600">Ingredient</th>
-                  <th class="text-sm font-medium text-center text-gray-600 w-8">Pantry</th>
+                  {#if hasFeatureAccess('smartPantry')}
+                    <th class="text-sm font-medium text-center text-gray-600 w-8">Pantry</th>
+                  {/if}
                 </tr>
               </thead>
               <tbody>
@@ -741,23 +744,25 @@
                           {/if}
                         </span>
                       </td>
-                      <td class="text-center">
-                        {#if $user}
-                          {#if isInPantry}
-                            <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
-                              <TableCellsSplit class="h-4 w-4" />
-                            </div>
-                          {:else}
-                            <button
-                              class="btn btn-ghost btn-xs p-1 text-gray-400"
-                              on:click={() => togglePantryStatus(ingredientName)}
-                              title="Add to pantry"
-                            >
-                              <Plus class="h-4 w-4" />
-                            </button>
+                      {#if hasFeatureAccess('smartPantry')}
+                        <td class="text-center">
+                          {#if $user}
+                            {#if isInPantry}
+                              <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
+                                <TableCellsSplit class="h-4 w-4" />
+                              </div>
+                            {:else}
+                              <button
+                                class="btn btn-ghost btn-xs p-1 text-gray-400"
+                                on:click={() => togglePantryStatus(ingredientName)}
+                                title="Add to pantry"
+                              >
+                                <Plus class="h-4 w-4" />
+                              </button>
+                            {/if}
                           {/if}
-                        {/if}
-                      </td>
+                        </td>
+                      {/if}
                     </tr>
                   {/each}
                 {:else}
@@ -780,23 +785,25 @@
                           {/if}
                         </span>
                       </td>
-                      <td class="text-center">
-                        {#if $user}
-                          {#if isInPantry}
-                            <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
-                              <TableCellsSplit class="h-4 w-4" />
-                            </div>
-                          {:else}
-                            <button
-                              class="btn btn-ghost btn-xs p-1 text-gray-400"
-                              on:click={() => togglePantryStatus(ingredientName)}
-                              title="Add to pantry"
-                            >
-                              <Plus class="h-4 w-4" />
-                            </button>
+                      {#if hasFeatureAccess('smartPantry')}
+                        <td class="text-center">
+                          {#if $user}
+                            {#if isInPantry}
+                              <div class="text-gray-400 flex justify-center items-center" title="Already in Pantry">
+                                <TableCellsSplit class="h-4 w-4" />
+                              </div>
+                            {:else}
+                              <button
+                                class="btn btn-ghost btn-xs p-1 text-gray-400"
+                                on:click={() => togglePantryStatus(ingredientName)}
+                                title="Add to pantry"
+                              >
+                                <Plus class="h-4 w-4" />
+                              </button>
+                            {/if}
                           {/if}
-                        {/if}
-                      </td>
+                        </td>
+                      {/if}
                     </tr>
                   {/each}
                 {/if}

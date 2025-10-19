@@ -4,6 +4,7 @@
     import { eatingMode, toggleEatingMode } from '$lib/stores/eatingMode.js';
     import { openModal, MODAL_TYPES } from '$lib/stores/modal.js';
     import { currentTheme } from '$lib/stores/theme.js';
+    import { userTier, TIER_TYPES } from '$lib/stores/userTier.js';
     import { browser } from '$app/environment';
     
     export let page;
@@ -69,7 +70,7 @@
     }
   }
 </style>
-<header class="bg-white border-b border-primary/10">
+<header class="{$userTier === TIER_TYPES.PLUS ? 'bg-purple-50' : 'bg-white'} border-b border-primary/10">
   <div class="max-w-5xl mx-auto flex flex-col gap-1 px-4 sm:px-6 lg:px-8 py-3">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3 screen-only">

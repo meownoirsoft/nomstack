@@ -7,6 +7,8 @@
     import { settings } from '$lib/stores/settings.js';
     import RecipeEditor from './RecipeEditor.svelte';
     import RecipeViewer from './RecipeViewer.svelte';
+    import PayGate from './PayGate.svelte';
+    import { subscriptionStatus, needsUpgradeForLimit } from '$lib/stores/userTier.js';
     const dispatch = createEventDispatcher();
 
     const LUNCH_FLAG = 'lunch';
@@ -43,6 +45,7 @@
     let showRecipeEditor = false;
     let showRecipeViewer = false;
     let currentRecipe = null;
+    let totalRecipes = 0; // Will be loaded from API
 
     function normalizeSelection(values) {
         if (!Array.isArray(values)) {
@@ -61,6 +64,10 @@
         notes = meal?.notes ?? '';
         nameTouched = false;
         nameError = '';
+        // Load recipe count when meal changes
+        if (meal?.id) {
+            loadRecipeCount();
+        }
     }
 
     $: {
@@ -233,6 +240,31 @@
         }
     }
 
+    // Load total recipe count for limit checking
+    async function loadRecipeCount() {
+        try {
+            const result = await api.getMeals('all');
+            if (result && Array.isArray(result)) {
+                // Count meals that have recipes
+                let count = 0;
+                for (const meal of result) {
+                    try {
+                        const recipeResult = await api.getRecipe(meal.id);
+                        if (recipeResult && recipeResult.recipe) {
+                            count++;
+                        }
+                    } catch (error) {
+                        // Recipe doesn't exist, that's fine
+                    }
+                }
+                totalRecipes = count;
+            }
+        } catch (error) {
+            console.error('Error loading recipe count:', error);
+            totalRecipes = 0;
+        }
+    }
+
     // Recipe functions
     async function openRecipeViewer() {
         try {
@@ -402,14 +434,20 @@
                   on:click={confirmDelete}
                 >Delete meal</button>
                 {#if $settings.recipesEnabled && meal && meal.id}
-                    <button
-                        class="btn btn-sm btn-ghost text-primary underline pl-1"
-                        on:click={openRecipeViewer}
-                        title="View recipe"
+                    <PayGate 
+                        resource="maxRecipes" 
+                        currentCount={totalRecipes}
+                        showUpgradeButton={true}
                     >
-                        <ChefHat class="h-5 w-5 -ml-1" />
-                        Recipe
-                    </button>
+                        <button
+                            class="btn btn-sm btn-ghost text-primary underline pl-1"
+                            on:click={openRecipeViewer}
+                            title="View recipe"
+                        >
+                            <ChefHat class="h-5 w-5 -ml-1" />
+                            Recipe
+                        </button>
+                    </PayGate>
                 {/if}
                 <button class="btn btn-sm btn-primary" on:click={updateMeal} disabled={!nameIsValid}>Save</button>
             </div>

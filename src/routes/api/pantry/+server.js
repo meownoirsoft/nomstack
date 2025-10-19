@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { getUserIdFromRequest } from '$lib/utils.js';
 import { supabaseAdmin } from '$lib/server/supabaseClient.js';
+import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
 export async function GET({ request, locals }) {
   try {
@@ -59,11 +60,14 @@ export async function POST({ request, locals }) {
     }
 
     // Update any existing ingredients with this name to be marked as pantry
-    await supabaseAdmin
-      .from('ingredients')
-      .update({ is_pantry: true })
-      .eq('user_id', userId)
-      .ilike('name', name.trim());
+    // Only do this for Plus users (smart pantry feature)
+    if (hasFeatureAccess('smartPantry')) {
+      await supabaseAdmin
+        .from('ingredients')
+        .update({ is_pantry: true })
+        .eq('user_id', userId)
+        .ilike('name', name.trim());
+    }
 
     return json({ success: true, data: pantryItem });
   } catch (error) {
@@ -122,7 +126,8 @@ export async function PATCH({ request, locals }) {
     }
 
     // Update any existing ingredients with the old name to not be marked as pantry
-    if (oldPantryItem.name !== name.trim()) {
+    // Only do this for Plus users (smart pantry feature)
+    if (oldPantryItem.name !== name.trim() && hasFeatureAccess('smartPantry')) {
       await supabaseAdmin
         .from('ingredients')
         .update({ is_pantry: false })
@@ -182,11 +187,14 @@ export async function DELETE({ request, locals }) {
     }
 
     // Update any existing ingredients with this name to not be marked as pantry
-    await supabaseAdmin
-      .from('ingredients')
-      .update({ is_pantry: false })
-      .eq('user_id', userId)
-      .ilike('name', pantryItem.name);
+    // Only do this for Plus users (smart pantry feature)
+    if (hasFeatureAccess('smartPantry')) {
+      await supabaseAdmin
+        .from('ingredients')
+        .update({ is_pantry: false })
+        .eq('user_id', userId)
+        .ilike('name', pantryItem.name);
+    }
 
     return json({ success: true });
   } catch (error) {

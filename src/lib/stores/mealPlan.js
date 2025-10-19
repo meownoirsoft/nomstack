@@ -4,13 +4,16 @@ import { api } from '$lib/api.js';
 // Helper functions for localStorage persistence
 function getStoredMealPlanId() {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('currentMealPlanId');
+    const stored = localStorage.getItem('currentMealPlanId');
+    console.log('Loading meal plan ID from localStorage:', stored);
+    return stored;
   }
   return null;
 }
 
 function setStoredMealPlanId(planId) {
   if (typeof window !== 'undefined') {
+    console.log('Saving meal plan ID to localStorage:', planId);
     if (planId) {
       localStorage.setItem('currentMealPlanId', planId);
     } else {
@@ -70,7 +73,9 @@ export async function loadMealPlans() {
 
 // Set the current meal plan
 export async function setCurrentMealPlan(planId) {
+  console.log('setCurrentMealPlan called with:', planId);
   if (!planId) {
+    console.log('Clearing current meal plan');
     currentMealPlan.set(null);
     setStoredMealPlanId(null);
     return;
@@ -79,8 +84,11 @@ export async function setCurrentMealPlan(planId) {
   const plans = get(mealPlans);
   const plan = plans.find(p => p.id === planId);
   if (plan) {
+    console.log('Setting current meal plan to:', plan.title);
     currentMealPlan.set(plan);
     setStoredMealPlanId(planId);
+  } else {
+    console.log('Plan not found in meal plans list');
   }
 }
 

@@ -17,6 +17,12 @@
   export let error;
   let currentPage;
   let offlineInitialized = false;
+  
+  // Get pageTitle from data
+  $: headerPageTitle = data?.pageTitle || '';
+  $: console.log('Layout data:', data);
+  $: console.log('PageTitle from data:', data?.pageTitle);
+  $: console.log('Header pageTitle:', headerPageTitle);
 
   // Track current page for header
   $: currentPage = $page?.url?.pathname || '/';
@@ -39,7 +45,7 @@
 
   // Handle authentication redirects
   $: if (!$loading) {
-    if (!$user && !data.isAuthPage) {
+    if (!$user && !data.isAuthPage && !data.isSharedPage) {
       goto('/login');
     } else if ($user && data.isAuthPage) {
       goto('/');
@@ -87,7 +93,7 @@
   </div>
 {:else}
   <div class="h-screen flex flex-col" style="background-color: var(--app-background, #ffffff); isolation: auto !important;">
-    <Header page={currentPage} {pageTitle} />
+    <Header page={currentPage} pageTitle={headerPageTitle} />
     <main class="flex-1 overflow-hidden">
       <div class="max-w-5xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-0 h-full overflow-y-auto">
         {#if error}

@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { getUserIdFromRequest } from '$lib/utils.js';
 import { supabaseAdmin } from '$lib/server/supabaseClient.js';
+import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
 export async function POST({ request, locals }) {
   try {
@@ -38,14 +39,17 @@ export async function POST({ request, locals }) {
 
     if (existingIngredient) {
       // Update existing ingredient to not be pantry (so it shows on shopping list)
-      const { error: updateError } = await supabaseAdmin
-        .from('ingredients')
-        .update({ is_pantry: false })
-        .eq('id', existingIngredient.id);
+      // Only do this for Plus users (smart pantry feature)
+      if (hasFeatureAccess('smartPantry')) {
+        const { error: updateError } = await supabaseAdmin
+          .from('ingredients')
+          .update({ is_pantry: false })
+          .eq('id', existingIngredient.id);
 
-      if (updateError) {
-        console.error('Error updating existing ingredient:', updateError);
-        return json({ success: false, error: updateError.message }, { status: 500 });
+        if (updateError) {
+          console.error('Error updating existing ingredient:', updateError);
+          return json({ success: false, error: updateError.message }, { status: 500 });
+        }
       }
 
       return json({ success: true, data: { message: 'Ingredient added to shopping list' } });

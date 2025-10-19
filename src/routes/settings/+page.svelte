@@ -3,11 +3,23 @@
   import { settings, updateSetting } from '$lib/stores/settings.js';
   import { currentTheme, availableThemes, updateTheme } from '$lib/stores/theme.js';
   import { user } from '$lib/stores/auth.js';
-  import { Settings, Filter, Store, Tag, Palette, User, LogOut } from 'lucide-svelte';
+  import { subscriptionStatus, userTier, TIER_TYPES } from '$lib/stores/userTier.js';
+  import { Settings, Filter, Store, Tag, Palette, User, LogOut, Crown, Star, ToggleLeft, ToggleRight } from 'lucide-svelte';
   import { notifySuccess } from '$lib/stores/notifications.js';
   import { goto } from '$app/navigation';
 
   // Recipe toggle removed - recipes are always enabled
+
+  // Test function to toggle between Free and Plus tiers
+  function toggleTier() {
+    if ($userTier === TIER_TYPES.FREE) {
+      userTier.set(TIER_TYPES.PLUS);
+      notifySuccess('Switched to Plus tier (test mode)');
+    } else {
+      userTier.set(TIER_TYPES.FREE);
+      notifySuccess('Switched to Free tier (test mode)');
+    }
+  }
 
   async function logout() {
     try {
@@ -18,6 +30,7 @@
       console.error('Error logging out:', error);
     }
   }
+
 </script>
 
 <svelte:head>
@@ -53,6 +66,45 @@
     </div>
   </div>
 
+  <!-- Subscription Status Card -->
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
+    <div class="card-body">
+      <div class="flex items-center gap-3 mb-4">
+        {#if $userTier === TIER_TYPES.PLUS}
+          <Crown class="h-6 w-6 text-primary" />
+        {:else}
+          <Star class="h-6 w-6 text-primary" />
+        {/if}
+        <h2 class="text-xl font-bold text-primary">Subscription</h2>
+      </div>
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-primary/70 text-sm">Current Plan</p>
+          <p class="text-primary font-medium">
+            {#if $userTier === TIER_TYPES.PLUS}
+              nomStack Plus
+            {:else}
+              Free Plan
+            {/if}
+          </p>
+        </div>
+        <button
+          class="btn btn-primary btn-sm"
+          on:click={toggleTier}
+        >
+          {#if $userTier === TIER_TYPES.FREE}
+            <Crown class="h-4 w-4" />
+            Test: Switch to Plus
+          {:else}
+            <ToggleLeft class="h-4 w-4" />
+            Test: Switch to Free
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Meal Categories Management -->
   <div class="card bg-white shadow-lg border border-primary/30 mb-6">
     <div class="card-body">
@@ -73,21 +125,39 @@
   </div>
 
   <!-- Meal Filter Settings -->
-  <div class="card bg-white shadow-lg border border-primary/30 mb-6">
+  <div class="card bg-white shadow-lg border border-primary/30 mb-6 {$userTier === TIER_TYPES.FREE ? 'opacity-60' : ''}">
     <div class="card-body">
       <div class="flex items-center gap-3 mb-4">
         <Filter class="h-6 w-6 text-primary" />
         <h2 class="text-xl font-bold text-primary">Meal Filters</h2>
+        {#if $userTier === TIER_TYPES.FREE}
+          <span class="ml-auto text-xs bg-primary/10 text-primary px-2 py-1 rounded">Plus Only</span>
+        {/if}
       </div>
       
       <p class="text-primary/70 mb-6">
-        Meal filters appear at the top of the meals list page. You can select which filters matter to you.
+        {#if $userTier === TIER_TYPES.FREE}
+          Free users get standard meal filters (All, Breakfast, Lunch, Dinner, Snack, Dessert, Side). Upgrade to Plus to customize which filters matter to you.
+        {:else}
+          Meal filters appear at the top of the meals list page. You can select which filters matter to you.
+        {/if}
       </p>
 
-      <a href="/settings/meal-filters" class="btn btn-primary">
-        <Filter class="h-4 w-4" />
-        Edit Filters
-      </a>
+      {#if $userTier === TIER_TYPES.FREE}
+        <button 
+          class="btn btn-primary opacity-50 cursor-not-allowed"
+          disabled
+          title="Upgrade to Plus to customize meal filters"
+        >
+          <Filter class="h-4 w-4" />
+          Edit Filters
+        </button>
+      {:else}
+        <a href="/settings/meal-filters" class="btn btn-primary">
+          <Filter class="h-4 w-4" />
+          Edit Filters
+        </a>
+      {/if}
     </div>
   </div>
 

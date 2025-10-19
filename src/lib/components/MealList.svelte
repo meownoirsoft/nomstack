@@ -9,10 +9,13 @@
     import { settings } from '$lib/stores/settings.js';
     import { currentMealPlan, mealPlans, loadingMealPlans, loadMealPlans, setCurrentMealPlan } from '$lib/stores/mealPlan.js';
     import { mealFilters } from '$lib/stores/mealFilters.js';
+    import { userTier, TIER_TYPES, getLimit, needsUpgradeForLimit } from '$lib/stores/userTier.js';
     import { Edit, Check, Plus, ChefHat, Printer, Calendar, Edit3 } from 'lucide-svelte';
     import { onMount } from 'svelte';
     import MealPlanManager from '$lib/components/MealPlanManager.svelte';
     import Search from '$lib/components/Search.svelte';
+    import UpgradeModal from '$lib/components/UpgradeModal.svelte';
+    import { goto } from '$app/navigation';
 
     const BREAKFAST_FLAG = 'breakfast';
     const LUNCH_FLAG = 'lunch';
@@ -45,6 +48,11 @@
     
     // Meal plan manager state
     let showMealPlanManager = false;
+    
+    // Upgrade modal state
+    let showUpgradeModal = false;
+    let showMealPlanUpgradeModal = false;
+    let upgradeTriggerSource = '';
     
     // Filter state
     let selectedFilter = 'all';
@@ -208,6 +216,16 @@
       const flags = Array.isArray(meal?.flags) ? meal.flags : [];
       selectedCats = [...catIds, ...flags];
       showModal = true;
+    }
+
+    function handleAddMealClick() {
+      // Check if user needs to upgrade for more meals
+      if (needsUpgradeForLimit('maxRecipes', displayMeals.length)) {
+        upgradeTriggerSource = 'meal-limit';
+        showUpgradeModal = true;
+      } else {
+        showModal = true;
+      }
     }
 
     function handleModalClose() {
@@ -394,7 +412,7 @@
           Clear
           <Check class="h-4 w-4" />
         </button>
-        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 mr-2 flex items-center gap-1" on:click={() => showModal = true}>
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 mr-2 flex items-center gap-1" on:click={handleAddMealClick}>
           <Plus class="h-4 w-4" />
           <span class="sm:hidden">Meal</span>
         </button>
@@ -433,6 +451,26 @@
           </li>
         {/each}
       </ul>
+      
+      <!-- Meals Count Display -->
+      <div class="mt-4 px-4 py-2 bg-white rounded-lg border border-primary/20">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-primary/70">
+            Meals: <span class="font-medium text-primary">{displayMeals.length}</span>
+          </span>
+          {#if $userTier === TIER_TYPES.FREE}
+            {@const maxMeals = getLimit('maxRecipes')}
+            {@const remaining = Math.max(0, maxMeals - displayMeals.length)}
+            <span class="text-primary/70">
+              Remaining: <span class="font-medium text-primary">{remaining}</span>
+            </span>
+          {:else}
+            <span class="text-primary/70">
+              <span class="text-green-600 font-medium">Unlimited</span>
+            </span>
+          {/if}
+        </div>
+      </div>
     </div>
     {#if showModal}
       <EditModal
@@ -473,5 +511,19 @@
     <MealPlanManager 
       bind:isOpen={showMealPlanManager}
       onClose={() => showMealPlanManager = false}
+      bind:showUpgradeModal={showMealPlanUpgradeModal}
+    />
+
+    <!-- Upgrade Modal -->
+    <UpgradeModal 
+      bind:isOpen={showUpgradeModal}
+      triggerSource={upgradeTriggerSource}
+      on:close={() => showUpgradeModal = false}
+    />
+
+    <!-- Meal Plan Upgrade Modal -->
+    <UpgradeModal 
+      bind:isOpen={showMealPlanUpgradeModal}
+      triggerSource="meal-plan-limit"
     />
   </main>

@@ -14,10 +14,10 @@ export default {
       themes: [
         {
           nomstack: {
-            "primary": "var(--primary)",
-            "primary-focus": "var(--primary-focus)",
-            "primary-content": "var(--primary-content)",
-            "secondary": "var(--secondary)",
+            "primary": "#000000",
+            "primary-focus": "#333333",
+            "primary-content": "#ffffff",
+            "secondary": "#64748b",
             "accent": "#EE82EE",
           },
         },

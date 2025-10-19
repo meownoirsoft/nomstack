@@ -24,12 +24,14 @@ const DEFAULT_CATEGORIES = [
   { name: 'Lunch', color: '#10b981', sort_order: 2 },
   { name: 'Dinner', color: '#8b5cf6', sort_order: 3 },
   { name: 'Snack', color: '#f97316', sort_order: 4 },
-  { name: 'Quick & Easy', color: '#ef4444', sort_order: 5 },
-  { name: 'Slow Cooker', color: '#6b7280', sort_order: 6 },
-  { name: 'Vegetarian', color: '#22c55e', sort_order: 7 },
-  { name: 'Kid Friendly', color: '#eab308', sort_order: 8 },
-  { name: 'Healthy', color: '#06b6d4', sort_order: 9 },
-  { name: 'Comfort Food', color: '#a855f7', sort_order: 10 }
+  { name: 'Dessert', color: '#ec4899', sort_order: 5 },
+  { name: 'Side', color: '#84cc16', sort_order: 6 },
+  { name: 'Quick & Easy', color: '#ef4444', sort_order: 7 },
+  { name: 'Slow Cooker', color: '#6b7280', sort_order: 8 },
+  { name: 'Vegetarian', color: '#22c55e', sort_order: 9 },
+  { name: 'Kid Friendly', color: '#eab308', sort_order: 10 },
+  { name: 'Healthy', color: '#06b6d4', sort_order: 11 },
+  { name: 'Comfort Food', color: '#a855f7', sort_order: 12 }
 ];
 
 // Sample meals for new users
@@ -93,9 +95,11 @@ const DEFAULT_MEAL_FILTERS = [
   { name: 'Lunch', category_id: 'lunch', is_system: true, order: 3 },
   { name: 'Dinner', category_id: 'dinner', is_system: true, order: 4 },
   { name: 'Snacks', category_id: 'snack', is_system: true, order: 5 },
-  { name: 'Quick & Easy', category_id: 'quick-easy', is_system: true, order: 6 },
-  { name: 'Kid Friendly', category_id: 'kid-friendly', is_system: true, order: 7 },
-  { name: 'Vegetarian', category_id: 'vegetarian', is_system: true, order: 8 }
+  { name: 'Dessert', category_id: 'dessert', is_system: true, order: 6 },
+  { name: 'Side', category_id: 'side', is_system: true, order: 7 },
+  { name: 'Quick & Easy', category_id: 'quick-easy', is_system: true, order: 8 },
+  { name: 'Kid Friendly', category_id: 'kid-friendly', is_system: true, order: 9 },
+  { name: 'Vegetarian', category_id: 'vegetarian', is_system: true, order: 10 }
 ];
 
 // Default meal plan for new users
@@ -104,6 +108,80 @@ const DEFAULT_MEAL_PLAN = {
   start_date: new Date().toISOString().split('T')[0], // Today
   end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 7 days from now
 };
+
+/**
+ * Add missing categories to existing users
+ * @param {string} userId - The user's UUID
+ * @returns {Promise<Object>} - Result object with success status and added categories
+ */
+export async function addMissingCategoriesToUser(userId) {
+  try {
+    const result = {
+      success: true,
+      added: 0,
+      categories: [],
+      errors: []
+    };
+
+    // Get existing categories for this user
+    const { data: existingCategories, error: categoriesError } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('user_id', userId);
+    
+    if (categoriesError) {
+      throw new Error(`Failed to load categories: ${categoriesError.message}`);
+    }
+    
+    const existingNames = existingCategories?.map(cat => cat.name) || [];
+    
+    // Define the new categories we want to add
+    const newCategories = [
+      { name: 'Dessert', color: '#ec4899', sort_order: 5 },
+      { name: 'Side', color: '#84cc16', sort_order: 6 }
+    ];
+    
+    // Filter out categories that already exist
+    const categoriesToAdd = newCategories.filter(cat => !existingNames.includes(cat.name));
+    
+    if (categoriesToAdd.length === 0) {
+      result.message = 'All categories already exist';
+      return result;
+    }
+    
+    // Add the missing categories
+    const { data: addedCategories, error: insertError } = await supabase
+      .from('categories')
+      .insert(
+        categoriesToAdd.map(cat => ({
+          user_id: userId,
+          name: cat.name,
+          color: cat.color,
+          sort_order: cat.sort_order
+        }))
+      )
+      .select('id, name');
+    
+    if (insertError) {
+      throw new Error(`Failed to add categories: ${insertError.message}`);
+    }
+    
+    result.added = addedCategories.length;
+    result.categories = addedCategories;
+    result.message = `Added ${addedCategories.length} new categories`;
+    
+    return result;
+    
+  } catch (error) {
+    console.error('Error adding missing categories:', error);
+    return {
+      success: false,
+      error: error.message,
+      added: 0,
+      categories: []
+    };
+  }
+}
 
 /**
  * Set up seed data for a new user

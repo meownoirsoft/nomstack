@@ -3,6 +3,8 @@
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
   import { Store, Plus, Edit3, Trash2, Save, X, ChevronUp, ChevronDown, ShoppingCart } from 'lucide-svelte';
+  import { needsUpgradeForLimit } from '$lib/stores/userTier.js';
+  import UpgradeModal from '$lib/components/UpgradeModal.svelte';
 
   let stores = [];
   let loading = true;
@@ -10,6 +12,7 @@
   let editingStore = null;
   let newStoreName = '';
   let editingStoreName = '';
+  let showUpgradeModal = false;
 
   onMount(async () => {
     await loadStores();
@@ -35,6 +38,13 @@
   async function addStore() {
     if (!newStoreName.trim()) {
       notifyError('Store name is required');
+      return;
+    }
+
+    // Check if user has reached the store limit
+    if (needsUpgradeForLimit('maxStores', stores.length)) {
+      // Show upgrade modal
+      showUpgradeModal = true;
       return;
     }
 
@@ -144,17 +154,22 @@
 
 <div class="space-y-6 mt-6">
   <!-- Header -->
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <Store class="h-6 w-6 text-primary" />
-      <h1 class="text-2xl font-bold text-primary">Stores</h1>
-    </div>
+  <div class="flex items-center justify-end">
     <button 
       class="btn btn-primary btn-sm"
-      on:click={() => showAddForm = true}
+      on:click={() => {
+        if (needsUpgradeForLimit('maxStores', stores.length)) {
+          showUpgradeModal = true;
+        } else {
+          showAddForm = true;
+        }
+      }}
     >
       <Plus class="h-4 w-4" />
-      Add Store
+      Store
+      {#if needsUpgradeForLimit('maxStores', stores.length)}
+        <span class="ml-2 text-xs bg-white text-primary px-2 py-1 rounded">Plus Only</span>
+      {/if}
     </button>
   </div>
 
@@ -270,11 +285,10 @@
     {/if}
   </div>
 
-  <!-- Back to Shopping List -->
-  <div class="text-center">
-    <a href="/shopping" class="btn btn-outline text-primary border-primary hover:bg-primary hover:text-white">
-      <ShoppingCart class="h-4 w-4" />
-      Back to Shopping List
-    </a>
-  </div>
 </div>
+
+<!-- Upgrade Modal -->
+<UpgradeModal 
+  bind:isOpen={showUpgradeModal}
+  triggerSource="store-limit"
+/>

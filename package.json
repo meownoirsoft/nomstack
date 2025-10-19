@@ -13,7 +13,8 @@
 		"test:e2e:debug": "playwright test --debug",
 		"test:critical": "playwright test tests/move-category.spec.ts tests/ingredient-state.spec.ts tests/meal-plan-workflow.spec.ts",
 		"test:data": "playwright test tests/data-persistence.spec.ts",
-		"test:theme": "playwright test tests/theme-changes.spec.ts"
+		"test:theme": "playwright test tests/theme-changes.spec.ts",
+		"migrate:add-categories": "node migrate-add-categories.js"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.49.0",

@@ -6,19 +6,18 @@ import { accessToken } from '$lib/stores/auth.js';
 
 // Helper function to get the current session token
 export async function getAuthToken() {
-  // First try to get from store (faster)
-  const storeToken = get(accessToken);
-  if (storeToken) {
-    return storeToken;
-  }
-  
-  // Fallback to getting from Supabase
+  // Always get fresh session from Supabase to avoid stale tokens
+  console.log('Getting fresh session from Supabase...');
   const { data: { session }, error } = await supabase.auth.getSession();
   
   if (error) {
     console.error('Error getting session:', error);
     return null;
   }
+  
+  console.log('Session found:', !!session);
+  console.log('Access token found:', !!session?.access_token);
+  console.log('Token preview:', session?.access_token?.substring(0, 20) + '...');
   
   return session?.access_token || null;
 }
@@ -29,7 +28,8 @@ async function apiRequest(endpoint, options = {}) {
   
   if (!token) {
     console.error('No authentication token available for endpoint:', endpoint);
-    throw new Error('No authentication token available');
+    console.error('Store token:', get(accessToken));
+    throw new Error('Authentication required');
   }
 
 
@@ -365,6 +365,7 @@ export const api = {
     });
   },
 
+
   // Sync status
   async getSyncStatus() {
     return apiRequest('/api/sync-status');
@@ -401,5 +402,71 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ pantryItemId, planId })
     });
-  }
+  },
+
+  // Share Shopping List API
+  async getShareLink(mealPlanId) {
+    return apiRequest(`/api/share/${mealPlanId}`);
+  },
+
+  async createShareLink(mealPlanId, expiresAt) {
+    return apiRequest('/api/share', {
+      method: 'POST',
+      body: JSON.stringify({ meal_plan_id: mealPlanId, expires_at: expiresAt })
+    });
+  },
+
+  async regenerateShareLink(mealPlanId, expiresAt) {
+    return apiRequest(`/api/share/${mealPlanId}/regenerate`, {
+      method: 'POST',
+      body: JSON.stringify({ expires_at: expiresAt })
+    });
+  },
+
+  async getSharedShoppingList(token) {
+    const response = await fetch(`/api/shared/${token}`);
+    return response.json();
+  },
+
+  async addItemToSharedList(token, itemData) {
+    const response = await fetch(`/api/shared/${token}/items`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData)
+    });
+    return response.json();
+  },
+
+        async addCommentToSharedList(token, ingredientId, comment, initials) {
+          const response = await fetch(`/api/shared/${token}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ingredient_id: ingredientId, comment, created_by: initials })
+          });
+          return response.json();
+        },
+
+        async getSharedItemsForMealPlan(mealPlanId) {
+          const response = await fetch(`/api/shared-items/${mealPlanId}`);
+          return response.json();
+        },
+
+        async getCommentsForMealPlan(mealPlanId) {
+          const response = await fetch(`/api/ingredients/${mealPlanId}/comments`);
+          return response.json();
+        },
+
+        async deleteSharedComment(token, commentId) {
+          const response = await fetch(`/api/shared/${token}/comments/${commentId}`, {
+            method: 'DELETE'
+          });
+          return response.json();
+        },
+
+        async deleteSharedItem(token, itemId) {
+          const response = await fetch(`/api/shared/${token}/items/${itemId}`, {
+            method: 'DELETE'
+          });
+          return response.json();
+        }
 };

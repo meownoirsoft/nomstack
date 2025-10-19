@@ -10,10 +10,10 @@ export default defineConfig({
 		sveltekit(),
 		VitePWA({
 			registerType: 'autoUpdate',
-			includeAssets: ['favicon.ico', 'favicon.png', 'icon-192.png', 'icon-512.png', 'no-drama-dinner-decider300.png'],
+			includeAssets: ['favicon.ico', 'favicon.png', 'icon-192.png', 'icon-512.png', 'no-drama-dinner-decider300.png', 'logo/nomstack-logo-grape.webp'],
 			manifest: {
-				name: 'NomStack - Meal Planning Made Simple',
-				short_name: 'NomStack',
+				name: 'nomStack - Meal Planning Made Simple',
+				short_name: 'nomStack',
 				description: 'Plan your meals, discover recipes, and organize your cooking with ease',
 				theme_color: '#8b5cf6',
 				background_color: '#1f2937',
@@ -23,21 +23,21 @@ export default defineConfig({
 				start_url: '/',
 				icons: [
 					{
-						src: 'icon-192.png',
+						src: 'logo/nomstack-logo-grape.webp',
 						sizes: '192x192',
-						type: 'image/png',
+						type: 'image/webp',
 						purpose: 'any'
 					},
 					{
-						src: 'icon-512.png',
+						src: 'logo/nomstack-logo-grape.webp',
 						sizes: '512x512',
-						type: 'image/png',
+						type: 'image/webp',
 						purpose: 'any'
 					},
 					{
-						src: 'favicon.png',
+						src: 'logo/nomstack-logo-grape.webp',
 						sizes: '192x192',
-						type: 'image/png',
+						type: 'image/webp',
 						purpose: 'maskable'
 					}
 				]

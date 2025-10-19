@@ -4,6 +4,7 @@
   import { api } from '$lib/api.js';
   import { currentMealPlan } from '$lib/stores/mealPlan.js';
   import { ShoppingCart, Store, Printer, CheckSquare, Square, ArrowLeft } from 'lucide-svelte';
+  import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
   let stores = [];
   let ingredients = [];
@@ -56,8 +57,12 @@
       const planId = mealPlan?.id || $currentMealPlan?.id;
       const ingredientsResult = await api.getIngredients({ plan_id: planId });
       if (ingredientsResult.success) {
-        // Filter out pantry items from the printout
-        ingredients = ingredientsResult.data.filter(ingredient => !ingredient.is_pantry);
+        // Filter out pantry items from the printout (only for Plus users with smart pantry)
+        ingredients = ingredientsResult.data.filter(ingredient => {
+          // For free users, show all ingredients (no smart pantry filtering)
+          // For Plus users, filter out pantry items
+          return hasFeatureAccess('smartPantry') ? !ingredient.is_pantry : true;
+        });
         
         // Group ingredients by store
         ingredientsByStore = ingredients.reduce((acc, ingredient) => {

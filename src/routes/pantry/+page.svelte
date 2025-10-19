@@ -3,6 +3,7 @@
   import { api } from '$lib/api.js';
   import { currentMealPlan } from '$lib/stores/mealPlan.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
+  import { userTier, TIER_TYPES, hasFeatureAccess } from '$lib/stores/userTier.js';
   import { 
     TableCellsSplit, 
     Plus, 
@@ -12,7 +13,8 @@
     Search,
     X,
     Check,
-    Edit3
+    Edit3,
+    Crown
   } from 'lucide-svelte';
 
   let pantryItems = [];
@@ -108,6 +110,13 @@
   }
 
   async function addToShoppingList(pantryItem) {
+    // Check if user has smart pantry feature
+    if (!hasFeatureAccess('smartPantry')) {
+      // Redirect to upgrade page for free users
+      window.location.href = '/upgrade';
+      return;
+    }
+
     if (!$currentMealPlan) {
       notifyError('Please create a meal plan first');
       return;
@@ -316,14 +325,16 @@
               
               <div class="flex items-center">
                 {#if editingItemId !== item.id}
-                  <button
-                    class="btn btn-sm btn-ghost text-primary mr-0"
-                    on:click={() => addToShoppingList(item)}
-                    title={$currentMealPlan ? "Add to current shopping list" : "Create a meal plan first to add to shopping list"}
-                  >
-                    <ShoppingCart class="h-4 w-4" />
-                    Buy
-                  </button>
+                  {#if hasFeatureAccess('smartPantry')}
+                    <button
+                      class="btn btn-sm btn-ghost text-primary mr-0"
+                      on:click={() => addToShoppingList(item)}
+                      title={$currentMealPlan ? "Add to current shopping list" : "Create a meal plan first to add to shopping list"}
+                    >
+                      <ShoppingCart class="h-4 w-4" />
+                      Buy
+                    </button>
+                  {/if}
                   <div class="flex items-center ml-auto -mr-4">
                     <button
                       class="btn btn-sm btn-ghost py-0 px-1"

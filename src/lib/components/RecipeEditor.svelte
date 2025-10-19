@@ -2,8 +2,11 @@
   import { createEventDispatcher } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Search, Check, Camera } from 'lucide-svelte';
+  import { X, Clock, Users, ChefHat, ChevronDown, ChevronUp, Search, Check, Camera, Crown } from 'lucide-svelte';
   import PhotoImportModal from '$lib/components/PhotoImportModal.svelte';
+  import UpgradeModal from '$lib/components/UpgradeModal.svelte';
+  import { hasFeatureAccess } from '$lib/stores/userTier.js';
+  import { goto } from '$app/navigation';
 
   export let mealId = null; // Optional - if null, user can select a meal
   export let mealName = '';
@@ -23,6 +26,9 @@
   // Import state
   let showManualEdit = false;
   let photoImportModal;
+  
+  // Upgrade modal state
+  let showUpgradeModal = false;
   
   // Meal selection state (when mealId is not provided)
   let allMeals = [];
@@ -149,6 +155,15 @@
     showManualEdit = !showManualEdit;
   }
 
+  function handlePhotoImportClick() {
+    if (hasFeatureAccess('photoImport')) {
+      photoImportModal.open();
+    } else {
+      // Show upgrade modal
+      showUpgradeModal = true;
+    }
+  }
+
   function handlePhotoImports(event) {
     const { imports, importMode, selectedMealId: importedMealId } = event.detail || {};
     if (!imports || imports.length === 0) return;
@@ -201,11 +216,14 @@
   <div class="mt-2">
     <button 
       class="btn btn-primary w-full"
-      on:click={() => photoImportModal.open()}
+      on:click={handlePhotoImportClick}
       type="button"
     >
       <Camera class="h-5 w-5 mr-2" />
       Import from Photo
+      {#if !hasFeatureAccess('photoImport')}
+        <span class="ml-2 text-xs bg-white/20 px-2 py-1 rounded">Plus Only</span>
+      {/if}
     </button>
   </div>
 
@@ -217,18 +235,19 @@
 
     <!-- Manual Edit Accordion -->
     <div class="mt-4">
-      <button 
-        class="w-full flex items-center justify-between p-3 text-sm text-primary hover:bg-primary/5 rounded-lg transition-colors border border-primary/20"
+      <button
+        class="w-full flex items-center justify-between p-3 text-sm hover:bg-primary/5 rounded-lg transition-colors border border-primary/20"
+        style="background-color: {showManualEdit ? 'var(--primary)' : 'transparent'};"
         on:click={toggleManualEdit}
       >
         <div class="flex items-center gap-2">
-          <ChefHat class="h-4 w-4 text-primary" />
-          <span class="font-medium">{recipe ? 'Manual Edit' : 'Manual Entry'}</span>
+          <ChefHat class="h-4 w-4 {showManualEdit ? 'text-white' : 'text-primary'}" />
+          <span class="font-medium {showManualEdit ? 'text-white' : 'text-primary'}">{recipe ? 'Manual Edit' : 'Manual Entry'}</span>
         </div>
         {#if showManualEdit}
-          <ChevronUp class="h-4 w-4" />
+          <ChevronUp class="h-4 w-4 text-white" />
         {:else}
-          <ChevronDown class="h-4 w-4" />
+          <ChevronDown class="h-4 w-4 text-primary" />
         {/if}
       </button>
 
@@ -472,4 +491,11 @@
       </div>
     {/if}
   </div>
+
+  <!-- Upgrade Modal -->
+  <UpgradeModal 
+    bind:isOpen={showUpgradeModal}
+    triggerSource="photo-import"
+    on:close={() => showUpgradeModal = false}
+  />
 </div>

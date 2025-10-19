@@ -7,6 +7,9 @@
   import MealPlanManager from '$lib/components/MealPlanManager.svelte';
   import StoreTabs from '$lib/components/StoreTabs.svelte';
   import AddItem from '$lib/components/AddItem.svelte';
+  import { needsUpgradeForLimit } from '$lib/stores/userTier.js';
+  import { goto } from '$app/navigation';
+  import UpgradeModal from '$lib/components/UpgradeModal.svelte';
 
   export let data;
 
@@ -20,6 +23,7 @@
   let lastLoadedPlanId = null;
   let ingredientsLoaded = false;
   let showMealPlanManager = false;
+  let showUpgradeModal = false;
 
   // Load initial data
   onMount(async () => {
@@ -90,6 +94,51 @@
         ingredients = ingredientsResult.data;
         lastLoadedPlanId = $currentMealPlan.id;
         console.log('loadIngredientsForPlan: Loaded existing ingredients:', ingredients.length, 'items');
+        
+        // Load shared items for this meal plan
+        try {
+          console.log('loadIngredientsForPlan: About to fetch shared items for meal plan:', $currentMealPlan.id);
+          const sharedItemsResult = await api.getSharedItemsForMealPlan($currentMealPlan.id);
+          console.log('loadIngredientsForPlan: Shared items API result:', sharedItemsResult);
+          if (sharedItemsResult.success && sharedItemsResult.data.length > 0) {
+            console.log('loadIngredientsForPlan: Raw shared items data:', sharedItemsResult.data);
+            // Add shared items to the ingredients list
+            const sharedItems = sharedItemsResult.data.map(item => ({
+              id: `shared_${item.id}`,
+              name: item.name,
+              quantity: item.quantity,
+              store_id: null, // Shared items go in the "List" tab
+              source_recipe_id: null,
+              created_at: item.created_at,
+              is_shared_item: true,
+              shared_item_id: item.id,
+              shared_by: item.created_by
+            }));
+            console.log('loadIngredientsForPlan: Mapped shared items:', sharedItems);
+            ingredients = [...ingredients, ...sharedItems];
+            console.log('loadIngredientsForPlan: Added shared items:', sharedItems.length, 'items');
+          }
+        } catch (error) {
+          console.error('loadIngredientsForPlan: Error loading shared items:', error);
+        }
+
+        // Load comments for ingredients
+        try {
+          console.log('loadIngredientsForPlan: About to fetch comments for meal plan:', $currentMealPlan.id);
+          const commentsResult = await api.getCommentsForMealPlan($currentMealPlan.id);
+          console.log('loadIngredientsForPlan: Comments API result:', commentsResult);
+          if (commentsResult.success && commentsResult.data) {
+            console.log('loadIngredientsForPlan: Raw comments data:', commentsResult.data);
+            // Attach comments to ingredients
+            ingredients = ingredients.map(ingredient => ({
+              ...ingredient,
+              comments: commentsResult.data[ingredient.id] || []
+            }));
+            console.log('loadIngredientsForPlan: Attached comments to ingredients');
+          }
+        } catch (error) {
+          console.error('loadIngredientsForPlan: Error loading comments:', error);
+        }
         
         // Only regenerate if no ingredients exist (first time loading this plan)
         if (ingredients.length === 0) {
@@ -204,6 +253,13 @@
       return;
     }
 
+    // Check if user has reached the meal plan limit
+    if (needsUpgradeForLimit('maxMealPlans', $mealPlans.length)) {
+      // Redirect to upgrade page
+      goto('/upgrade');
+      return;
+    }
+
     try {
       console.log('Creating meal plan with selections:', sels);
       const planData = {
@@ -271,6 +327,12 @@
   async function handleIngredientUpdated(updatedIngredient) {
     console.log('handleIngredientUpdated called with:', updatedIngredient);
     console.log('Current ingredients before update:', ingredients.length);
+    
+    // Don't reload if this is a shared item removal (handled locally)
+    if (updatedIngredient.detail && updatedIngredient.detail.removed && updatedIngredient.detail.id && updatedIngredient.detail.id.startsWith('shared_')) {
+      console.log('Skipping reload for shared item removal:', updatedIngredient.detail.id);
+      return;
+    }
     
     // Instead of trying to update the local state, reload from server
     if ($currentMealPlan) {
@@ -442,6 +504,7 @@
     console.log('MealPlanManager close event');
     showMealPlanManager = false;
   }}
+  bind:showUpgradeModal={showUpgradeModal}
   on:plan-created={() => {
     console.log('MealPlanManager plan-created event');
     showMealPlanManager = false;
@@ -457,5 +520,11 @@
     showMealPlanManager = false;
     loadMealPlans();
   }}
+/>
+
+<!-- Upgrade Modal -->
+<UpgradeModal 
+  bind:isOpen={showUpgradeModal}
+  triggerSource="meal-plan-limit"
 />
 

@@ -2,8 +2,10 @@
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import { api } from '$lib/api.js';
   import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
-  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, ListChecks, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar, SquareArrowRight } from 'lucide-svelte';
+  import { Store, Plus, ChevronUp, ChevronDown, CheckSquare, Square, ArrowRightLeft, ListChecks, HelpCircle, ChevronLeft, ChevronRight, ChefHat, Calendar, SquareArrowRight, Redo, X } from 'lucide-svelte';
   import AddItem from './AddItem.svelte';
+  import ShareShoppingListModal from './ShareShoppingListModal.svelte';
+  import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
   const dispatch = createEventDispatcher();
 
@@ -18,6 +20,39 @@
   let showLeftChevron = false;
   let showRightChevron = false;
   let categoryOrder = {}; // Store custom category order per store
+  let showShareModal = false;
+  
+  // Track locally removed shared items
+  let removedSharedItems = [];
+  
+  // Load removed items from localStorage on component mount
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('removedSharedItems');
+    if (stored) {
+      try {
+        removedSharedItems = JSON.parse(stored);
+        console.log('Loaded removed items from localStorage:', removedSharedItems);
+      } catch (e) {
+        console.error('Error loading removed items from localStorage:', e);
+      }
+    }
+  }
+  
+  // Function to save removed items to localStorage
+  function saveRemovedItems() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('removedSharedItems', JSON.stringify(removedSharedItems));
+      console.log('Saved removed items to localStorage:', removedSharedItems);
+    }
+  }
+  
+  // Function to restore a removed shared item
+  function restoreSharedItem(ingredientId) {
+    removedSharedItems = removedSharedItems.filter(id => id !== ingredientId);
+    saveRemovedItems();
+    console.log('Restored shared item:', ingredientId);
+    console.log('Removed items array:', removedSharedItems);
+  }
   
   const categories = ['Produce', 'Meat & Seafood', 'Dairy', 'Pantry', 'Frozen', 'Bakery', 'Other'];
 
@@ -197,11 +232,24 @@
   }
 
   // Group ingredients by store and combine duplicates
-  $: ingredientsByStore = ingredients.reduce((acc, ingredient) => {
-    const storeId = ingredient.store_id || 'unassigned';
-    if (!acc[storeId]) {
-      acc[storeId] = [];
-    }
+  $: ingredientsByStore = ingredients
+    .filter(ingredient => {
+      // Filter out removed shared items
+      if (ingredient.id.startsWith('shared_')) {
+        const isRemoved = removedSharedItems.includes(ingredient.id);
+        console.log('FILTER: Checking shared item:', ingredient.id, 'name:', ingredient.name, 'isRemoved:', isRemoved, 'removedArray:', removedSharedItems);
+        if (isRemoved) {
+          console.log('FILTER: Filtering out removed shared item:', ingredient.name);
+          return false;
+        }
+      }
+      return true;
+    })
+    .reduce((acc, ingredient) => {
+      const storeId = ingredient.store_id || 'unassigned';
+      if (!acc[storeId]) {
+        acc[storeId] = [];
+      }
     
     const coreName = extractCoreIngredient(ingredient.name);
     
@@ -267,6 +315,32 @@
   async function toggleIngredient(ingredientId, field) {
     try {
       console.log('Toggling ingredient:', ingredientId, field);
+      
+      // Find the ingredient to check if it's a shared item
+      const ingredient = ingredients.find(ing => ing.id === ingredientId);
+      
+      // Check if this is a shared item
+      if (ingredient && ingredient.is_shared_item) {
+        console.log('This is a shared item, handling differently');
+        // For shared items, we'll remove them from the list (veto/cancel)
+        console.log('Removing shared item:', ingredient);
+        
+        // Add to removed array
+        if (!removedSharedItems.includes(ingredientId)) {
+          removedSharedItems = [...removedSharedItems, ingredientId];
+          saveRemovedItems();
+          console.log('Added to removed array:', ingredientId);
+          console.log('Removed items array:', removedSharedItems);
+        }
+        
+        // Dispatch event to notify parent
+        dispatch('ingredient-updated', { id: ingredientId, removed: true });
+        
+        notifySuccess(`Removed "${ingredient.name}" from shopping list`);
+        return;
+      }
+      
+      // Handle regular ingredients normally
       const result = await api.toggleIngredient(ingredientId, field);
       console.log('Toggle result:', result);
       if (result.success) {
@@ -285,6 +359,23 @@
   async function moveIngredient(ingredientId, newStoreId, suppressToast = false) {
     try {
       console.log('Moving ingredient:', ingredientId, 'to store:', newStoreId);
+      
+      // Check if this is a shared item
+      if (ingredientId.startsWith('shared_')) {
+        console.log('This is a shared item, updating store_id locally');
+        // For shared items, just update the store_id locally since they're not in the database
+        const ingredientIndex = ingredients.findIndex(ing => ing.id === ingredientId);
+        if (ingredientIndex >= 0) {
+          ingredients[ingredientIndex].store_id = newStoreId;
+          dispatch('ingredient-updated', ingredients[ingredientIndex]);
+          if (!suppressToast) {
+            notifySuccess(`Moved "${ingredients[ingredientIndex].name}" to ${newStoreId === 'unassigned' ? 'List' : 'store'}`);
+          }
+        }
+        return;
+      }
+      
+      // Handle regular ingredients normally
       const result = await api.moveIngredient(ingredientId, newStoreId);
       console.log('Move result:', result);
       if (result.success) {
@@ -561,14 +652,30 @@
     <!-- Store Content -->
     <div class="px-3 py-4 pb-2">
       {#if activeStoreId}
-               <div class="flex items-center justify-between mb-4">
+               <div class="flex items-center justify-between -mt-2 mb-4">
                  <h3 class="text-lg font-semibold text-primary">
                    {getStoreName(activeStoreId)}
                    <span class="text-sm font-normal text-primary/70 ml-2">
                      ({getIngredientCount(activeStoreId)} items)
                    </span>
                  </h3>
-          {#if activeStoreId !== 'unassigned'}
+                 {#if activeStoreId === 'unassigned'}
+                   <div class="text-xs text-primary/80 -mb-6 max-w-60 text-right">
+                    <div class="flex text-right items-center justify-end mt-0">
+                      <button 
+                        class="btn-link text-xs"
+                        on:click={() => showShareModal = true}
+                      >
+                        Share Shopping List
+                      </button>
+                    </div>
+                     <div class="flex items-center justify-end gap-1 text-gray-400">
+                       Reorder sections based on store layout!
+                       <Redo class="h-4 w-4 mt-6 transform rotate-90" />
+                     </div>
+                   </div>
+                 {/if}
+          {#if activeStoreId !== 'unassigned' && hasFeatureAccess('smartPantry')}
             <button
               class="btn btn-sm btn-primary"
               on:click={() => showAddItem = !showAddItem}
@@ -671,45 +778,64 @@
                 <div class="w-8 text-right">Store</div>
               </div>
               
-              <div class="space-y-1" style="gap: 1px;">
+              <div class="space-y-0" style="gap: 0px;">
                 {#each categoryIngredients as ingredient}
-                  <div class="flex items-start gap-3 px-0 py-0 bg-white rounded-lg" data-testid="ingredient-{ingredient.id}">
+                  <div class="flex items-start gap-1 px-0 py-0 bg-white rounded-lg" data-testid="ingredient-{ingredient.id}">
 
                     <!-- Ingredient Info -->
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start gap-2">
+                    <div class="flex-1 min-w-0 flex items-start">
+                      <div class="flex-1 min-w-0">
                         <span class="{ingredient.checked ? 'line-through opacity-60' : ''}">
                           {#if ingredient.amount}
                             <span class="text-sm text-primary/70">
                               {formatAmount(ingredient.amount)}&nbsp;{ingredient.unit || ''}
                             </span>
                           {/if}
-                          <span class="text-sm text-primary/70" data-testid="ingredient-name-{ingredient.id}">
+                        <span class="text-sm text-primary/70" data-testid="ingredient-name-{ingredient.id}">
+                          {#if ingredient.is_shared_item && ingredient.quantity}
+                            {ingredient.quantity} {extractCoreIngredient(ingredient.name)}
+                          {:else}
                             {extractCoreIngredient(ingredient.name)}
-                          </span>
-                          {#if ingredient.is_custom}
-                            <span class="badge badge-sm badge-secondary">Custom</span>
-                          {/if}
-                          {#if ingredient.sourceRecipes && ingredient.sourceRecipes.length > 1}
-                            <span class="badge badge-sm badge-outline badge-primary">({ingredient.sourceRecipes.length} meals)</span>
                           {/if}
                         </span>
-                        {#if ingredient.checked}
-                          <span class="text-xs text-primary/60 ml-1">have this</span>
+                        {#if ingredient.is_custom}
+                          <span class="badge badge-sm badge-secondary">Custom</span>
                         {/if}
-                      </div>
+                        {#if ingredient.is_shared_item}
+                          <span class="badge badge-sm bg-primary/10 text-primary">Shared by {ingredient.shared_by}</span>
+                        {/if}
+                        {#if ingredient.sourceRecipes && ingredient.sourceRecipes.length > 1}
+                          <span class="badge badge-sm badge-outline badge-primary">{ingredient.sourceRecipes.length} meals</span>
+                        {/if}
+                        <!-- Comments inline -->
+                        {#if ingredient.comments && ingredient.comments.length > 0}
+                          {#each ingredient.comments as comment}
+                            <span class="text-xs text-gray-500 ml-2">
+                              <span class="font-medium text-gray-500">{comment.created_by}:</span> {comment.comment}
+                            </span>
+                          {/each}
+                        {/if}
+                      </span>
+                      {#if ingredient.checked}
+                        <span class="text-xs text-primary/60 ml-1">have this</span>
+                      {/if}
+                    </div>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-start gap-0.5 flex-shrink-0 pr-1 pt-0 pb-0.5 -mt-1">
-                      <!-- Have Toggle -->
+                    <div class="flex items-start gap-0.5 flex-shrink-0 ml-1 pr-1 pt-0 pb-0.5 -mt-1">
+                      <!-- Have Toggle / Remove Shared Item -->
                       <button
                         class="btn btn-ghost btn-sm p-1 text-primary hover:bg-primary/10"
                         on:click={() => toggleIngredient(ingredient.id, 'checked')}
-                        title={ingredient.checked ? 'Mark as need to buy' : 'Mark as already have'}
+                        title={ingredient.is_shared_item ? 'Remove shared item' : (ingredient.checked ? 'Mark as need to buy' : 'Mark as already have')}
                         data-testid="toggle-have-{ingredient.id}"
                       >
-                        <ListChecks class="h-5 w-5 text-primary" />
+                        {#if ingredient.is_shared_item}
+                          <X class="h-5 w-5 text-primary" />
+                        {:else}
+                          <ListChecks class="h-5 w-5 text-primary" />
+                        {/if}
                       </button>
 
                       <!-- Move to Store -->
@@ -767,13 +893,15 @@
               <!-- Store tab empty state -->
               <Store class="h-12 w-12 mx-auto text-primary/40 mb-4" />
               <p class="text-primary/60">No ingredients in this store yet</p>
-              <button
-                class="btn btn-primary btn-sm mt-4"
-                on:click={() => showAddItem = true}
-              >
-                <Plus class="h-4 w-4" />
-                Add First Item
-              </button>
+              {#if hasFeatureAccess('smartPantry')}
+                <button
+                  class="btn btn-primary btn-sm mt-4"
+                  on:click={() => showAddItem = true}
+                >
+                  <Plus class="h-4 w-4" />
+                  Add First Item
+                </button>
+              {/if}
             {/if}
           </div>
         {/if}
@@ -781,3 +909,10 @@
     </div>
   </div>
 </div>
+
+<!-- Share Shopping List Modal -->
+<ShareShoppingListModal 
+  bind:isOpen={showShareModal}
+  mealPlanId={currentMealPlan?.id}
+  on:close={() => showShareModal = false}
+/>
