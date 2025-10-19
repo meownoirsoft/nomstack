@@ -12,7 +12,7 @@ export async function GET() {
     });
 
     // Test LemonSqueezy API connection
-    const stores = await lemonSqueezySetup.stores.get();
+    const stores = await lemonSqueezySetup.getStores();
     
     if (stores.error) {
       return json({ 
@@ -36,7 +36,7 @@ export async function GET() {
     }
 
     // Get variants for the store
-    const variants = await lemonSqueezySetup.variants.get({ storeId });
+    const variants = await lemonSqueezySetup.getVariants({ storeId });
     
     return json({
       success: true,

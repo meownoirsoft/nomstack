@@ -60,7 +60,7 @@ export async function POST({ request }) {
     }
 
     // Create LemonSqueezy checkout using the correct API
-    const checkout = await lemonSqueezySetup.checkout.create({
+    const checkout = await lemonSqueezySetup.createCheckout({
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId: variantId,
       checkoutData: {
