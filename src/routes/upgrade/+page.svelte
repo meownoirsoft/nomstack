@@ -121,11 +121,11 @@
         
         // Use hardcoded fallback
         console.log('Using hardcoded fallback variant ID:', fallbackVariantId);
-        const response = await fetch('/api/lemonsqueezy/checkout', {
+        
+        // Use the API client for authentication
+        const { apiRequest } = await import('$lib/api.js');
+        const response = await apiRequest('/api/lemonsqueezy/checkout', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
           body: JSON.stringify({
             variantId: fallbackVariantId,
             successUrl: `${window.location.origin}/upgrade/success`,
@@ -133,22 +133,18 @@
           })
         });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create checkout session');
+        if (response.error) {
+          throw new Error(response.error);
         }
         
-        const data = await response.json();
-        window.location.href = data.url;
+        window.location.href = response.url;
         return;
       }
 
-      // Create LemonSqueezy checkout session
-      const response = await fetch('/api/lemonsqueezy/checkout', {
+      // Create LemonSqueezy checkout session using API client
+      const { apiRequest } = await import('$lib/api.js');
+      const response = await apiRequest('/api/lemonsqueezy/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           variantId: variantId,
           successUrl: `${window.location.origin}/upgrade/success`,
@@ -156,12 +152,11 @@
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create checkout session');
+      if (response.error) {
+        throw new Error(response.error);
       }
 
-      const { url } = await response.json();
-      window.location.href = url;
+      window.location.href = response.url;
     } catch (err) {
       console.error('Error creating checkout session:', err);
       error = err.message || 'Failed to start upgrade process. Please try again.';

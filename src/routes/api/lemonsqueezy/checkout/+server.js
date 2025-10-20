@@ -42,11 +42,20 @@ export async function POST({ request }) {
       }
     );
 
-    // Get the user from the session
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser();
+    // Get the user from the request headers
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return json({ error: 'Unauthorized - No auth token provided' }, { status: 401 });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
-      return json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('Auth error:', authError);
+      return json({ error: 'Unauthorized - Invalid token' }, { status: 401 });
     }
 
     // Check if user already has an active subscription
