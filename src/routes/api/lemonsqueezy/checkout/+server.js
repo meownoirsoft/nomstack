@@ -4,11 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST({ request }) {
   try {
     // Dynamic import of LemonSqueezy
-    const { LemonSqueezy } = await import('@lemonsqueezy/lemonsqueezy.js');
+    const { lemonSqueezySetup, createCheckout } = await import('@lemonsqueezy/lemonsqueezy.js');
     
-    // Initialize LemonSqueezy with the correct constructor
-    const lemonSqueezy = new LemonSqueezy({
+    // Initialize LemonSqueezy
+    lemonSqueezySetup({
       apiKey: process.env.LEMONSQUEEZY_API_KEY,
+      onError: (error) => console.error('LemonSqueezy Error:', error)
     });
 
     const requestData = await request.json();
@@ -58,10 +59,10 @@ export async function POST({ request }) {
       return json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
-    // Debug: Log the lemonSqueezy object to see what methods are available
-    console.log('lemonSqueezy object keys:', Object.keys(lemonSqueezy));
+    // Debug: Log the imported functions
+    console.log('createCheckout function available:', typeof createCheckout === 'function');
     
-    // Create LemonSqueezy checkout using the correct API - try different method names
+    // Create LemonSqueezy checkout using the imported function
     const checkoutParams = {
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId: variantId,
@@ -81,16 +82,10 @@ export async function POST({ request }) {
     };
 
     let checkout;
-    if (typeof lemonSqueezy.createCheckout === 'function') {
-      checkout = await lemonSqueezy.createCheckout(checkoutParams);
-    } else if (typeof lemonSqueezy.checkout?.create === 'function') {
-      checkout = await lemonSqueezy.checkout.create(checkoutParams);
-    } else if (typeof lemonSqueezy.checkout?.createCheckout === 'function') {
-      checkout = await lemonSqueezy.checkout.createCheckout(checkoutParams);
-    } else if (typeof lemonSqueezy.checkout === 'function') {
-      checkout = await lemonSqueezy.checkout(checkoutParams);
+    if (typeof createCheckout === 'function') {
+      checkout = await createCheckout(checkoutParams);
     } else {
-      throw new Error('No valid checkout method found. Available methods: ' + Object.keys(lemonSqueezy));
+      throw new Error('createCheckout function not available');
     }
 
     if (checkout.error) {

@@ -3,29 +3,23 @@ import { json } from '@sveltejs/kit';
 export async function GET() {
   try {
     // Dynamic import of LemonSqueezy
-    const { LemonSqueezy } = await import('@lemonsqueezy/lemonsqueezy.js');
+    const { lemonSqueezySetup, getStores, getVariants } = await import('@lemonsqueezy/lemonsqueezy.js');
     
-    // Initialize LemonSqueezy with the correct constructor
-    const lemonSqueezy = new LemonSqueezy({
+    // Initialize LemonSqueezy
+    lemonSqueezySetup({
       apiKey: process.env.LEMONSQUEEZY_API_KEY,
+      onError: (error) => console.error('LemonSqueezy Error:', error)
     });
 
-    // Debug: Log the lemonSqueezy object to see what methods are available
-    console.log('lemonSqueezy object keys:', Object.keys(lemonSqueezy));
-    console.log('lemonSqueezy object:', lemonSqueezy);
+    // Debug: Log the imported functions
+    console.log('Available functions:', { getStores: typeof getStores, getVariants: typeof getVariants });
 
-    // Test LemonSqueezy API connection - try different method names
+    // Test LemonSqueezy API connection using imported functions
     let stores;
-    if (typeof lemonSqueezy.getStores === 'function') {
-      stores = await lemonSqueezy.getStores();
-    } else if (typeof lemonSqueezy.stores?.get === 'function') {
-      stores = await lemonSqueezy.stores.get();
-    } else if (typeof lemonSqueezy.stores?.list === 'function') {
-      stores = await lemonSqueezy.stores.list();
-    } else if (typeof lemonSqueezy.stores === 'function') {
-      stores = await lemonSqueezy.stores();
+    if (typeof getStores === 'function') {
+      stores = await getStores();
     } else {
-      throw new Error('No valid stores method found. Available methods: ' + Object.keys(lemonSqueezy));
+      throw new Error('getStores function not available');
     }
     
     if (stores.error) {
@@ -49,18 +43,12 @@ export async function GET() {
       }, { status: 404 });
     }
 
-    // Get variants for the store - try different method names
+    // Get variants for the store using imported function
     let variants;
-    if (typeof lemonSqueezy.getVariants === 'function') {
-      variants = await lemonSqueezy.getVariants({ storeId });
-    } else if (typeof lemonSqueezy.variants?.get === 'function') {
-      variants = await lemonSqueezy.variants.get({ storeId });
-    } else if (typeof lemonSqueezy.variants?.list === 'function') {
-      variants = await lemonSqueezy.variants.list({ storeId });
-    } else if (typeof lemonSqueezy.variants === 'function') {
-      variants = await lemonSqueezy.variants({ storeId });
+    if (typeof getVariants === 'function') {
+      variants = await getVariants({ storeId });
     } else {
-      console.warn('No valid variants method found, skipping variants check');
+      console.warn('getVariants function not available, skipping variants check');
       variants = { data: { data: [] } };
     }
     
