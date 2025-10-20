@@ -22,8 +22,11 @@ export async function POST({ request }) {
     console.log('Environment variables:', {
       hasApiKey: !!process.env.LEMONSQUEEZY_API_KEY,
       hasStoreId: !!process.env.LEMONSQUEEZY_STORE_ID,
+      storeId: process.env.LEMONSQUEEZY_STORE_ID,
       nodeEnv: process.env.NODE_ENV
     });
+    console.log('All LEMONSQUEEZY env vars:', Object.keys(process.env).filter(key => key.includes('LEMONSQUEEZY')));
+    console.log('Raw storeId value:', JSON.stringify(process.env.LEMONSQUEEZY_STORE_ID));
 
     if (!variantId) {
       console.error('Variant ID is missing from request:', requestData);
@@ -72,6 +75,7 @@ export async function POST({ request }) {
 
     // Debug: Log available functions
     console.log('All LemonSqueezy exports:', Object.keys(lemonSqueezyModule));
+    console.log('LemonSqueezy module structure:', lemonSqueezyModule);
     
     // Create LemonSqueezy checkout - try different function names
     const checkoutParams = {
@@ -93,24 +97,50 @@ export async function POST({ request }) {
     };
 
     let checkout;
-    if (typeof lemonSqueezyModule.createCheckout === 'function') {
-      checkout = await lemonSqueezyModule.createCheckout(checkoutParams);
-    } else if (typeof lemonSqueezyModule.checkout === 'function') {
-      checkout = await lemonSqueezyModule.checkout(checkoutParams);
-    } else if (typeof lemonSqueezyModule.createCheckoutSession === 'function') {
-      checkout = await lemonSqueezyModule.createCheckoutSession(checkoutParams);
-    } else {
-      // Try to find any function that might be for checkout
-      const checkoutFunctions = Object.keys(lemonSqueezyModule).filter(key => 
-        key.toLowerCase().includes('checkout') && typeof lemonSqueezyModule[key] === 'function'
-      );
-      console.log('Checkout-related functions found:', checkoutFunctions);
-      throw new Error(`No checkout function found. Available functions: ${Object.keys(lemonSqueezyModule).join(', ')}`);
+    try {
+      if (typeof lemonSqueezyModule.createCheckout === 'function') {
+        console.log('Using createCheckout function');
+        console.log('checkoutParams (object form):', checkoutParams);
+        try {
+          checkout = await lemonSqueezyModule.createCheckout(checkoutParams);
+        } catch (e1) {
+          console.warn('Object-form createCheckout failed, retrying positional signature...', e1?.message || e1);
+          // Fallback to positional signature: (storeId, variantId, options)
+          const positionalOptions = {
+            checkoutData: checkoutParams.checkoutData,
+            checkoutOptions: checkoutParams.checkoutOptions,
+            preview: checkoutParams.preview,
+            testMode: checkoutParams.testMode
+          };
+          console.log('checkoutParams (positional):', process.env.LEMONSQUEEZY_STORE_ID, variantId, positionalOptions);
+          checkout = await lemonSqueezyModule.createCheckout(
+            process.env.LEMONSQUEEZY_STORE_ID,
+            variantId,
+            positionalOptions
+          );
+        }
+      } else if (typeof lemonSqueezyModule.checkout === 'function') {
+        console.log('Using checkout function');
+        checkout = await lemonSqueezyModule.checkout(checkoutParams);
+      } else if (typeof lemonSqueezyModule.createCheckoutSession === 'function') {
+        console.log('Using createCheckoutSession function');
+        checkout = await lemonSqueezyModule.createCheckoutSession(checkoutParams);
+      } else {
+        // Try to find any function that might be for checkout
+        const checkoutFunctions = Object.keys(lemonSqueezyModule).filter(key => 
+          key.toLowerCase().includes('checkout') && typeof lemonSqueezyModule[key] === 'function'
+        );
+        console.log('Checkout-related functions found:', checkoutFunctions);
+        throw new Error(`No checkout function found. Available functions: ${Object.keys(lemonSqueezyModule).join(', ')}`);
+      }
+    } catch (checkoutError) {
+      console.error('LemonSqueezy checkout function error:', checkoutError);
+      throw checkoutError;
     }
 
-    if (checkout.error) {
+    if (checkout?.error) {
       console.error('LemonSqueezy checkout error:', checkout.error);
-      return json({ error: 'Failed to create checkout session' }, { status: 500 });
+      return json({ error: 'Failed to create checkout session', details: checkout.error }, { status: 500 });
     }
 
     return json({ 
@@ -120,6 +150,6 @@ export async function POST({ request }) {
 
   } catch (error) {
     console.error('Error creating LemonSqueezy checkout:', error);
-    return json({ error: 'Failed to create checkout session' }, { status: 500 });
+    return json({ error: 'Failed to create checkout session', details: error?.message || String(error) }, { status: 500 });
   }
 }

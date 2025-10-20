@@ -23,7 +23,7 @@ export async function getAuthToken() {
 }
 
 // Generic API request helper with auth
-async function apiRequest(endpoint, options = {}) {
+export async function apiRequest(endpoint, options = {}) {
   const token = await getAuthToken();
   
   if (!token) {
