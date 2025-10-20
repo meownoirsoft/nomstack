@@ -70,8 +70,49 @@
       const variantId = import.meta.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID;
       console.log('Variant ID from env:', variantId);
       console.log('All env vars:', import.meta.env);
+      console.log('Environment mode:', import.meta.env.MODE);
+      console.log('Dev mode:', import.meta.env.DEV);
+      console.log('Prod mode:', import.meta.env.PROD);
       
       if (!variantId) {
+        console.error('PUBLIC_LEMONSQUEEZY_VARIANT_ID is not available in import.meta.env');
+        console.log('Available PUBLIC_ variables:', Object.keys(import.meta.env).filter(key => key.startsWith('PUBLIC_')));
+        
+        // Try to get variant ID from server-side test endpoint as fallback
+        console.log('Attempting to get variant ID from server...');
+        try {
+          const testResponse = await fetch('/api/lemonsqueezy/test');
+          const testData = await testResponse.json();
+          if (testData.success && testData.config && testData.config.variantId) {
+            console.log('Got variant ID from server:', testData.config.variantId);
+            // Use the server-provided variant ID
+            const serverVariantId = testData.config.variantId;
+            // Continue with the checkout using server variant ID
+            const response = await fetch('/api/lemonsqueezy/checkout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                variantId: serverVariantId,
+                successUrl: `${window.location.origin}/upgrade/success`,
+                cancelUrl: `${window.location.origin}/upgrade`
+              })
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to create checkout session');
+            }
+            
+            const data = await response.json();
+            window.location.href = data.url;
+            return;
+          }
+        } catch (serverError) {
+          console.error('Failed to get variant ID from server:', serverError);
+        }
+        
         throw new Error('LemonSqueezy variant ID is not configured. Please set PUBLIC_LEMONSQUEEZY_VARIANT_ID environment variable.');
       }
 

@@ -4,13 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 export async function POST({ request }) {
   try {
     // Dynamic import of LemonSqueezy
-    const { lemonSqueezySetup, createCheckout } = await import('@lemonsqueezy/lemonsqueezy.js');
+    const lemonSqueezyModule = await import('@lemonsqueezy/lemonsqueezy.js');
     
     // Initialize LemonSqueezy
-    lemonSqueezySetup({
-      apiKey: process.env.LEMONSQUEEZY_API_KEY,
-      onError: (error) => console.error('LemonSqueezy Error:', error)
-    });
+    if (lemonSqueezyModule.lemonSqueezySetup) {
+      lemonSqueezyModule.lemonSqueezySetup({
+        apiKey: process.env.LEMONSQUEEZY_API_KEY,
+        onError: (error) => console.error('LemonSqueezy Error:', error)
+      });
+    }
 
     const requestData = await request.json();
     const { variantId, successUrl, cancelUrl } = requestData;
@@ -59,10 +61,10 @@ export async function POST({ request }) {
       return json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
-    // Debug: Log the imported functions
-    console.log('createCheckout function available:', typeof createCheckout === 'function');
+    // Debug: Log available functions
+    console.log('All LemonSqueezy exports:', Object.keys(lemonSqueezyModule));
     
-    // Create LemonSqueezy checkout using the imported function
+    // Create LemonSqueezy checkout - try different function names
     const checkoutParams = {
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId: variantId,
@@ -82,10 +84,19 @@ export async function POST({ request }) {
     };
 
     let checkout;
-    if (typeof createCheckout === 'function') {
-      checkout = await createCheckout(checkoutParams);
+    if (typeof lemonSqueezyModule.createCheckout === 'function') {
+      checkout = await lemonSqueezyModule.createCheckout(checkoutParams);
+    } else if (typeof lemonSqueezyModule.checkout === 'function') {
+      checkout = await lemonSqueezyModule.checkout(checkoutParams);
+    } else if (typeof lemonSqueezyModule.createCheckoutSession === 'function') {
+      checkout = await lemonSqueezyModule.createCheckoutSession(checkoutParams);
     } else {
-      throw new Error('createCheckout function not available');
+      // Try to find any function that might be for checkout
+      const checkoutFunctions = Object.keys(lemonSqueezyModule).filter(key => 
+        key.toLowerCase().includes('checkout') && typeof lemonSqueezyModule[key] === 'function'
+      );
+      console.log('Checkout-related functions found:', checkoutFunctions);
+      throw new Error(`No checkout function found. Available functions: ${Object.keys(lemonSqueezyModule).join(', ')}`);
     }
 
     if (checkout.error) {
