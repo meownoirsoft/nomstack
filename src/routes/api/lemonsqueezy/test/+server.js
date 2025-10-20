@@ -2,24 +2,38 @@ import { json } from '@sveltejs/kit';
 
 export async function GET() {
   try {
-    // Dynamic import of LemonSqueezy
-    const { lemonSqueezySetup, getStores, getVariants } = await import('@lemonsqueezy/lemonsqueezy.js');
+    // Dynamic import of LemonSqueezy - import everything to see what's available
+    const lemonSqueezyModule = await import('@lemonsqueezy/lemonsqueezy.js');
+    
+    // Debug: Log all available exports
+    console.log('All LemonSqueezy exports:', Object.keys(lemonSqueezyModule));
+    console.log('LemonSqueezy module:', lemonSqueezyModule);
     
     // Initialize LemonSqueezy
-    lemonSqueezySetup({
-      apiKey: process.env.LEMONSQUEEZY_API_KEY,
-      onError: (error) => console.error('LemonSqueezy Error:', error)
-    });
+    if (lemonSqueezyModule.lemonSqueezySetup) {
+      lemonSqueezyModule.lemonSqueezySetup({
+        apiKey: process.env.LEMONSQUEEZY_API_KEY,
+        onError: (error) => console.error('LemonSqueezy Error:', error)
+      });
+    }
 
-    // Debug: Log the imported functions
-    console.log('Available functions:', { getStores: typeof getStores, getVariants: typeof getVariants });
-
-    // Test LemonSqueezy API connection using imported functions
+    // Test LemonSqueezy API connection - try different function names
     let stores;
-    if (typeof getStores === 'function') {
-      stores = await getStores();
+    if (typeof lemonSqueezyModule.getStores === 'function') {
+      stores = await lemonSqueezyModule.getStores();
+    } else if (typeof lemonSqueezyModule.stores === 'function') {
+      stores = await lemonSqueezyModule.stores();
+    } else if (typeof lemonSqueezyModule.listStores === 'function') {
+      stores = await lemonSqueezyModule.listStores();
+    } else if (typeof lemonSqueezyModule.getStoresList === 'function') {
+      stores = await lemonSqueezyModule.getStoresList();
     } else {
-      throw new Error('getStores function not available');
+      // Try to find any function that might be for stores
+      const storeFunctions = Object.keys(lemonSqueezyModule).filter(key => 
+        key.toLowerCase().includes('store') && typeof lemonSqueezyModule[key] === 'function'
+      );
+      console.log('Store-related functions found:', storeFunctions);
+      throw new Error(`No stores function found. Available functions: ${Object.keys(lemonSqueezyModule).join(', ')}`);
     }
     
     if (stores.error) {
@@ -43,12 +57,18 @@ export async function GET() {
       }, { status: 404 });
     }
 
-    // Get variants for the store using imported function
+    // Get variants for the store - try different function names
     let variants;
-    if (typeof getVariants === 'function') {
-      variants = await getVariants({ storeId });
+    if (typeof lemonSqueezyModule.getVariants === 'function') {
+      variants = await lemonSqueezyModule.getVariants({ storeId });
+    } else if (typeof lemonSqueezyModule.variants === 'function') {
+      variants = await lemonSqueezyModule.variants({ storeId });
+    } else if (typeof lemonSqueezyModule.listVariants === 'function') {
+      variants = await lemonSqueezyModule.listVariants({ storeId });
+    } else if (typeof lemonSqueezyModule.getVariantsList === 'function') {
+      variants = await lemonSqueezyModule.getVariantsList({ storeId });
     } else {
-      console.warn('getVariants function not available, skipping variants check');
+      console.warn('No variants function found, skipping variants check');
       variants = { data: { data: [] } };
     }
     
