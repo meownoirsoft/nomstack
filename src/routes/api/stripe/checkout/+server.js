@@ -2,21 +2,18 @@ import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-// Initialize Stripe
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-console.log('Stripe secret key loaded:', !!stripeSecretKey);
-console.log('Stripe secret key starts with:', stripeSecretKey?.substring(0, 7));
-
-if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-}
-
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2024-06-20',
-});
-
 export async function POST({ request }) {
   try {
+    // Initialize Stripe inside the function to avoid build-time issues
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+    }
+    
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2024-06-20',
+    });
+
     const requestData = await request.json();
     const { priceId, successUrl, cancelUrl } = requestData;
     
