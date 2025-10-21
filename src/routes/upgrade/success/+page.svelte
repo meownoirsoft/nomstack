@@ -8,9 +8,18 @@
   $: pageTitle = 'Welcome to Plus!';
 
   onMount(async () => {
+    // Clear any test tier to ensure real subscription status is loaded
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('nomstack-test-tier');
+    }
+    
     // Reload subscription status to reflect the new subscription
-    await import('$lib/stores/userTier.js').then(({ loadSubscriptionStatus }) => {
-      loadSubscriptionStatus();
+    await import('$lib/stores/userTier.js').then(({ loadSubscriptionStatus, userTier, TIER_TYPES }) => {
+      console.log('Loading subscription status after payment...');
+      loadSubscriptionStatus().then(() => {
+        console.log('Subscription status loaded, setting user tier to plus');
+        userTier.set(TIER_TYPES.PLUS);
+      });
     });
   });
 </script>
@@ -42,7 +51,7 @@
       <div class="grid gap-4 text-left">
         <div class="flex items-center gap-3">
           <Star class="h-5 w-5 text-primary flex-shrink-0" />
-          <span class="text-primary/80">Unlimited recipes (no more 30-recipe limit!)</span>
+          <span class="text-primary/80">Unlimited recipes (no more 50-recipe limit!)</span>
         </div>
         <div class="flex items-center gap-3">
           <Star class="h-5 w-5 text-primary flex-shrink-0" />
@@ -69,8 +78,8 @@
 
     <!-- Next Steps -->
     <div class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-6 mb-8">
-      <h3 class="text-lg font-semibold text-primary mb-4">Ready to get started?</h3>
-      <p class="text-primary/70 mb-6">
+      <h3 class="text-lg font-semibold text-white mb-4">Ready to get started?</h3>
+      <p class="text-white/90 mb-6">
         Now that you have Plus access, you can add unlimited recipes and take advantage of all premium features.
       </p>
       
@@ -83,7 +92,8 @@
           Start Planning Meals
         </button>
         <button 
-          class="btn btn-outline btn-primary"
+          class="btn bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary transition-colors"
+          style="color: white !important;"
           on:click={() => goto('/settings')}
         >
           Explore Settings

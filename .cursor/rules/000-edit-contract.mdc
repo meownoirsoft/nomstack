@@ -9,3 +9,4 @@ When you modify code:
 - If anchors don’t match, STOP and say “Patch failed – anchors not found.”
 - Do not delete HTML/CSS/markup unless explicitly asked; if you must, include a short **Deletions Rationale** list.
 - Run Prettier assumptions; keep existing imports, ordering, and file headers.
+- This is a mobile app, all your code, UI, and solutions should aim to be mobile-first

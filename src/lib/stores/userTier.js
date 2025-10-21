@@ -88,8 +88,8 @@ export const subscriptionStatus = writable({
   tier: TIER_TYPES.FREE,
   isActive: false,
   expiresAt: null,
-  lemonSqueezyCustomerId: null,
-  lemonSqueezySubscriptionId: null
+  stripeCustomerId: null,
+  stripeSubscriptionId: null
 });
 
 // Check if user has access to a specific feature
@@ -151,7 +151,7 @@ export async function loadSubscriptionStatus() {
   if (!user) return;
   
   try {
-    const response = await fetch('/api/lemonsqueezy/status');
+    const response = await fetch('/api/stripe/status');
     if (response.ok) {
       const data = await response.json();
       subscriptionStatus.set(data);
@@ -167,8 +167,8 @@ export async function loadSubscriptionStatus() {
       tier: TIER_TYPES.FREE,
       isActive: false,
       expiresAt: null,
-      lemonSqueezyCustomerId: null,
-      lemonSqueezySubscriptionId: null
+      stripeCustomerId: null,
+      stripeSubscriptionId: null
     });
     // Don't override test tier - only set if no test tier is stored
     if (!browser || !localStorage.getItem('nomstack-test-tier')) {
@@ -187,8 +187,8 @@ user.subscribe(async (currentUser) => {
       tier: TIER_TYPES.FREE,
       isActive: false,
       expiresAt: null,
-      lemonSqueezyCustomerId: null,
-      lemonSqueezySubscriptionId: null
+      stripeCustomerId: null,
+      stripeSubscriptionId: null
     });
     // Don't override test tier - only set if no test tier is stored
     if (!browser || !localStorage.getItem('nomstack-test-tier')) {

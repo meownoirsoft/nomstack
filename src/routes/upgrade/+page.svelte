@@ -67,67 +67,27 @@
     error = null;
 
     try {
-      const variantId = import.meta.env.PUBLIC_LEMONSQUEEZY_VARIANT_ID;
-      console.log('Variant ID from env:', variantId);
-      console.log('All env vars:', import.meta.env);
+      const priceId = import.meta.env.PUBLIC_STRIPE_PRICE_ID;
+      console.log('Stripe Price ID from env:', priceId);
+      console.log('All PUBLIC_ env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('PUBLIC_')));
       console.log('Environment mode:', import.meta.env.MODE);
       console.log('Dev mode:', import.meta.env.DEV);
       console.log('Prod mode:', import.meta.env.PROD);
       
-      if (!variantId) {
-        console.error('PUBLIC_LEMONSQUEEZY_VARIANT_ID is not available in import.meta.env');
+      if (!priceId) {
+        console.error('PUBLIC_STRIPE_PRICE_ID is not available in import.meta.env');
         console.log('Available PUBLIC_ variables:', Object.keys(import.meta.env).filter(key => key.startsWith('PUBLIC_')));
         
-        // Hardcoded fallback for development/testing
-        const fallbackVariantId = '1048178'; // This is the published variant ID from the test
-        console.log('Using fallback variant ID:', fallbackVariantId);
-        
-        // Try to get variant ID from server-side test endpoint as fallback
-        console.log('Attempting to get variant ID from server...');
-        try {
-          const testResponse = await fetch('/api/lemonsqueezy/test');
-          if (testResponse.ok) {
-            const testData = await testResponse.json();
-            if (testData.success && testData.config && testData.config.variantId) {
-              console.log('Got variant ID from server:', testData.config.variantId);
-              // Use the server-provided variant ID
-              const serverVariantId = testData.config.variantId;
-              // Continue with the checkout using server variant ID
-              const response = await fetch('/api/lemonsqueezy/checkout', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  variantId: serverVariantId,
-                  successUrl: `${window.location.origin}/upgrade/success`,
-                  cancelUrl: `${window.location.origin}/upgrade`
-                })
-              });
-              
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create checkout session');
-              }
-              
-              const data = await response.json();
-              window.location.href = data.url;
-              return;
-            }
-          }
-        } catch (serverError) {
-          console.error('Failed to get variant ID from server:', serverError);
-        }
-        
-        // Use hardcoded fallback
-        console.log('Using hardcoded fallback variant ID:', fallbackVariantId);
+        // Use your actual Stripe price ID from environment
+        const fallbackPriceId = 'price_1SKfygCbySKCe8QoeDftBZY3'; // Your actual Stripe price ID
+        console.log('Using fallback price ID:', fallbackPriceId);
         
         // Use the API client for authentication
         const { apiRequest } = await import('$lib/api.js');
-        const response = await apiRequest('/api/lemonsqueezy/checkout', {
+        const response = await apiRequest('/api/stripe/checkout', {
           method: 'POST',
           body: JSON.stringify({
-            variantId: fallbackVariantId,
+            priceId: fallbackPriceId,
             successUrl: `${window.location.origin}/upgrade/success`,
             cancelUrl: `${window.location.origin}/upgrade`
           })
@@ -141,12 +101,12 @@
         return;
       }
 
-      // Create LemonSqueezy checkout session using API client
+      // Create Stripe checkout session using API client
       const { apiRequest } = await import('$lib/api.js');
-      const response = await apiRequest('/api/lemonsqueezy/checkout', {
+      const response = await apiRequest('/api/stripe/checkout', {
         method: 'POST',
         body: JSON.stringify({
-          variantId: variantId,
+          priceId: priceId,
           successUrl: `${window.location.origin}/upgrade/success`,
           cancelUrl: `${window.location.origin}/upgrade`
         })
