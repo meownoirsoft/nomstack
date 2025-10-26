@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
 export async function POST({ request, getClientAddress }) {
+  console.log('=== WEBHOOK RECEIVED ===');
+  console.log('Request URL:', request.url);
+  console.log('Request method:', request.method);
+  console.log('Headers:', Object.fromEntries(request.headers.entries()));
+  
   try {
     // Initialize Stripe inside the function to avoid build-time issues
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -57,27 +62,40 @@ export async function POST({ request, getClientAddress }) {
       return json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    console.log('Stripe webhook event:', event.type);
+        console.log('Stripe webhook event:', event.type);
+        console.log('Event data:', JSON.stringify(event.data, null, 2));
+        
+        // Log all event types we receive
+        console.log('=== WEBHOOK EVENT SUMMARY ===');
+        console.log('Event type:', event.type);
+        console.log('Event ID:', event.id);
+        console.log('Created:', new Date(event.created * 1000).toISOString());
 
     // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event);
+        console.log('Processing checkout.session.completed');
+        await handleCheckoutSessionCompleted(event, supabaseAdmin, stripe);
         break;
       case 'customer.subscription.created':
-        await handleSubscriptionCreated(event);
+        console.log('Processing customer.subscription.created');
+        await handleSubscriptionCreated(event, supabaseAdmin, stripe);
         break;
       case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event);
+        console.log('Processing customer.subscription.updated');
+        await handleSubscriptionUpdated(event, supabaseAdmin, stripe);
         break;
       case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event);
+        console.log('Processing customer.subscription.deleted');
+        await handleSubscriptionDeleted(event, supabaseAdmin);
         break;
       case 'invoice.payment_succeeded':
-        await handlePaymentSucceeded(event);
+        console.log('Processing invoice.payment_succeeded');
+        await handlePaymentSucceeded(event, supabaseAdmin);
         break;
       case 'invoice.payment_failed':
-        await handlePaymentFailed(event);
+        console.log('Processing invoice.payment_failed');
+        await handlePaymentFailed(event, supabaseAdmin);
         break;
       default:
         console.log('Unhandled event type:', event.type);
@@ -91,10 +109,20 @@ export async function POST({ request, getClientAddress }) {
   }
 }
 
-async function handleCheckoutSessionCompleted(event) {
+async function handleCheckoutSessionCompleted(event, supabaseAdmin, stripe) {
   try {
     const session = event.data.object;
     const userId = session.metadata?.user_id;
+    
+    console.log('=== CHECKOUT SESSION COMPLETED ===');
+    console.log('Session details:', {
+      id: session.id,
+      mode: session.mode,
+      payment_status: session.payment_status,
+      subscription: session.subscription,
+      customer: session.customer,
+      metadata: session.metadata
+    });
     
     if (!userId) {
       console.error('No user_id found in session metadata');
@@ -111,7 +139,7 @@ async function handleCheckoutSessionCompleted(event) {
   }
 }
 
-async function handleSubscriptionCreated(event) {
+async function handleSubscriptionCreated(event, supabaseAdmin, stripe) {
   try {
     const subscription = event.data.object;
     const customerId = subscription.customer;
@@ -129,21 +157,29 @@ async function handleSubscriptionCreated(event) {
     const subscriptionData = {
       user_id: userId,
       tier: 'plus',
-      is_active: true,
+      is_active: subscription.status === 'active' || subscription.status === 'trialing',
       stripe_customer_id: customerId,
       stripe_subscription_id: subscriptionId,
       stripe_price_id: subscription.items.data[0]?.price?.id,
       status: subscription.status,
-      created_at: new Date(subscription.created * 1000).toISOString(),
+      created_at: subscription.created ? new Date(subscription.created * 1000).toISOString() : new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      expires_at: new Date(subscription.current_period_end * 1000).toISOString(),
-      stripe_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      stripe_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      stripe_cancel_at_period_end: subscription.cancel_at_period_end,
+      expires_at: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+      stripe_current_period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
+      stripe_current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+      stripe_cancel_at_period_end: subscription.cancel_at_period_end || false,
       stripe_canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null
     };
 
-    // Insert or update subscription
+    console.log('Updating subscription with data:', {
+      userId,
+      customerId,
+      subscriptionId,
+      isTestCustomer: customerId.startsWith('cus_test_'),
+      subscriptionData: subscriptionData
+    });
+
+    // Insert or update subscription (now that we have unique constraint)
     const { error } = await supabaseAdmin
       .from('user_subscriptions')
       .upsert(subscriptionData, { 
@@ -153,15 +189,16 @@ async function handleSubscriptionCreated(event) {
 
     if (error) {
       console.error('Error creating subscription:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
     } else {
-      console.log('Subscription created for user:', userId);
+      console.log('Subscription created/updated for user:', userId);
     }
   } catch (error) {
     console.error('Error handling subscription created:', error);
   }
 }
 
-async function handleSubscriptionUpdated(event) {
+async function handleSubscriptionUpdated(event, supabaseAdmin, stripe) {
   try {
     const subscription = event.data.object;
     const subscriptionId = subscription.id;
@@ -196,7 +233,7 @@ async function handleSubscriptionUpdated(event) {
   }
 }
 
-async function handleSubscriptionDeleted(event) {
+async function handleSubscriptionDeleted(event, supabaseAdmin) {
   try {
     const subscription = event.data.object;
     const subscriptionId = subscription.id;
@@ -221,7 +258,7 @@ async function handleSubscriptionDeleted(event) {
   }
 }
 
-async function handlePaymentSucceeded(event) {
+async function handlePaymentSucceeded(event, supabaseAdmin) {
   try {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -248,7 +285,7 @@ async function handlePaymentSucceeded(event) {
   }
 }
 
-async function handlePaymentFailed(event) {
+async function handlePaymentFailed(event, supabaseAdmin) {
   try {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;

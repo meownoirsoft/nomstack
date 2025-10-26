@@ -3,23 +3,47 @@
   import { settings, updateSetting } from '$lib/stores/settings.js';
   import { currentTheme, availableThemes, updateTheme } from '$lib/stores/theme.js';
   import { user } from '$lib/stores/auth.js';
-  import { subscriptionStatus, userTier, TIER_TYPES } from '$lib/stores/userTier.js';
-  import { Settings, Filter, Store, Tag, Palette, User, LogOut, Crown, Star, ToggleLeft, ToggleRight } from 'lucide-svelte';
+  import { subscriptionStatus, userTier, TIER_TYPES, loadSubscriptionStatus } from '$lib/stores/userTier.js';
+  import { Settings, Filter, Store, Tag, Palette, User, LogOut, Crown, Star, ExternalLink } from 'lucide-svelte';
   import { notifySuccess } from '$lib/stores/notifications.js';
   import { goto } from '$app/navigation';
 
+  // Track if we've loaded subscription on this page view
+  let hasLoadedSubscription = false;
+  
+  // Load subscription status on mount
+  onMount(async () => {
+    // Check if returning from billing portal
+    const returningFromPortal = sessionStorage.getItem('returning-from-billing-portal');
+    
+    if (returningFromPortal) {
+      sessionStorage.removeItem('returning-from-billing-portal');
+      console.log('Returned from billing portal, polling for updates...');
+      pollingForUpdates = true;
+      
+      // Poll for updates up to 30 times (60 seconds)
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        console.log(`Polling attempt ${attempts}/30`);
+        await loadSubscriptionStatus();
+        
+        if (attempts >= 30) {
+          clearInterval(pollInterval);
+          pollingForUpdates = false;
+          console.log('Stopped polling');
+        }
+      }, 2000);
+    } else if (!hasLoadedSubscription) {
+      // Normal page load - load subscription once
+      await loadSubscriptionStatus();
+      hasLoadedSubscription = true;
+      console.log('Subscription status loaded:', $subscriptionStatus);
+    }
+  });
+
   // Recipe toggle removed - recipes are always enabled
 
-  // Test function to toggle between Free and Plus tiers
-  function toggleTier() {
-    if ($userTier === TIER_TYPES.FREE) {
-      userTier.set(TIER_TYPES.PLUS);
-      notifySuccess('Switched to Plus tier (test mode)');
-    } else {
-      userTier.set(TIER_TYPES.FREE);
-      notifySuccess('Switched to Free tier (test mode)');
-    }
-  }
 
   async function logout() {
     try {
@@ -30,6 +54,68 @@
       console.error('Error logging out:', error);
     }
   }
+
+  // Test function to toggle between Free and Plus tiers for development
+  function toggleTier() {
+    if ($userTier === TIER_TYPES.FREE) {
+      // Switch to Plus
+      userTier.set(TIER_TYPES.PLUS);
+      subscriptionStatus.set({
+        tier: TIER_TYPES.PLUS,
+        isActive: true,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        stripeCustomerId: 'cus_test_manual',
+        stripeSubscriptionId: 'sub_test_manual'
+      });
+      notifySuccess('Switched to Plus tier (test mode)');
+    } else {
+      // Switch to Free
+      userTier.set(TIER_TYPES.FREE);
+      subscriptionStatus.set({
+        tier: TIER_TYPES.FREE,
+        isActive: false,
+        expiresAt: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null
+      });
+      notifySuccess('Switched to Free tier (test mode)');
+    }
+  }
+
+  let loadingBillingPortal = false;
+  let pollingForUpdates = false;
+  
+  async function openBillingPortal() {
+    if (loadingBillingPortal) return;
+    
+    loadingBillingPortal = true;
+    try {
+      console.log('Opening billing portal...');
+      const { apiRequest } = await import('$lib/api.js');
+      const response = await apiRequest('/api/stripe/billing-portal', {
+        method: 'POST'
+      });
+      
+      console.log('Billing portal response:', response);
+      
+      if (response.url) {
+        // Store flag so we know to poll when returning
+        sessionStorage.setItem('returning-from-billing-portal', 'true');
+        window.location.href = response.url;
+      } else if (response.redirectToUpgrade) {
+        notifySuccess('Manual subscription detected. For billing management, please upgrade to a real subscription.');
+        goto('/upgrade');
+      } else {
+        throw new Error(response.error || 'No URL returned from billing portal');
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error);
+      notifySuccess('Failed to open billing portal. Please try again.');
+      loadingBillingPortal = false;
+    }
+  }
+
+
 
 </script>
 
@@ -76,6 +162,10 @@
           <Star class="h-6 w-6 text-primary" />
         {/if}
         <h2 class="text-xl font-bold text-primary">Subscription</h2>
+        {#if pollingForUpdates}
+          <span class="loading loading-spinner loading-sm text-primary ml-auto"></span>
+          <span class="text-sm text-primary/70">Checking for updates...</span>
+        {/if}
       </div>
       
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -98,19 +188,35 @@
               <Crown class="h-4 w-4" />
               Upgrade to Plus
             </button>
-          {/if}
-          <button
-            class="btn btn-outline btn-sm w-full sm:w-auto"
-            on:click={toggleTier}
-          >
-            {#if $userTier === TIER_TYPES.FREE}
-              <ToggleRight class="h-4 w-4" />
-              Test: Switch to Plus
-            {:else}
-              <ToggleLeft class="h-4 w-4" />
-              Test: Switch to Free
+          {:else}
+            {#if $subscriptionStatus?.stripeCustomerId && !$subscriptionStatus.stripeCustomerId.startsWith('cus_manual_') && !$subscriptionStatus.stripeCustomerId.startsWith('cus_test_')}
+              <button
+                class="btn btn-outline btn-sm w-full sm:w-auto"
+                on:click={openBillingPortal}
+                disabled={loadingBillingPortal}
+              >
+                {#if loadingBillingPortal}
+                  <span class="loading loading-spinner loading-xs"></span>
+                  Loading...
+                {:else}
+                  <ExternalLink class="h-4 w-4" />
+                  Manage Subscription
+                {/if}
+              </button>
             {/if}
-          </button>
+            <button
+              class="btn btn-outline btn-sm w-full sm:w-auto"
+              on:click={toggleTier}
+            >
+              {#if $userTier === TIER_TYPES.FREE}
+                <Crown class="h-4 w-4" />
+                Test: Switch to Plus
+              {:else}
+                <Star class="h-4 w-4" />
+                Test: Switch to Free
+              {/if}
+            </button>
+          {/if}
         </div>
       </div>
     </div>

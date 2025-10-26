@@ -1,9 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import { subscriptionStatus, TIER_TYPES, TIER_LIMITS } from '$lib/stores/userTier.js';
+  import { subscriptionStatus, userTier, TIER_TYPES, TIER_LIMITS } from '$lib/stores/userTier.js';
   import { user } from '$lib/stores/auth.js';
   import { Crown, Check, ArrowLeft, Star, Zap, Shield, Heart, Camera } from 'lucide-svelte';
   import { goto } from '$app/navigation';
+  import { PUBLIC_STRIPE_PRICE_ID } from '$env/static/public';
 
   // Page title for header
   $: pageTitle = 'Upgrade';
@@ -67,47 +68,13 @@
     error = null;
 
     try {
-      const priceId = import.meta.env.PUBLIC_STRIPE_PRICE_ID;
-      console.log('Stripe Price ID from env:', priceId);
-      console.log('All PUBLIC_ env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('PUBLIC_')));
-      console.log('Environment mode:', import.meta.env.MODE);
-      console.log('Dev mode:', import.meta.env.DEV);
-      console.log('Prod mode:', import.meta.env.PROD);
-      
-      if (!priceId) {
-        console.error('PUBLIC_STRIPE_PRICE_ID is not available in import.meta.env');
-        console.log('Available PUBLIC_ variables:', Object.keys(import.meta.env).filter(key => key.startsWith('PUBLIC_')));
-        
-        // Use your actual Stripe price ID from environment
-        const fallbackPriceId = 'price_1SKfygCbySKCe8QoeDftBZY3'; // Your actual Stripe price ID
-        console.log('Using fallback price ID:', fallbackPriceId);
-        
-        // Use the API client for authentication
-        const { apiRequest } = await import('$lib/api.js');
-        const response = await apiRequest('/api/stripe/checkout', {
-          method: 'POST',
-          body: JSON.stringify({
-            priceId: fallbackPriceId,
-            successUrl: `${window.location.origin}/upgrade/success`,
-            cancelUrl: `${window.location.origin}/upgrade`
-          })
-        });
-        
-        if (response.error) {
-          throw new Error(response.error);
-        }
-        
-        window.location.href = response.url;
-        return;
-      }
-
-      // Create Stripe checkout session using API client
+      // Use the API client for authentication
       const { apiRequest } = await import('$lib/api.js');
       const response = await apiRequest('/api/stripe/checkout', {
         method: 'POST',
         body: JSON.stringify({
-          priceId: priceId,
-          successUrl: `${window.location.origin}/upgrade/success`,
+          priceId: PUBLIC_STRIPE_PRICE_ID,
+          successUrl: `${window.location.origin}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/upgrade`
         })
       });
@@ -126,11 +93,8 @@
   }
 
   function getCurrentPlan() {
-    let currentStatus;
-    subscriptionStatus.subscribe(status => {
-      currentStatus = status;
-    })();
-    return currentStatus?.tier || TIER_TYPES.FREE;
+    // Use userTier store for consistency with settings page
+    return $userTier;
   }
 </script>
 

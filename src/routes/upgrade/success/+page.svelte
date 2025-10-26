@@ -1,27 +1,106 @@
 <script>
   import { onMount } from 'svelte';
-  import { subscriptionStatus } from '$lib/stores/userTier.js';
-  import { Crown, CheckCircle, ArrowRight, Star } from 'lucide-svelte';
+  import { subscriptionStatus, userTier, TIER_TYPES } from '$lib/stores/userTier.js';
+  import { user } from '$lib/stores/auth.js';
+  import { Crown, CheckCircle, ArrowRight, Star, AlertTriangle, RefreshCw } from 'lucide-svelte';
   import { goto } from '$app/navigation';
+  import { notifySuccess, notifyError } from '$lib/stores/notifications.js';
 
   // Page title for header
   $: pageTitle = 'Welcome to Plus!';
 
+  let subscriptionData = null;
+  let isLoading = false;
+  let showManualFix = false;
+  let debugInfo = null;
+
   onMount(async () => {
-    // Clear any test tier to ensure real subscription status is loaded
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('nomstack-test-tier');
-    }
-    
     // Reload subscription status to reflect the new subscription
-    await import('$lib/stores/userTier.js').then(({ loadSubscriptionStatus, userTier, TIER_TYPES }) => {
-      console.log('Loading subscription status after payment...');
-      loadSubscriptionStatus().then(() => {
-        console.log('Subscription status loaded, setting user tier to plus');
-        userTier.set(TIER_TYPES.PLUS);
-      });
-    });
+    console.log('Loading subscription status after payment...');
+    await loadSubscriptionStatus();
+    
+    // Always show manual fix option initially, then hide if subscription is active
+    showManualFix = true;
+    
+    // Check if subscription is active after a delay
+    setTimeout(() => {
+      if (subscriptionData && subscriptionData.isActive) {
+        showManualFix = false;
+      }
+    }, 3000);
   });
+
+  async function loadSubscriptionStatus() {
+    try {
+      const { loadSubscriptionStatus } = await import('$lib/stores/userTier.js');
+      await loadSubscriptionStatus();
+      
+      // Get the current subscription data
+      subscriptionData = $subscriptionStatus;
+      console.log('Subscription status loaded:', subscriptionData);
+      
+      if (subscriptionData && subscriptionData.isActive) {
+        userTier.set(TIER_TYPES.PLUS);
+      }
+    } catch (error) {
+      console.error('Error loading subscription status:', error);
+    }
+  }
+
+  async function processPayment() {
+    if (!$user) return;
+    
+    isLoading = true;
+    
+    try {
+      // Get the session ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+      
+      if (!sessionId) {
+        throw new Error('No session ID found in URL');
+      }
+
+      console.log('Processing payment with session ID:', sessionId);
+      
+      const { apiRequest } = await import('$lib/api.js');
+      const response = await apiRequest('/api/stripe/process-payment', {
+        method: 'POST',
+        body: { sessionId }
+      });
+
+      if (response && response.success) {
+        notifySuccess('Payment processed successfully! Your Plus subscription is now active.');
+        
+        // Refresh the page to load the subscription status
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        throw new Error(response?.error || 'Failed to process payment');
+      }
+      
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      notifyError('Failed to process payment: ' + error.message);
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function debugSubscription() {
+    try {
+      const { apiRequest } = await import('$lib/api.js');
+      const response = await apiRequest('/api/debug-subscription', {
+        method: 'GET'
+      });
+      
+      debugInfo = response;
+      console.log('Debug info:', debugInfo);
+    } catch (error) {
+      console.error('Error getting debug info:', error);
+    }
+  }
 </script>
 
 <svelte:head>
@@ -75,6 +154,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Manual Activation Section -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <Crown class="h-6 w-6 text-blue-600" />
+        <h3 class="text-lg font-semibold text-blue-800">Activate Your Plus Subscription</h3>
+      </div>
+      <p class="text-blue-700 mb-4">
+        If your subscription isn't showing as active yet, click the button below to manually activate it. 
+        This ensures you get immediate access to all Plus features.
+      </p>
+      <div class="flex gap-3">
+        <button 
+          class="btn btn-primary"
+          on:click={processPayment}
+          disabled={isLoading}
+        >
+          {#if isLoading}
+            <RefreshCw class="h-4 w-4 animate-spin" />
+            Processing...
+          {:else}
+            <Crown class="h-4 w-4" />
+            Process My Payment
+          {/if}
+        </button>
+        <button 
+          class="btn btn-outline"
+          on:click={debugSubscription}
+        >
+          Debug Subscription
+        </button>
+      </div>
+    </div>
+
+    <!-- Debug Info -->
+    {#if debugInfo}
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-8">
+        <h4 class="font-semibold mb-2">Debug Information:</h4>
+        <pre class="text-xs overflow-auto">{JSON.stringify(debugInfo, null, 2)}</pre>
+      </div>
+    {/if}
 
     <!-- Next Steps -->
     <div class="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-6 mb-8">

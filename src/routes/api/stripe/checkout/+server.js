@@ -70,6 +70,19 @@ export async function POST({ request }) {
       return json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
+    // Debug: Check the price details
+    try {
+      const price = await stripe.prices.retrieve(priceId);
+      console.log('Price details:', {
+        id: price.id,
+        type: price.type,
+        recurring: price.recurring,
+        active: price.active
+      });
+    } catch (priceError) {
+      console.error('Error retrieving price:', priceError);
+    }
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -94,10 +107,35 @@ export async function POST({ request }) {
     });
 
     console.log('Stripe checkout session created:', session.id);
-
-    return json({ 
+    console.log('Checkout session details:', {
+      id: session.id,
+      mode: session.mode,
+      payment_status: session.payment_status,
+      subscription: session.subscription,
+      customer: session.customer,
       url: session.url,
-      sessionId: session.id 
+      line_items: session.line_items,
+      subscription_data: session.subscription_data
+    });
+
+    // Check session status after creation
+    setTimeout(async () => {
+      try {
+        const updatedSession = await stripe.checkout.sessions.retrieve(session.id);
+        console.log('Session status after 5 seconds:', {
+          id: updatedSession.id,
+          payment_status: updatedSession.payment_status,
+          subscription: updatedSession.subscription,
+          customer: updatedSession.customer
+        });
+      } catch (error) {
+        console.error('Error checking session status:', error);
+      }
+    }, 5000);
+
+    return json({
+      url: session.url,
+      sessionId: session.id
     });
 
   } catch (error) {
