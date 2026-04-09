@@ -52,9 +52,12 @@
         body: JSON.stringify(newData)
       });
     }
+
+    $: emptyHomeOnboarding = page === 'all' && meals.length === 0;
   </script>
     
   <main class="flex flex-col min-h-auto">
+    {#if !emptyHomeOnboarding}
     <div class="flex items-center pr-4">
       <span class="flex-1" style="margin-left: -10px; my-0 mx-0 pl-0">
         <button class="btn btn-sm btn-ghost text-primary px-2 py-0" on:click={clearAll}>
@@ -62,7 +65,18 @@
         </button>
       </span>
     </div>
+    {/if}
     <div class="scroller flex-grow overflow-y-auto pr-4 min-h-60 max-h-screen">
+      {#if emptyHomeOnboarding}
+        <div class="flex flex-col items-center justify-center text-center px-4 py-8 min-h-[50vh] max-w-md mx-auto">
+          <p class="text-lg font-semibold text-primary">
+            The best thing to do is add a new meal.
+          </p>
+          <p class="text-sm text-base-content/70 mt-3 leading-relaxed">
+            Tap <span class="font-semibold text-primary">+ Meal</span> in the top-right corner to get started.
+          </p>
+        </div>
+      {:else}
       <ul class="mx-0 mt-2 text-primary"> 
         {#each meals as meal}
           <li class="mx-0 w-full">
@@ -84,6 +98,7 @@
           </li>
         {/each}
       </ul>
+      {/if}
     </div>
     {#if showModal}
       <EditModal {showModal} meal={mealToEdit} {selectedCats} {cats} {srcs} {meals} {updateSelections} on:close={handleModalClose} />

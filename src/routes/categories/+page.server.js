@@ -1,7 +1,7 @@
-export async function load({url}) {
-    const apiUrl = `${import.meta.env.VITE_BASE_URL}/api/cat-get`;
-    const res = await fetch(apiUrl);
-    const cats = await res.json()
-    const pathname = url.pathname;
-    return { cats, pathname };
+import { getAllCats } from '$lib/db';
+
+export async function load({ locals, url }) {
+	const cats = getAllCats(locals.user.id);
+	const pathname = url.pathname;
+	return { cats, pathname };
 }

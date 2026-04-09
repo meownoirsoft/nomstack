@@ -1,11 +1,13 @@
-export async function load({url}) {
-    const mealsRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/meal-get`);
-    const meals = await mealsRes.json();
+import { getAllMeals, getDinnerSels, getLunchSels } from '$lib/db';
 
-    const selsLunchRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/sels-get?type=lunch`);
-    const selsLunch = await selsLunchRes.json();
-
-    const selsDinnerRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/sels-get?type=dinner`);
-    const selsDinner = await selsDinnerRes.json();
-    return {meals, lunchSels: selsLunch[0].meals, dinnerSels: selsDinner[0].meals };
-  }
+export async function load({ locals }) {
+	const userId = locals.user.id;
+	const meals = getAllMeals(userId);
+	const selsLunch = getLunchSels(userId);
+	const selsDinner = getDinnerSels(userId);
+	return {
+		meals,
+		lunchSels: selsLunch[0]?.meals ?? '',
+		dinnerSels: selsDinner[0]?.meals ?? ''
+	};
+}

@@ -1,138 +1,159 @@
 import Database from 'better-sqlite3';
+import { env } from '$env/dynamic/private';
+import { runMigrate } from '$lib/migrate.js';
 
-const dbPath = import.meta.env.VITE_DB_PATH;
-const apiBaseUrl = import.meta.env.VITE_BASE_URL;
-console.log('DB Path: ',dbPath)
-console.log('API Base URL: ',apiBaseUrl)
+const dbPath = env.SQLITE_PATH ?? env.VITE_DB_PATH;
+if (!dbPath) {
+	throw new Error('Set SQLITE_PATH in .env (or legacy VITE_DB_PATH) to your SQLite database file path.');
+}
+
 const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+runMigrate(db);
 
 try {
-    // Test the connection by executing a simple query
-    const rows = db.prepare('SELECT count(*) FROM meals').all();
-    console.log(rows,' meals in db');
-
+	const rows = db.prepare('SELECT count(*) AS c FROM meals').get();
+	console.log(rows, ' meals in db');
 } catch (error) {
-    // Catch any connection errors or query issues
-    console.error('Failed to connect to the database:', error.message);
+	console.error('Failed to connect to the database:', error.message);
 }
+
+export default db;
 
 // Meals
-export function getAllMeals() {
-  return db.prepare(`SELECT * FROM meals ORDER BY name`).all();
+export function getAllMeals(userId) {
+	return db.prepare(`SELECT * FROM meals WHERE user_id = ? ORDER BY name`).all(userId);
 }
 
-export function getLunches() {
-    return db.prepare(`SELECT * FROM meals WHERE cats LIKE '%12%' ORDER BY name`).all();
+export function getLunches(userId) {
+	return db
+		.prepare(`SELECT * FROM meals WHERE user_id = ? AND cats LIKE '%12%' ORDER BY name`)
+		.all(userId);
 }
 
-export function getDinners() {
-    return db.prepare(`SELECT * FROM meals WHERE cats LIKE '%13%' ORDER BY name`).all();
+export function getDinners(userId) {
+	return db
+		.prepare(`SELECT * FROM meals WHERE user_id = ? AND cats LIKE '%13%' ORDER BY name`)
+		.all(userId);
 }
 
-export function addMeal(name, source, cats, notes) {
-  const stmt = db.prepare(`INSERT INTO meals (name, source, cats, notes) VALUES (?,?,?,?)`);
-  try {
-    stmt.run(name, source, cats, notes);
-    console.log('added meal', name);
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+export function addMeal(userId, name, source, cats, notes) {
+	const stmt = db.prepare(
+		`INSERT INTO meals (name, source, cats, notes, user_id) VALUES (?,?,?,?,?)`
+	);
+	try {
+		stmt.run(name, source, cats, notes, userId);
+		console.log('added meal', name);
+		return true;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
-export function updMeal(id, name, source, cats, notes) {
-    const stmt = db.prepare(`UPDATE meals SET name = ?, source = ?, cats = ?, notes = ? WHERE id = ?`);
-    try {
-        stmt.run(name, source, cats, notes, id);
-        console.log('updated meal', id);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+export function updMeal(userId, id, name, source, cats, notes) {
+	const stmt = db.prepare(
+		`UPDATE meals SET name = ?, source = ?, cats = ?, notes = ? WHERE id = ? AND user_id = ?`
+	);
+	try {
+		const info = stmt.run(name, source, cats, notes, id, userId);
+		console.log('updated meal', id);
+		return info.changes > 0;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
-export function delMeal(id) {
-    const stmt = db.prepare(`DELETE FROM meals WHERE id = ?`);
-    try {
-        stmt.run(id);
-        console.log('deleted meal', id);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+export function delMeal(userId, id) {
+	const stmt = db.prepare(`DELETE FROM meals WHERE id = ? AND user_id = ?`);
+	try {
+		const info = stmt.run(id, userId);
+		console.log('deleted meal', id);
+		return info.changes > 0;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
-
 
 // Cats
-export function getAllCats() {
-    return db.prepare(`SELECT * FROM cats ORDER BY name`).all();
+export function getAllCats(userId) {
+	return db.prepare(`SELECT * FROM cats WHERE user_id = ? ORDER BY name`).all(userId);
 }
 
-export function addCat(name) {
-    try {
-        const stmt = db.prepare(`INSERT INTO cats (name) VALUES (?)`);
-        stmt.run(name);
-        console.log('added cat', name);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+export function addCat(userId, name) {
+	try {
+		const stmt = db.prepare(`INSERT INTO cats (name, user_id) VALUES (?, ?)`);
+		stmt.run(name, userId);
+		console.log('added cat', name);
+		return true;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
-export function updCats(id, name) {
-    try {
-        const stmt = db.prepare(`UPDATE cats SET name = ? WHERE id = ?`);
-        stmt.run(name, id);
-        console.log('updated cat', id);
-        return true;
-    }catch (error) {
-        console.error(error);
-        return false;
-    }
+export function updCats(userId, id, name) {
+	try {
+		const stmt = db.prepare(`UPDATE cats SET name = ? WHERE id = ? AND user_id = ?`);
+		const info = stmt.run(name, id, userId);
+		console.log('updated cat', id);
+		return info.changes > 0;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
-export function delCat(id) {
-    try {
-        const stmt = db.prepare(`DELETE FROM cats WHERE id = ?`);
-        stmt.run(id);
-        console.log('deleted cat', id);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+export function delCat(userId, id) {
+	try {
+		const stmt = db.prepare(`DELETE FROM cats WHERE id = ? AND user_id = ?`);
+		const info = stmt.run(id, userId);
+		console.log('deleted cat', id);
+		return info.changes > 0;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
 // Sels
-export function getAllSels() {
-    return db.prepare(`SELECT * FROM sels WHERE type = 'all' ORDER BY type`).all();
+export function getAllSels(userId) {
+	return db
+		.prepare(`SELECT * FROM sels WHERE user_id = ? AND type = 'all' ORDER BY type`)
+		.all(userId);
 }
 
-export function getLunchSels() {
-    return db.prepare(`SELECT * FROM sels WHERE type = 'lunch' ORDER BY type`).all();
+export function getLunchSels(userId) {
+	return db
+		.prepare(`SELECT * FROM sels WHERE user_id = ? AND type = 'lunch' ORDER BY type`)
+		.all(userId);
 }
 
-export function getDinnerSels() {
-    return db.prepare(`SELECT * FROM sels WHERE type = 'dinner' ORDER BY type`).all();
+export function getDinnerSels(userId) {
+	return db
+		.prepare(`SELECT * FROM sels WHERE user_id = ? AND type = 'dinner' ORDER BY type`)
+		.all(userId);
 }
 
-export function updSels(type, meals) {
-    try {
-        const stmt = db.prepare('UPDATE sels SET meals = ? WHERE type = ?');
-        stmt.run(meals, type);
-        console.log('updated sels', type);
-        return true;
-    } catch (error) {
-        console.error(error);
-        return false;
-    }
+export function updSels(userId, type, meals) {
+	try {
+		const stmt = db.prepare(
+			'UPDATE sels SET meals = ? WHERE type = ? AND user_id = ?'
+		);
+		const info = stmt.run(meals, type, userId);
+		console.log('updated sels', type);
+		return info.changes > 0;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
 // Sources
-export function getAllSrcs() {
-    return db.prepare(`SELECT * FROM sources ORDER BY name`).all();
+export function getAllSrcs(userId) {
+	return db.prepare(`SELECT * FROM sources WHERE user_id = ? ORDER BY name`).all(userId);
 }

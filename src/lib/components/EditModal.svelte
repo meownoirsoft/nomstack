@@ -116,41 +116,59 @@
                 <Checkbox label="Dinner?" value={13} bind:selectedItems lblClass="modal-chk" />
             </label>
             <!-- CATS -->
-            <div class="categories">
-                <button class="flex w-full items-center justify-between mt-2 my-3" on:click={toggleCats}>
-                    <div class="flex-5">
-                        <div class="text-md font-bold m-0 pb-0">
+            <div class="rounded-xl border border-primary/25 bg-secondary/90 shadow-sm overflow-hidden my-3">
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-secondary transition-colors {showCats ? 'border-b border-primary/20' : ''}"
+                    on:click={toggleCats}
+                    aria-expanded={showCats}
+                >
+                    <div class="flex flex-col items-start min-w-0">
+                        <span class="text-md font-bold m-0">
                             Categories
-                            {selectedItems?.filter((item) => ![12,13].includes(item)).length > 0 ? `(${selectedItems?.filter((item) => ![12,13].includes(item)).length})` : ''}
-                        </div>
+                            {selectedItems?.filter((item) => ![12,13].includes(item)).length > 0 ? ` (${selectedItems?.filter((item) => ![12,13].includes(item)).length})` : ''}
+                        </span>
+                        <span class="text-xs font-normal opacity-70">Tap to {showCats ? 'collapse' : 'expand'}</span>
                     </div>
                     {#if showCats}
-                        <div class="ml-auto"><ChevronUp /></div>
+                        <ChevronUp class="shrink-0 opacity-80" />
                     {:else}
-                        <div class="ml-auto"><ChevronDown /></div>
+                        <ChevronDown class="shrink-0 opacity-80" />
                     {/if}
                 </button>
-                <div class={showCats ? 'cats-shown' : 'hidden'}>
-                    <div class="overflow-y-scroll h-40"> 
-                        {#each cats as cat}
-                            <Checkbox label={cat.name} value={cat.id} bind:selectedItems lblClass="modal-chk" />
-                        {/each}
+                {#if showCats}
+                    <div class="cats-shown bg-white/50 px-2 py-2">
+                        <div class="modal-collapsible-scroll max-h-40 pr-1">
+                            {#each cats as cat}
+                                <Checkbox label={cat.name} value={cat.id} bind:selectedItems lblClass="modal-chk" />
+                            {/each}
+                        </div>
                     </div>
-                </div>
+                {/if}
             </div>
             <!-- NOTES -->
-            <div class="notes">
-                <button class="flex w-full items-center justify-between mt-2 my-3" on:click={toggleNotes}>
-                    <div class="flex-5"><div class="text-md font-bold m-0 pb-0">Notes</div></div>
+            <div class="rounded-xl border border-primary/25 bg-secondary/90 shadow-sm overflow-hidden my-3">
+                <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-secondary transition-colors {showNotes ? 'border-b border-primary/20' : ''}"
+                    on:click={toggleNotes}
+                    aria-expanded={showNotes}
+                >
+                    <div class="flex flex-col items-start min-w-0">
+                        <span class="text-md font-bold m-0">Notes</span>
+                        <span class="text-xs font-normal opacity-70">Tap to {showNotes ? 'collapse' : 'expand'}</span>
+                    </div>
                     {#if showNotes}
-                        <div class="ml-auto"><ChevronUp /></div>
+                        <ChevronUp class="shrink-0 opacity-80" />
                     {:else}
-                        <div class="ml-auto"><ChevronDown /></div>
+                        <ChevronDown class="shrink-0 opacity-80" />
                     {/if}
                 </button>
-                <div class={showNotes ? 'notes-shown' : 'hidden'}>
-                    <textarea id="meal_notes" class="textarea textarea-bordered w-full m-0" rows="3" placeholder="add notes" value={meal.notes}></textarea>
-                </div>
+                {#if showNotes}
+                    <div class="notes-shown bg-white/50 px-2 py-2">
+                        <textarea id="meal_notes" class="textarea textarea-bordered w-full m-0" rows="3" placeholder="add notes" value={meal.notes}></textarea>
+                    </div>
+                {/if}
             </div>
             <div class="flex justify-end">
                 <button class="flex-1 btn btn-sm btn-outlined btn-error text-white ml-auto mr-1" on:click={confirmDelete}>Delete</button>

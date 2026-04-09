@@ -6,6 +6,12 @@ dotenv.config();
 
 export default defineConfig({
 	plugins: [sveltekit()],
+	optimizeDeps: {
+		exclude: ['better-sqlite3']
+	},
+	ssr: {
+		external: ['better-sqlite3']
+	},
 	build: {
         rollupOptions: {
             onwarn: (warning, handler) => {

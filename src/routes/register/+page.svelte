@@ -1,5 +1,4 @@
 <script>
-	export let data;
 	let username = '';
 	let password = '';
 	let errorMessage = '';
@@ -7,10 +6,10 @@
 	let showPassword = false;
 	import { Eye, EyeSlash } from 'svelte-heros-v2';
 
-	async function login() {
+	async function register() {
 		const usr = document.querySelector('.usr').value;
 		const pwd = document.querySelector('.pwd').value;
-		const response = await fetch('/api/login', {
+		const response = await fetch('/api/register', {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'Content-Type': 'application/json' },
@@ -18,15 +17,15 @@
 		});
 
 		if (response.ok) {
-			successMessage = 'Login successful. Redirecting...';
+			successMessage = 'Account created. Redirecting...';
 			await new Promise((resolve) => setTimeout(resolve, 500));
 			window.location.href = '/';
 		} else {
 			const err = await response.json();
-			errorMessage = err.error ?? 'Login failed';
+			errorMessage = err.error ?? 'Registration failed';
 			setTimeout(() => {
 				errorMessage = '';
-			}, 3000);
+			}, 4000);
 		}
 	}
 </script>
@@ -42,15 +41,15 @@
 	<input
 		type="text"
 		class="usr input input-bordered w-full text-primary px-2 my-2 focus:outline-none focus:ring-0"
-		placeholder="type username..."
+		placeholder="choose a username..."
 		bind:value={username}
 	/><br />
-	<small class="font-bold text-lg text-primary m-0 pb-0">Password:</small>
+	<small class="font-bold text-lg text-primary m-0 pb-0">Password (8+ characters):</small>
 	<span class="flex justify-end">
 		<input
 			type={showPassword ? 'text' : 'password'}
 			class="pwd flex-1 input input-bordered w-full text-primary px-2 my-2 focus:outline-none focus:ring-0"
-			placeholder="type password..."
+			placeholder="choose a password..."
 			bind:value={password}
 		/><br />
 		<button
@@ -65,10 +64,8 @@
 			{/if}
 		</button>
 	</span>
-	<button class="btn btn-block btn-primary text-white text-lg my-2" on:click={login}>Login</button>
-	{#if data.allowRegistration}
-		<p class="text-sm text-center mt-2">
-			<a href="/register" class="link link-primary">Create an account</a>
-		</p>
-	{/if}
+	<button class="btn btn-block btn-primary text-white text-lg my-2" on:click={register}>Register</button>
+	<p class="text-sm text-center mt-2">
+		<a href="/login" class="link link-primary">Back to login</a>
+	</p>
 </div>

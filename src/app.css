@@ -96,3 +96,20 @@ input[type=checkbox]:checked {
     padding-top: 0px;
     padding-bottom: 0px;
 }
+
+/* Scrollable region inside modals: only show scrollbar when needed, keep it subtle */
+.modal-collapsible-scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 51, 153, 0.35) transparent;
+}
+.modal-collapsible-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+.modal-collapsible-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(102, 51, 153, 0.35);
+    border-radius: 9999px;
+}
+.modal-collapsible-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}

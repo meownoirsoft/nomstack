@@ -8,12 +8,13 @@
         menuOpen = !menuOpen;
     }
 
-    async function logout() {
-        await fetch('/api/logout', { method: 'POST' });
+    async function logout(e) {
+        e.preventDefault();
+        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
         window.location.href = '/login';
     }
 </script>
-{#if !['/login','/print'].includes(page)}
+{#if !['/login','/register','/print'].includes(page)}
 <nav class="navbar bg-secondary my-0 py-0 m-h-8 pb-0">
     <Search />
     <!-- Mobile Menu Icon -->
@@ -29,7 +30,7 @@
                     <li><a href="/dinner" class="text-primary"><Sparkles /> Dinner</a></li>
                     <li><a href="/categories" class="text-primary"><Funnel /> Categories</a></li>
                     <li><a href="/print" class="text-primary"><Printer /> Print</a></li>
-                    <li><a href="/logout" class="text-primary" on:click={logout}><NoSymbol /> Logout</a></li>
+                    <li><a href="/login" class="text-primary" on:click={logout}><NoSymbol /> Logout</a></li>
                 </ul>
             </button>
         {/if}

@@ -1,23 +1,30 @@
-export async function load({url}) {
-  console.log('API URL: ',import.meta.env.VITE_BASE_URL)
-  const search = url.searchParams.get('search') || '';
-  const res = await fetch(`${import.meta.env.VITE_BASE_URL}/api/meal-get`);
-  const meals = await res.json();
-  if (search) {
-    meals = meals.filter(meal =>
-      meal.cats?.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-  const selsRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/sels-get`);
-  const sels = await selsRes.json();
-  const selsArr = sels[0].meals.split(',').map(meal => parseInt(meal,10))
+import {
+	getAllMeals,
+	getAllSels,
+	getAllCats,
+	getAllSrcs
+} from '$lib/db';
 
-  const catRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/cat-get`);
-  const cats = await catRes.json()
+export async function load({ locals, url }) {
+	const userId = locals.user.id;
+	const search = url.searchParams.get('search') || '';
+	let meals = getAllMeals(userId);
+	if (search) {
+		meals = meals.filter((meal) =>
+			meal.cats?.toLowerCase().includes(search.toLowerCase())
+		);
+	}
+	const selsRows = getAllSels(userId);
+	const selsRaw = selsRows[0]?.meals ?? '';
+	const selsArr = selsRaw
+		.split(',')
+		.filter(Boolean)
+		.map((meal) => parseInt(meal, 10))
+		.filter((n) => !Number.isNaN(n));
 
-  const srcRes = await fetch(`${import.meta.env.VITE_BASE_URL}/api/src-get`);
-  const srcs = await srcRes.json()
+	const cats = getAllCats(userId);
+	const srcs = getAllSrcs(userId);
 
-  const pathname = url.pathname;
-  return { meals, sels: selsArr, cats, srcs, pathname, search };
+	const pathname = url.pathname;
+	return { meals, sels: selsArr, cats, srcs, pathname, search };
 }
