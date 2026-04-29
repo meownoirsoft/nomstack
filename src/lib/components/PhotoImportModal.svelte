@@ -294,18 +294,26 @@
               </div>
             {/if}
             
+            {#if importMode === 'existing' && !selectedMealId}
+              <div class="rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
+                Pick a meal above before taking a photo or choosing one from your gallery.
+              </div>
+            {/if}
+
             <div class="grid grid-cols-2 gap-4">
               <button
                 class="btn btn-primary flex flex-col items-center gap-2 h-24"
                 on:click={handleCameraClick}
+                disabled={importMode === 'existing' && !selectedMealId}
               >
                 <Camera class="h-8 w-8 text-white" />
                 <span class="text-white">Take Photo</span>
               </button>
-              
+
               <button
                 class="btn btn-outline text-primary border-primary hover:bg-primary hover:text-white flex flex-col items-center gap-2 h-24"
                 on:click={handleGalleryClick}
+                disabled={importMode === 'existing' && !selectedMealId}
               >
                 <Upload class="h-8 w-8" />
                 <span>From Gallery</span>
