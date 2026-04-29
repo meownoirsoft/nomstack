@@ -121,16 +121,27 @@
         // exists, attach to that meal instead of creating a duplicate.
         if (selectedMealId === 'new') {
           const normalized = title.trim().toLowerCase();
-          const existingMeal = allMeals.find(
+          const matches = allMeals.filter(
             (m) => m.name && m.name.trim().toLowerCase() === normalized
           );
 
-          if (existingMeal) {
+          if (matches.length > 1) {
+            // Ambiguous: multiple meals share this exact name. Refuse to guess
+            // — make the user pick explicitly from the meal selector above.
+            loading = false;
+            notifyError(
+              `${matches.length} meals are named "${title.trim()}". Pick the one you want from the meal selector above instead of "Create new".`
+            );
+            return;
+          }
+
+          if (matches.length === 1) {
+            const existingMeal = matches[0];
             // Make sure the existing meal doesn't already have a recipe — the
             // recipes table enforces one-recipe-per-meal so a blind insert
             // would 500 with a unique-constraint error.
-            const existingRecipe = await api.getRecipe(existingMeal.id).catch(() => null);
-            if (existingRecipe && existingRecipe.id) {
+            const existingResponse = await api.getRecipe(existingMeal.id).catch(() => null);
+            if (existingResponse?.recipe?.id) {
               loading = false;
               notifyError(
                 `"${existingMeal.name}" already has a recipe. Edit it from the meal list instead of importing again.`

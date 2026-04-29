@@ -265,14 +265,25 @@
         }
     }
 
-    // Recipe functions
+    // Recipe functions. Always opens the viewer — the viewer itself handles
+    // the "no recipe yet" empty state with an Add Recipe button. We only
+    // surface a toast on actual server/network failures.
     async function openRecipeViewer() {
         try {
             const result = await api.getRecipe(meal.id);
-            currentRecipe = result.recipe;
+            // Tolerate both the current ({ success, recipe }) and legacy
+            // (recipe object directly) response shapes.
+            currentRecipe = result?.recipe !== undefined ? result.recipe : (result || null);
             showRecipeViewer = true;
         } catch (error) {
             console.error('Error loading recipe:', error);
+            // 404/no-row → just open the viewer in its empty state.
+            const msg = error?.message || '';
+            if (msg.includes('404') || msg.toLowerCase().includes('not found') || msg.includes('PGRST116')) {
+                currentRecipe = null;
+                showRecipeViewer = true;
+                return;
+            }
             notifyError('Failed to load recipe');
         }
     }
