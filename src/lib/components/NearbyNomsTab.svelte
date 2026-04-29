@@ -99,7 +99,7 @@
             </div>
             <div class="flex gap-2 mt-4">
               <button class="btn btn-primary btn-sm" on:click={addSelectedRestaurant}>
-                Add to My Noms
+                Add to My Restaurants
               </button>
               <button class="btn btn-ghost btn-sm" on:click={cancelSelection}>
                 Cancel
@@ -146,7 +146,7 @@
 
     <!-- Info Message -->
     <p class="text-center text-sm text-primary/70 -mt-2 mb-2">
-      These noms will be randomly picked in the Decider
+      Restaurants will be randomly picked in the Decider
     </p>
   </div>
   
@@ -171,7 +171,7 @@
           on:click={() => showAddModal = true}
         >
           <Plus class="h-4 w-4" />
-          Add Your First Restaurant
+          Manually Add
         </button>
       </div>
     {:else}

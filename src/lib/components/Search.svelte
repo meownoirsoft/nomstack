@@ -174,49 +174,19 @@
     {#if $eatingMode === 'out'}
         <!-- Restaurant Mode: Location Search -->
         <div class="space-y-3">
-            <!-- Location Status -->
-            {#if locationStatus === 'granted' || locationStatus === 'requesting'}
+            {#if locationStatus === 'requesting'}
+                <!-- Permission prompt in flight -->
                 <div class="text-center">
-                    <div class="flex items-center justify-center gap-2 mb-2">
-                        {#if locationStatus === 'requesting'}
-                            <div class="loading loading-spinner loading-sm text-primary"></div>
-                        {:else}
-                            <MapPin class="h-4 w-4 text-primary" />
-                        {/if}
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="loading loading-spinner loading-sm text-primary"></div>
                         <span class="text-sm font-medium text-primary/70">
-                            {#if locationStatus === 'granted'}
-                                Searching near your location
-                            {:else if locationStatus === 'requesting'}
-                                Requesting location permission...
-                            {/if}
+                            Requesting location permission...
                         </span>
                     </div>
                 </div>
-            {/if}
-
-            <!-- Location Options -->
-            {#if locationStatus === 'granted'}
-                <!-- Show location search when permission is granted -->
-                <div class="text-center">
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-primary"
-                        on:click={() => {
-                            useCustomLocation = false;
-                            customLocation = '';
-                            getCurrentLocation();
-                        }}
-                    >
-                        <MapPin class="h-4 w-4" />
-                        Use My Location
-                    </button>
-                </div>
-            {/if}
-
-
-            <!-- Custom Location Input (only when location is denied/error) -->
-            {#if locationStatus !== 'granted' && locationStatus !== 'requesting'}
-                <div class="form-control mt-2">
+            {:else if useCustomLocation}
+                <!-- Custom address mode: input is the primary control -->
+                <div class="form-control">
                     <div class="relative">
                         <input
                             type="text"
@@ -225,25 +195,88 @@
                             style="padding-top: 4px; padding-bottom: 4px;"
                             bind:value={customLocation}
                             on:input={() => {
-                                // Set custom location mode
-                                useCustomLocation = true;
-                                // Save location to localStorage
                                 saveLocation(customLocation);
-                                // Trigger search with current search term
                                 handleInput(searchTerm);
                             }}
                         />
                         <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
                             {#if customLocation && customLocation.trim()}
-                                <!-- Success indicator -->
-                                <div class="text-green-500" title="Location set successfully">
+                                <div class="text-green-500" title="Location set">
                                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
+                                <button
+                                    type="button"
+                                    class="text-primary/40 hover:text-primary/60 p-1"
+                                    on:click={() => {
+                                        customLocation = '';
+                                        saveLocation('');
+                                        handleInput(searchTerm);
+                                    }}
+                                    title="Clear address"
+                                >
+                                    <X class="h-5 w-5" />
+                                </button>
                             {/if}
+                        </div>
+                    </div>
+                    {#if locationStatus === 'granted'}
+                        <button
+                            type="button"
+                            class="text-sm text-primary hover:text-primary-focus underline underline-offset-2 py-2 px-3 mt-2 self-start"
+                            on:click={() => {
+                                useCustomLocation = false;
+                                customLocation = '';
+                                saveLocation('');
+                                getCurrentLocation();
+                            }}
+                        >
+                            Use my location instead
+                        </button>
+                    {/if}
+                </div>
+            {:else if locationStatus === 'granted'}
+                <!-- GPS active — no redundant "Use My Location" button -->
+                <div class="text-center">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <MapPin class="h-4 w-4 text-primary" />
+                        <span class="text-sm font-medium text-primary/70">Searching near your location</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="text-sm text-primary hover:text-primary-focus underline underline-offset-2 py-2 px-3"
+                        on:click={() => {
+                            useCustomLocation = true;
+                            handleInput(searchTerm);
+                        }}
+                    >
+                        Use my address instead
+                    </button>
+                </div>
+            {:else}
+                <!-- Permission denied/error — address input + retry option -->
+                <div class="form-control">
+                    <div class="relative">
+                        <input
+                            type="text"
+                            placeholder="Enter city or zip code"
+                            class="input w-full pr-20 border-primary focus:border-primary"
+                            style="padding-top: 4px; padding-bottom: 4px;"
+                            bind:value={customLocation}
+                            on:input={() => {
+                                useCustomLocation = true;
+                                saveLocation(customLocation);
+                                handleInput(searchTerm);
+                            }}
+                        />
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
                             {#if customLocation && customLocation.trim()}
-                                <!-- Clear button -->
+                                <div class="text-green-500" title="Location set">
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
                                 <button
                                     type="button"
                                     class="text-primary/40 hover:text-primary/60 p-1"
@@ -253,13 +286,20 @@
                                         saveLocation('');
                                         handleInput(searchTerm);
                                     }}
-                                    title="Clear location"
+                                    title="Clear address"
                                 >
                                     <X class="h-5 w-5" />
                                 </button>
                             {/if}
                         </div>
                     </div>
+                    <button
+                        type="button"
+                        class="text-sm text-primary hover:text-primary-focus underline underline-offset-2 py-2 px-3 mt-2 self-start"
+                        on:click={retryLocation}
+                    >
+                        Use my location instead
+                    </button>
                 </div>
             {/if}
 

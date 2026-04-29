@@ -43,7 +43,7 @@
       searchLoading = true;
       const { location, useCustomLocation, customLocation } = $locationSearchParams;
       const query = $restaurantSearchTerm;
-      
+
       if (useCustomLocation && customLocation.trim()) {
         searchResults = await searchRestaurants(query, null, customLocation);
       } else if (location) {
@@ -53,7 +53,10 @@
       }
     } catch (err) {
       console.error('Search error:', err);
-      notifyError('Failed to search restaurants. Please try again.');
+      // Surface the underlying error so misconfiguration (missing API key,
+      // wrong Referer restrictions, etc.) is debuggable from the UI.
+      const detail = err?.message || 'Unknown error';
+      notifyError(`Restaurant search failed — ${detail}`);
       searchResults = [];
     } finally {
       searchLoading = false;
@@ -275,7 +278,7 @@
       class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'my-noms' ? 'border-primary text-primary' : 'border-transparent text-primary/60 hover:text-primary/80'}"
       on:click={() => activeTab = 'my-noms'}
     >
-      My Noms
+      My Restaurants
     </button>
   </div>
 
@@ -283,12 +286,13 @@
   <div class="mt-1 flex-1 flex flex-col min-h-0">
     {#if activeTab === 'decider'}
        <!-- Decider Tab -->
-       <DeciderTab 
+       <DeciderTab
          {restaurants}
          {isDeciding}
          {randomRestaurant}
          {selectRandomRestaurant}
          {clearRandomSelection}
+         on:go-to-my-noms={() => (activeTab = 'my-noms')}
        />
     {:else if activeTab === 'my-noms'}
       <!-- Nearby Noms Tab -->
