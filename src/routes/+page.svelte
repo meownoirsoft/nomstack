@@ -8,6 +8,7 @@
   import { user, loading as authLoading, accessToken } from '$lib/stores/auth.js';
   import { loadMealFilters } from '$lib/stores/mealFilters.js';
   import { goto } from '$app/navigation';
+  import { browser } from '$app/environment';
   import { setupNewUserSeedData, userHasSeedData } from '$lib/seedData.js';
 
   export let data;
@@ -43,11 +44,12 @@
   let hasLoadedHomeData = false;
   let hasLoadedOutData = false;
   
-  // Handle eating mode changes without infinite loops
-  $: if ($eatingMode === 'home' && !hasLoadedHomeData && $user && !$authLoading) {
+  // Handle eating mode changes without infinite loops. Gate on `browser` so
+  // the relative-URL fetches don't fire during SSR.
+  $: if (browser && $eatingMode === 'home' && !hasLoadedHomeData && $user && !$authLoading) {
     hasLoadedHomeData = true;
     loadDataForCurrentMode();
-  } else if ($eatingMode === 'out' && !hasLoadedOutData && $user && !$authLoading) {
+  } else if (browser && $eatingMode === 'out' && !hasLoadedOutData && $user && !$authLoading) {
     hasLoadedOutData = true;
     loadDataForCurrentMode();
   }
@@ -178,13 +180,13 @@
   <!-- Debug section for seed data -->
   {#if $user && (!hasSeedData || meals.length === 0)}
     <div class="alert alert-warning mb-4">
-      <div class="flex items-center justify-between">
-        <div>
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+        <div class="min-w-0">
           <span class="font-bold">No data found!</span>
           <p class="text-sm">You don't have any meals, categories, or sources yet.</p>
         </div>
-        <button 
-          class="btn btn-primary btn-sm"
+        <button
+          class="btn btn-primary btn-sm shrink-0"
           on:click={setupSeedData}
           disabled={seedDataLoading}
         >

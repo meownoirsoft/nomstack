@@ -1,11 +1,9 @@
 import { json } from '@sveltejs/kit';
-import { getUserIdFromRequest } from '$lib/utils.js';
 import { getRecipe } from '$lib/db.js';
 
-export async function GET({ request, url }) {
+export async function GET({ url, locals }) {
   try {
-    const userId = getUserIdFromRequest(request);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -14,17 +12,20 @@ export async function GET({ request, url }) {
       return json({ error: 'Meal ID is required' }, { status: 400 });
     }
 
-    const recipe = await getRecipe(mealId);
-    
-    return json({ 
-      success: true, 
-      recipe 
+    const recipe = await getRecipe(mealId, locals.userId);
+
+    return json({
+      success: true,
+      recipe
     });
   } catch (error) {
     console.error('Error getting recipe:', error);
-    return json({ 
-      error: 'Failed to get recipe', 
-      details: error.message 
-    }, { status: 500 });
+    return json(
+      {
+        error: 'Failed to get recipe',
+        details: error.message
+      },
+      { status: 500 }
+    );
   }
 }

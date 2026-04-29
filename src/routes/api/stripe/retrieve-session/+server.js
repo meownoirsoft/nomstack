@@ -1,8 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
   try {
     // Initialize Stripe
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -21,31 +20,7 @@ export async function POST({ request }) {
       return json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
-
-    // Get the user from the request headers
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return json({ error: 'Unauthorized - No token provided' }, { status: 401 });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    
-    // Verify the token and get user
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.error('Auth error:', authError);
+    if (!locals.userId) {
       return json({ error: 'Unauthorized - Invalid token' }, { status: 401 });
     }
 

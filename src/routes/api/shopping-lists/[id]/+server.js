@@ -1,17 +1,15 @@
 import { json } from '@sveltejs/kit';
-import { getUserIdFromRequest } from '$lib/utils.js';
 import { updateShoppingList, deleteShoppingList } from '$lib/db.js';
 
 export async function PATCH({ request, locals, params }) {
   try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const listId = params.id;
     const listData = await request.json();
-    const result = await updateShoppingList(listId, listData);
+    const result = await updateShoppingList(listId, listData, locals.userId);
     return json(result);
   } catch (error) {
     console.error('Error updating shopping list:', error);
@@ -19,15 +17,14 @@ export async function PATCH({ request, locals, params }) {
   }
 }
 
-export async function DELETE({ request, locals, params }) {
+export async function DELETE({ locals, params }) {
   try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const listId = params.id;
-    const result = await deleteShoppingList(listId);
+    const result = await deleteShoppingList(listId, locals.userId);
     return json(result);
   } catch (error) {
     console.error('Error deleting shopping list:', error);

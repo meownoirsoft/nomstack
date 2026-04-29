@@ -1,23 +1,18 @@
-import { supabaseAdmin } from '$lib/server/supabaseClient.js';
+import { getUserIdForSession } from './server/session.js';
 
-export async function getUserIdFromRequest(request) {
-  try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return null;
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    
-    if (error || !user) {
-      return null;
-    }
-
-    return user.id;
-  } catch (error) {
-    console.error('Error getting user ID from request:', error);
-    return null;
-  }
+/**
+ * Resolve user id from the httpOnly `session` cookie.
+ * The cookie value is a session id (row in `app_sessions`); we look up
+ * the user id from that row, returning null if the session is missing,
+ * expired, or revoked.
+ *
+ * @param {{ request: Request; cookies: import('@sveltejs/kit').Cookies }} ctx
+ * @returns {Promise<string | null>}
+ */
+export async function getUserIdFromRequest({ cookies }) {
+	const sessionId = cookies.get('session');
+	if (!sessionId) {
+		return null;
+	}
+	return await getUserIdForSession(sessionId);
 }

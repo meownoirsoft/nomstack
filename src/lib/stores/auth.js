@@ -1,25 +1,8 @@
-import { writable } from 'svelte/store';
-import { supabase } from '$lib/supabaseClient.js';
-import { browser } from '$app/environment';
+import { writable, derived } from 'svelte/store';
 
-// Create writable stores for auth state
 export const user = writable(null);
-export const loading = writable(true);
-export const accessToken = writable(null);
+export const loading = writable(false);
 
-// Initialize auth state
-if (browser) {
-  // Get initial session
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    user.set(session?.user ?? null);
-    accessToken.set(session?.access_token ?? null);
-    loading.set(false);
-  });
-
-  // Listen for auth changes
-  supabase.auth.onAuthStateChange((event, session) => {
-    user.set(session?.user ?? null);
-    accessToken.set(session?.access_token ?? null);
-    loading.set(false);
-  });
-}
+// Truthy whenever the user is logged in. Kept for backwards-compat with
+// pages that gated logic on `$accessToken` under the old Supabase JWT flow.
+export const accessToken = derived(user, ($user) => ($user ? 'cookie-session' : null));

@@ -1,35 +1,63 @@
 import { json } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { verifyEmailPassword, createSessionForUserId } from '$lib/server/session.js';
+import { checkRateLimit } from '$lib/server/rate-limit.js';
 
-export async function POST({ request, cookies }) {
+const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
-    const { username, password } = await request.json();
+export async function POST({ request, cookies, getClientAddress }) {
+	const ip = getClientAddress() || 'unknown';
 
-    const authUser = env.AUTH_USERNAME;
-    const authPass = env.AUTH_PASSWORD;
+	const ipLimit = await checkRateLimit(`login:ip:${ip}`, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS);
+	if (!ipLimit.allowed) {
+		return json(
+			{ error: 'Too many login attempts. Try again in a few minutes.' },
+			{ status: 429, headers: { 'Retry-After': Math.ceil(ipLimit.retryAfterMs / 1000).toString() } }
+		);
+	}
 
-    if (!authUser || !authPass) {
-      console.error('AUTH_USERNAME and/or AUTH_PASSWORD are not set in the environment.');
-      return json({ error: 'Authentication service unavailable.' }, { status: 500 });
-    }
+	let email;
+	let password;
+	try {
+		const body = await request.json();
+		email = body?.email;
+		password = body?.password;
+	} catch {
+		return json({ error: 'Invalid request body' }, { status: 400 });
+	}
 
-    if (!username || !password) {
-      return json({ error: 'Username and password are required' }, { status: 400 });
-    }
+	if (!email || !password) {
+		return json({ error: 'Email and password are required' }, { status: 400 });
+	}
 
-    if (username !== authUser || password !== authPass) {
-      return json({ error: 'Invalid credentials' }, { status: 401 });
-    }
+	// Per-account throttle prevents IP-rotation from grinding through one email.
+	const emailLimit = await checkRateLimit(
+		`login:email:${email.trim().toLowerCase()}`,
+		RATE_LIMIT_MAX,
+		RATE_LIMIT_WINDOW_MS
+	);
+	if (!emailLimit.allowed) {
+		return json(
+			{ error: 'Too many login attempts. Try again in a few minutes.' },
+			{ status: 429, headers: { 'Retry-After': Math.ceil(emailLimit.retryAfterMs / 1000).toString() } }
+		);
+	}
 
-    if (username === authUser && password === authPass) {
-      cookies.set('session', crypto.randomUUID(), {
-        httpOnly: true,
-        secure: true,
-        maxAge: 30 * 24 * 60 * 60,
-        path: '/'
-      });
+	const result = await verifyEmailPassword(email, password);
+	if (result.error) {
+		return json({ error: result.error }, { status: 401 });
+	}
 
-      throw redirect(302, '/');
-    }
+	const sessionId = await createSessionForUserId(result.userId);
+
+	cookies.set('session', sessionId, {
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: SESSION_MAX_AGE_SECONDS,
+		path: '/'
+	});
+
+	return json({ success: true, userId: result.userId });
 }

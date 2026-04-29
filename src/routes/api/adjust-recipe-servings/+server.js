@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import { getUserIdFromRequest } from '$lib/utils.js';
 
 // Helper function to convert ingredients to decimal format for AI processing
 function convertIngredientsToDecimals(ingredients) {
@@ -171,11 +170,10 @@ function calculatePracticalChange(originalAmount, adjustedAmount) {
   return `${sign}${formatAmount(practicalDifference)}`;
 }
 
-export async function POST({ request }) {
+export async function POST({ request, locals }) {
   try {
     // Check authentication
-    const userId = await getUserIdFromRequest(request);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 

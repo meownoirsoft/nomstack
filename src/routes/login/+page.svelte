@@ -123,12 +123,16 @@
         </div>
       </form>
 
+      <div class="text-center mt-2">
+        <a href="/forgot-password" class="text-sm text-primary/70 hover:underline">Forgot password?</a>
+      </div>
+
       <div class="divider">OR</div>
 
       <div class="text-center">
         <p class="text-sm text-primary/70 mb-2">Don't have an account?</p>
-        <button 
-          type="button" 
+        <button
+          type="button"
           class="btn btn-outline w-full"
           on:click={goToSignup}
           disabled={isLoading}

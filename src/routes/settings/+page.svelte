@@ -47,9 +47,8 @@
 
   async function logout() {
     try {
-      const { supabase } = await import('$lib/supabaseClient.js');
-      await supabase.auth.signOut();
-      goto('/login');
+      const { signOut } = await import('$lib/auth.js');
+      await signOut();
     } catch (error) {
       console.error('Error logging out:', error);
     }

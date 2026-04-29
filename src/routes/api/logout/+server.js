@@ -1,12 +1,22 @@
 import { json } from '@sveltejs/kit';
+import { destroySession } from '$lib/server/session.js';
 
 export async function POST({ cookies }) {
-  cookies.delete('session', {
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/'
-  });
+	const sessionId = cookies.get('session');
+	if (sessionId) {
+		try {
+			await destroySession(sessionId);
+		} catch (err) {
+			console.error('Failed to destroy session row:', err);
+		}
+	}
 
-  return json({ success: true });
+	cookies.delete('session', {
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: process.env.NODE_ENV === 'production',
+		path: '/'
+	});
+
+	return json({ success: true });
 }

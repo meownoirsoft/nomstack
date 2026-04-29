@@ -1,204 +1,181 @@
 import { json } from '@sveltejs/kit';
-import { getUserIdFromRequest } from '$lib/utils.js';
-import { supabaseAdmin } from '$lib/server/supabaseClient.js';
+import { supabaseAdmin } from '$lib/server/pg-data-client.js';
 import { hasFeatureAccess } from '$lib/stores/userTier.js';
 
-export async function GET({ request, locals }) {
-  try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
-      return json({ success: false, error: 'Not authenticated' }, { status: 401 });
-    }
+export async function GET({ locals }) {
+	try {
+		if (!locals.userId) {
+			return json({ success: false, error: 'Not authenticated' }, { status: 401 });
+		}
+		const { data: pantryItems, error } = await supabaseAdmin
+			.from('pantry_items')
+			.select('*')
+			.eq('user_id', locals.userId)
+			.order('name');
 
-    const { data: pantryItems, error } = await supabaseAdmin
-      .from('pantry_items')
-      .select('*')
-      .eq('user_id', userId)
-      .order('name');
-
-    if (error) {
-      console.error('Error fetching pantry items:', error);
-      return json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return json({ success: true, data: pantryItems });
-  } catch (error) {
-    console.error('Error in pantry GET:', error);
-    return json({ success: false, error: 'Internal server error' }, { status: 500 });
-  }
+		if (error) {
+			console.error('Error fetching pantry items:', error);
+			return json({ success: false, error: error.message }, { status: 500 });
+		}
+		return json({ success: true, data: pantryItems });
+	} catch (error) {
+		console.error('Error in pantry GET:', error);
+		return json({ success: false, error: 'Internal server error' }, { status: 500 });
+	}
 }
 
 export async function POST({ request, locals }) {
-  try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
-      return json({ success: false, error: 'Not authenticated' }, { status: 401 });
-    }
+	try {
+		if (!locals.userId) {
+			return json({ success: false, error: 'Not authenticated' }, { status: 401 });
+		}
+		const { name, category } = await request.json();
+		if (!name || !name.trim()) {
+			return json({ success: false, error: 'Name is required' }, { status: 400 });
+		}
 
-    const { name, category } = await request.json();
+		const { data: pantryItem, error } = await supabaseAdmin
+			.from('pantry_items')
+			.insert({
+				user_id: locals.userId,
+				name: name.trim(),
+				category: category || null
+			})
+			.select()
+			.single();
 
-    if (!name || !name.trim()) {
-      return json({ success: false, error: 'Name is required' }, { status: 400 });
-    }
+		if (error) {
+			console.error('Error creating pantry item:', error);
+			if (error.code === '23505') {
+				return json(
+					{ success: false, error: 'This item already exists in your pantry' },
+					{ status: 409 }
+				);
+			}
+			return json({ success: false, error: error.message }, { status: 500 });
+		}
 
-    const { data: pantryItem, error } = await supabaseAdmin
-      .from('pantry_items')
-      .insert({
-        user_id: userId,
-        name: name.trim(),
-        category: category || null
-      })
-      .select()
-      .single();
+		if (hasFeatureAccess('smartPantry')) {
+			await supabaseAdmin
+				.from('ingredients')
+				.update({ is_pantry: true })
+				.eq('user_id', locals.userId)
+				.ilike('name', name.trim());
+		}
 
-    if (error) {
-      console.error('Error creating pantry item:', error);
-      if (error.code === '23505') { // Unique constraint violation
-        return json({ success: false, error: 'This item already exists in your pantry' }, { status: 409 });
-      }
-      return json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    // Update any existing ingredients with this name to be marked as pantry
-    // Only do this for Plus users (smart pantry feature)
-    if (hasFeatureAccess('smartPantry')) {
-      await supabaseAdmin
-        .from('ingredients')
-        .update({ is_pantry: true })
-        .eq('user_id', userId)
-        .ilike('name', name.trim());
-    }
-
-    return json({ success: true, data: pantryItem });
-  } catch (error) {
-    console.error('Error in pantry POST:', error);
-    return json({ success: false, error: 'Internal server error' }, { status: 500 });
-  }
+		return json({ success: true, data: pantryItem });
+	} catch (error) {
+		console.error('Error in pantry POST:', error);
+		return json({ success: false, error: 'Internal server error' }, { status: 500 });
+	}
 }
 
 export async function PATCH({ request, locals }) {
-  try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
-      return json({ success: false, error: 'Not authenticated' }, { status: 401 });
-    }
+	try {
+		if (!locals.userId) {
+			return json({ success: false, error: 'Not authenticated' }, { status: 401 });
+		}
+		const { id, name, category } = await request.json();
+		if (!id) {
+			return json({ success: false, error: 'ID is required' }, { status: 400 });
+		}
+		if (!name || !name.trim()) {
+			return json({ success: false, error: 'Name is required' }, { status: 400 });
+		}
 
-    const { id, name, category } = await request.json();
+		const { data: oldPantryItem, error: fetchError } = await supabaseAdmin
+			.from('pantry_items')
+			.select('name')
+			.eq('id', id)
+			.eq('user_id', locals.userId)
+			.single();
 
-    if (!id) {
-      return json({ success: false, error: 'ID is required' }, { status: 400 });
-    }
+		if (fetchError) {
+			return json({ success: false, error: 'Pantry item not found' }, { status: 404 });
+		}
 
-    if (!name || !name.trim()) {
-      return json({ success: false, error: 'Name is required' }, { status: 400 });
-    }
+		const { data: updatedPantryItem, error } = await supabaseAdmin
+			.from('pantry_items')
+			.update({ name: name.trim(), category: category || null })
+			.eq('id', id)
+			.eq('user_id', locals.userId)
+			.select()
+			.single();
 
-    // Get the old pantry item name before updating
-    const { data: oldPantryItem, error: fetchError } = await supabaseAdmin
-      .from('pantry_items')
-      .select('name')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+		if (error) {
+			console.error('Error updating pantry item:', error);
+			if (error.code === '23505') {
+				return json(
+					{ success: false, error: 'This item already exists in your pantry' },
+					{ status: 409 }
+				);
+			}
+			return json({ success: false, error: error.message }, { status: 500 });
+		}
 
-    if (fetchError) {
-      return json({ success: false, error: 'Pantry item not found' }, { status: 404 });
-    }
+		if (oldPantryItem.name !== name.trim() && hasFeatureAccess('smartPantry')) {
+			await supabaseAdmin
+				.from('ingredients')
+				.update({ is_pantry: false })
+				.eq('user_id', locals.userId)
+				.ilike('name', oldPantryItem.name);
+			await supabaseAdmin
+				.from('ingredients')
+				.update({ is_pantry: true })
+				.eq('user_id', locals.userId)
+				.ilike('name', name.trim());
+		}
 
-    // Update the pantry item
-    const { data: updatedPantryItem, error } = await supabaseAdmin
-      .from('pantry_items')
-      .update({
-        name: name.trim(),
-        category: category || null
-      })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating pantry item:', error);
-      if (error.code === '23505') { // Unique constraint violation
-        return json({ success: false, error: 'This item already exists in your pantry' }, { status: 409 });
-      }
-      return json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    // Update any existing ingredients with the old name to not be marked as pantry
-    // Only do this for Plus users (smart pantry feature)
-    if (oldPantryItem.name !== name.trim() && hasFeatureAccess('smartPantry')) {
-      await supabaseAdmin
-        .from('ingredients')
-        .update({ is_pantry: false })
-        .eq('user_id', userId)
-        .ilike('name', oldPantryItem.name);
-
-      // Update any existing ingredients with the new name to be marked as pantry
-      await supabaseAdmin
-        .from('ingredients')
-        .update({ is_pantry: true })
-        .eq('user_id', userId)
-        .ilike('name', name.trim());
-    }
-
-    return json({ success: true, data: updatedPantryItem });
-  } catch (error) {
-    console.error('Error in pantry PATCH:', error);
-    return json({ success: false, error: 'Internal server error' }, { status: 500 });
-  }
+		return json({ success: true, data: updatedPantryItem });
+	} catch (error) {
+		console.error('Error in pantry PATCH:', error);
+		return json({ success: false, error: 'Internal server error' }, { status: 500 });
+	}
 }
 
 export async function DELETE({ request, locals }) {
-  try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
-      return json({ success: false, error: 'Not authenticated' }, { status: 401 });
-    }
+	try {
+		if (!locals.userId) {
+			return json({ success: false, error: 'Not authenticated' }, { status: 401 });
+		}
+		const { id } = await request.json();
+		if (!id) {
+			return json({ success: false, error: 'ID is required' }, { status: 400 });
+		}
 
-    const { id } = await request.json();
+		const { data: pantryItem, error: fetchError } = await supabaseAdmin
+			.from('pantry_items')
+			.select('name')
+			.eq('id', id)
+			.eq('user_id', locals.userId)
+			.single();
 
-    if (!id) {
-      return json({ success: false, error: 'ID is required' }, { status: 400 });
-    }
+		if (fetchError) {
+			return json({ success: false, error: 'Pantry item not found' }, { status: 404 });
+		}
 
-    // Get the pantry item name before deleting
-    const { data: pantryItem, error: fetchError } = await supabaseAdmin
-      .from('pantry_items')
-      .select('name')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single();
+		const { error } = await supabaseAdmin
+			.from('pantry_items')
+			.delete()
+			.eq('id', id)
+			.eq('user_id', locals.userId);
 
-    if (fetchError) {
-      return json({ success: false, error: 'Pantry item not found' }, { status: 404 });
-    }
+		if (error) {
+			console.error('Error deleting pantry item:', error);
+			return json({ success: false, error: error.message }, { status: 500 });
+		}
 
-    // Delete the pantry item
-    const { error } = await supabaseAdmin
-      .from('pantry_items')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+		if (hasFeatureAccess('smartPantry')) {
+			await supabaseAdmin
+				.from('ingredients')
+				.update({ is_pantry: false })
+				.eq('user_id', locals.userId)
+				.ilike('name', pantryItem.name);
+		}
 
-    if (error) {
-      console.error('Error deleting pantry item:', error);
-      return json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    // Update any existing ingredients with this name to not be marked as pantry
-    // Only do this for Plus users (smart pantry feature)
-    if (hasFeatureAccess('smartPantry')) {
-      await supabaseAdmin
-        .from('ingredients')
-        .update({ is_pantry: false })
-        .eq('user_id', userId)
-        .ilike('name', pantryItem.name);
-    }
-
-    return json({ success: true });
-  } catch (error) {
-    console.error('Error in pantry DELETE:', error);
-    return json({ success: false, error: 'Internal server error' }, { status: 500 });
-  }
+		return json({ success: true });
+	} catch (error) {
+		console.error('Error in pantry DELETE:', error);
+		return json({ success: false, error: 'Internal server error' }, { status: 500 });
+	}
 }

@@ -1,53 +1,31 @@
 import { json } from '@sveltejs/kit';
+import { getPool } from '$lib/server/sql.js';
 
 export async function GET({ params }) {
-  try {
-    const { mealPlanId } = params;
+	try {
+		const { mealPlanId } = params;
+		if (!mealPlanId) {
+			return json({ success: false, error: 'Meal plan ID is required' }, { status: 400 });
+		}
 
-    if (!mealPlanId) {
-      return json({ success: false, error: 'Meal plan ID is required' }, { status: 400 });
-    }
+		const pool = getPool();
+		const res = await pool.query(
+			`SELECT sli.*
+			 FROM shared_list_items sli
+			 INNER JOIN share_links sl ON sl.id = sli.share_link_id
+			 WHERE sl.meal_plan_id = $1
+			 ORDER BY sli.created_at`,
+			[mealPlanId]
+		);
 
-    // Create a Supabase client with service role to bypass RLS
-    const { createClient } = await import('@supabase/supabase-js');
-    const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+		const itemsWithDefaults = res.rows.map((item) => ({
+			...item,
+			created_by: item.created_by || 'Unknown'
+		}));
 
-    // Get shared items for this meal plan
-    const { data: sharedItems, error: sharedItemsError } = await supabaseAdmin
-      .from('shared_list_items')
-      .select(`
-        *,
-        share_links!inner(meal_plan_id)
-      `)
-      .eq('share_links.meal_plan_id', mealPlanId)
-      .order('created_at');
-
-    if (sharedItemsError) {
-      console.error('Error fetching shared items:', sharedItemsError);
-      return json({ success: false, error: 'Failed to load shared items' }, { status: 500 });
-    }
-
-    console.log('Fetched shared items:', sharedItems);
-    console.log('Shared items with created_by:', sharedItems?.map(item => ({ id: item.id, name: item.name, created_by: item.created_by })));
-
-    // Ensure created_by is set for all items (handle existing items that might be null)
-    const itemsWithDefaults = sharedItems?.map(item => ({
-      ...item,
-      created_by: item.created_by || 'Unknown'
-    })) || [];
-
-    return json({ success: true, data: itemsWithDefaults });
-  } catch (error) {
-    console.error('Error in shared items fetch:', error);
-    return json({ success: false, error: 'Internal server error' }, { status: 500 });
-  }
+		return json({ success: true, data: itemsWithDefaults });
+	} catch (error) {
+		console.error('Error in shared items fetch:', error);
+		return json({ success: false, error: 'Internal server error' }, { status: 500 });
+	}
 }

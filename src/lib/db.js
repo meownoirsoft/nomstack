@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '$lib/server/supabaseClient.js';
+import { supabaseAdmin } from '$lib/server/pg-data-client.js';
+import { getPool } from '$lib/server/sql.js';
 
 // Helper function to get user ID from request context
 function getUserId(request) {
@@ -594,7 +595,68 @@ export async function deleteRestaurant(userId, restaurantId) {
 }
 
 // Recipe functions
-export async function getRecipe(mealId) {
+
+// Helper: verify a meal belongs to a given user. Returns boolean.
+async function userOwnsMeal(mealId, userId) {
+  if (mealId == null || userId == null) return false;
+  const pool = getPool();
+  const res = await pool.query(
+    'SELECT 1 FROM meals WHERE id = $1 AND user_id = $2 LIMIT 1',
+    [mealId, userId]
+  );
+  return res.rowCount > 0;
+}
+
+// Helper: verify a recipe belongs to a meal owned by a given user. Returns boolean.
+async function userOwnsRecipe(recipeId, userId) {
+  if (recipeId == null || userId == null) return false;
+  const pool = getPool();
+  const res = await pool.query(
+    `SELECT 1
+       FROM recipes r
+       JOIN meals m ON m.id = r.meal_id
+      WHERE r.id = $1 AND m.user_id = $2
+      LIMIT 1`,
+    [recipeId, userId]
+  );
+  return res.rowCount > 0;
+}
+
+// Helper: verify a meal_plan belongs to a given user. Returns boolean.
+async function userOwnsMealPlan(planId, userId) {
+  if (planId == null || userId == null) return false;
+  const pool = getPool();
+  const res = await pool.query(
+    'SELECT 1 FROM meal_plans WHERE id = $1 AND user_id = $2 LIMIT 1',
+    [planId, userId]
+  );
+  return res.rowCount > 0;
+}
+
+// Helper: verify a shopping_list belongs to a meal_plan owned by a given user.
+async function userOwnsShoppingList(listId, userId) {
+  if (listId == null || userId == null) return false;
+  const pool = getPool();
+  const res = await pool.query(
+    `SELECT 1
+       FROM shopping_lists sl
+       JOIN meal_plans mp ON mp.id = sl.plan_id
+      WHERE sl.id = $1 AND mp.user_id = $2
+      LIMIT 1`,
+    [listId, userId]
+  );
+  return res.rowCount > 0;
+}
+
+export async function getRecipe(mealId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the meal belongs to the user before returning the recipe.
+  if (!(await userOwnsMeal(mealId, userId))) {
+    return null;
+  }
+
   const { data, error } = await supabaseAdmin
     .from('recipes')
     .select('*')
@@ -612,7 +674,15 @@ export async function getRecipe(mealId) {
   return data;
 }
 
-export async function addRecipe(mealId, recipe) {
+export async function addRecipe(mealId, recipe, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the user owns this meal before inserting a recipe.
+  if (!(await userOwnsMeal(mealId, userId))) {
+    throw new Error('Meal not found or not owned by user');
+  }
+
   const { data, error } = await supabaseAdmin
     .from('recipes')
     .insert([{
@@ -677,7 +747,15 @@ export async function addRecipe(mealId, recipe) {
   return data;
 }
 
-export async function updateRecipe(recipeId, recipe) {
+export async function updateRecipe(recipeId, recipe, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the recipe belongs to a meal owned by this user.
+  if (!(await userOwnsRecipe(recipeId, userId))) {
+    throw new Error('Recipe not found or not owned by user');
+  }
+
   const { data, error } = await supabaseAdmin
     .from('recipes')
     .update({
@@ -739,7 +817,15 @@ export async function updateRecipe(recipeId, recipe) {
   return data;
 }
 
-export async function deleteRecipe(recipeId) {
+export async function deleteRecipe(recipeId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the recipe belongs to a meal owned by this user.
+  if (!(await userOwnsRecipe(recipeId, userId))) {
+    throw new Error('Recipe not found or not owned by user');
+  }
+
   const { error } = await supabaseAdmin
     .from('recipes')
     .delete()
@@ -790,7 +876,10 @@ export async function getMealPlans(userId, status = 'active') {
   return data || [];
 }
 
-export async function updateMealPlan(planId, planData) {
+export async function updateMealPlan(planId, planData, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { data, error } = await supabaseAdmin
     .from('meal_plans')
     .update({
@@ -800,6 +889,7 @@ export async function updateMealPlan(planId, planData) {
       status: planData.status
     })
     .eq('id', planId)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -810,11 +900,15 @@ export async function updateMealPlan(planId, planData) {
   return { success: true, data };
 }
 
-export async function deleteMealPlan(planId) {
+export async function deleteMealPlan(planId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { error } = await supabaseAdmin
     .from('meal_plans')
     .delete()
-    .eq('id', planId);
+    .eq('id', planId)
+    .eq('user_id', userId);
 
   if (error) {
     throw new Error(`Failed to delete meal plan: ${error.message}`);
@@ -870,7 +964,10 @@ export async function getStores(userId) {
   return sortedStores;
 }
 
-export async function updateStore(storeId, storeData) {
+export async function updateStore(storeId, storeData, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { data, error } = await supabaseAdmin
     .from('stores')
     .update({
@@ -879,6 +976,7 @@ export async function updateStore(storeId, storeData) {
       last_used: new Date().toISOString()
     })
     .eq('id', storeId)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -889,11 +987,15 @@ export async function updateStore(storeId, storeData) {
   return { success: true, data };
 }
 
-export async function deleteStore(storeId) {
+export async function deleteStore(storeId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { error } = await supabaseAdmin
     .from('stores')
     .delete()
-    .eq('id', storeId);
+    .eq('id', storeId)
+    .eq('user_id', userId);
 
   if (error) {
     throw new Error(`Failed to delete store: ${error.message}`);
@@ -921,28 +1023,44 @@ export async function createShoppingList(planId, storeId, title) {
   return { success: true, data };
 }
 
-export async function getShoppingLists(planId) {
-  const { data, error } = await supabaseAdmin
-    .from('shopping_lists')
-    .select(`
-      *,
-      stores (
-        id,
-        name,
-        section_order
-      )
-    `)
-    .eq('plan_id', planId)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to get shopping lists: ${error.message}`);
+export async function getShoppingLists(planId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the meal plan belongs to the user before returning its lists.
+  if (!(await userOwnsMealPlan(planId, userId))) {
+    return [];
   }
 
-  return data || [];
+  const pool = getPool();
+  const res = await pool.query(
+    `SELECT sl.*,
+      json_build_object(
+        'id', st.id,
+        'name', st.name,
+        'section_order', st.section_order
+      ) AS stores
+     FROM shopping_lists sl
+     LEFT JOIN stores st ON st.id = sl.store_id
+     WHERE sl.plan_id = $1
+     ORDER BY sl.created_at ASC`,
+    [planId]
+  );
+  return (res.rows || []).map((row) => {
+    const { stores, ...rest } = row;
+    return { ...rest, stores };
+  });
 }
 
-export async function updateShoppingList(listId, listData) {
+export async function updateShoppingList(listId, listData, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the list belongs to a meal plan owned by this user.
+  if (!(await userOwnsShoppingList(listId, userId))) {
+    throw new Error('Shopping list not found or not owned by user');
+  }
+
   const { data, error } = await supabaseAdmin
     .from('shopping_lists')
     .update({
@@ -960,7 +1078,15 @@ export async function updateShoppingList(listId, listData) {
   return { success: true, data };
 }
 
-export async function deleteShoppingList(listId) {
+export async function deleteShoppingList(listId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // Verify the list belongs to a meal plan owned by this user.
+  if (!(await userOwnsShoppingList(listId, userId))) {
+    throw new Error('Shopping list not found or not owned by user');
+  }
+
   const { error } = await supabaseAdmin
     .from('shopping_lists')
     .delete()
@@ -1028,7 +1154,10 @@ export async function getIngredients(userId, filters = {}) {
   return data || [];
 }
 
-export async function updateIngredient(ingredientId, ingredientData) {
+export async function updateIngredient(ingredientId, ingredientData, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { data, error } = await supabaseAdmin
     .from('ingredients')
     .update({
@@ -1043,6 +1172,7 @@ export async function updateIngredient(ingredientId, ingredientData) {
       position: ingredientData.position
     })
     .eq('id', ingredientId)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -1053,13 +1183,30 @@ export async function updateIngredient(ingredientId, ingredientData) {
   return { success: true, data };
 }
 
-export async function moveIngredient(ingredientId, newStoreId) {
+export async function moveIngredient(ingredientId, newStoreId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+  // If a target store is specified, ensure it belongs to this user too —
+  // otherwise we'd let a user reassign their ingredient into another user's store.
+  if (newStoreId) {
+    const pool = getPool();
+    const ownsStore = await pool.query(
+      'SELECT 1 FROM stores WHERE id = $1 AND user_id = $2 LIMIT 1',
+      [newStoreId, userId]
+    );
+    if (ownsStore.rowCount === 0) {
+      throw new Error('Store not found or not owned by user');
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from('ingredients')
     .update({
       store_id: newStoreId
     })
     .eq('id', ingredientId)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -1070,11 +1217,15 @@ export async function moveIngredient(ingredientId, newStoreId) {
   return { success: true, data };
 }
 
-export async function toggleIngredient(ingredientId, field) {
+export async function toggleIngredient(ingredientId, field, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { data, error } = await supabaseAdmin
     .from('ingredients')
     .select(field)
     .eq('id', ingredientId)
+    .eq('user_id', userId)
     .single();
 
   if (error) {
@@ -1089,6 +1240,7 @@ export async function toggleIngredient(ingredientId, field) {
       [field]: newValue
     })
     .eq('id', ingredientId)
+    .eq('user_id', userId)
     .select()
     .single();
 
@@ -1099,11 +1251,15 @@ export async function toggleIngredient(ingredientId, field) {
   return { success: true, data: updatedData };
 }
 
-export async function deleteIngredient(ingredientId) {
+export async function deleteIngredient(ingredientId, userId) {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
   const { error } = await supabaseAdmin
     .from('ingredients')
     .delete()
-    .eq('id', ingredientId);
+    .eq('id', ingredientId)
+    .eq('user_id', userId);
 
   if (error) {
     throw new Error(`Failed to delete ingredient: ${error.message}`);

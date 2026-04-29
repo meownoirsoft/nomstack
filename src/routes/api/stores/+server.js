@@ -1,15 +1,13 @@
 import { json } from '@sveltejs/kit';
-import { getUserIdFromRequest } from '$lib/utils.js';
 import { createStore, getStores, updateStore, deleteStore } from '$lib/db.js';
 
-export async function GET({ request, locals }) {
+export async function GET({ locals }) {
   try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const stores = await getStores(userId);
+    const stores = await getStores(locals.userId);
     return json({ success: true, data: stores });
   } catch (error) {
     console.error('Error getting stores:', error);
@@ -19,13 +17,12 @@ export async function GET({ request, locals }) {
 
 export async function POST({ request, locals }) {
   try {
-    const userId = await getUserIdFromRequest(request, locals);
-    if (!userId) {
+    if (!locals.userId) {
       return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const storeData = await request.json();
-    const result = await createStore(userId, storeData);
+    const result = await createStore(locals.userId, storeData);
     return json(result);
   } catch (error) {
     console.error('Error creating store:', error);

@@ -35,8 +35,15 @@
         return;
       }
 
-      if (passwordValue.length < 6) {
-        errorMessage = 'Password must be at least 6 characters long.';
+      if (passwordValue.length < 8) {
+        errorMessage = 'Password must be at least 8 characters long.';
+        setTimeout(() => {
+          errorMessage = '';
+        }, 3000);
+        return;
+      }
+      if (!/[A-Za-z]/.test(passwordValue) || !/[0-9]/.test(passwordValue)) {
+        errorMessage = 'Password must include at least one letter and one number.';
         setTimeout(() => {
           errorMessage = '';
         }, 3000);

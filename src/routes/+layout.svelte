@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import '../app.css';
@@ -17,6 +18,13 @@
   export let error;
   let currentPage;
   let offlineInitialized = false;
+
+  // Hydrate the auth store from server-loaded layout data so client code
+  // (redirect logic below, page-level `$user` reads, etc.) stays reactive.
+  $: {
+    user.set(data?.user ?? null);
+    loading.set(false);
+  }
   
   // Get pageTitle from data
   $: headerPageTitle = data?.pageTitle || '';
@@ -70,8 +78,9 @@
     initializeTheme();
   });
 
-  // Initialize offline system when user is authenticated
-  $: if ($user && !offlineInitialized) {
+  // Initialize offline system when user is authenticated. Gate on `browser` —
+  // Dexie/IndexedDB doesn't exist during SSR.
+  $: if (browser && $user && !offlineInitialized) {
     initializeOfflineSystem().then(() => {
       offlineInitialized = true;
     }).catch((error) => {

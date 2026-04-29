@@ -186,22 +186,24 @@ export async function loadSubscriptionStatus() {
   }
 }
 
-// Subscribe to user changes to load subscription status
-user.subscribe(async (currentUser) => {
-  if (currentUser) {
-    await loadSubscriptionStatus();
-  } else {
-    // Reset to free tier when user logs out
-    subscriptionStatus.set({
-      tier: TIER_TYPES.FREE,
-      isActive: false,
-      expiresAt: null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null
-    });
-    userTier.set(TIER_TYPES.FREE);
-  }
-});
+// Subscribe to user changes to load subscription status (client-only — fetch
+// against relative URLs during SSR throws in SvelteKit's server fetch).
+if (browser) {
+  user.subscribe(async (currentUser) => {
+    if (currentUser) {
+      await loadSubscriptionStatus();
+    } else {
+      subscriptionStatus.set({
+        tier: TIER_TYPES.FREE,
+        isActive: false,
+        expiresAt: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null
+      });
+      userTier.set(TIER_TYPES.FREE);
+    }
+  });
+}
 
 // userTier is now the single source of truth
 // Both stores are updated together in loadSubscriptionStatus()
