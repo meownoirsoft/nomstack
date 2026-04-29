@@ -10,6 +10,7 @@
   import GlobalModal from '$lib/components/GlobalModal.svelte';
   import OfflineIndicator from '$lib/components/OfflineIndicator.svelte';
   import OnboardingModal from '$lib/components/OnboardingModal.svelte';
+  import EmailVerifyBanner from '$lib/components/EmailVerifyBanner.svelte';
   import { user, loading } from '$lib/stores/auth.js';
   import { eatingMode } from '$lib/stores/eatingMode.js';
   import { initializeOfflineSystem } from '$lib/offline/index.js';
@@ -51,14 +52,9 @@
     }
   })();
 
-  // Handle authentication redirects
-  $: if (!$loading) {
-    if (!$user && !data.isAuthPage && !data.isSharedPage) {
-      goto('/login');
-    } else if ($user && data.isAuthPage) {
-      goto('/');
-    }
-  }
+  // Auth redirects happen server-side in +layout.server.js. After signIn /
+  // signOut the client calls invalidateAll(), which re-runs the server load
+  // and triggers the redirect cleanly without any client-side `goto`.
 
   // Handle onboarding completion
   function handleOnboardingComplete() {
@@ -105,6 +101,9 @@
     <Header page={currentPage} pageTitle={headerPageTitle} />
     <main class="flex-1 overflow-hidden">
       <div class="max-w-5xl mx-auto w-full px-2 sm:px-6 lg:px-8 py-0 h-full overflow-y-auto">
+        {#if !data?.isAuthPage && !data?.isSharedPage}
+          <EmailVerifyBanner />
+        {/if}
         {#if error}
           <h1 class="text-2xl font-semibold text-error">Error: {error.message}</h1>
         {:else}

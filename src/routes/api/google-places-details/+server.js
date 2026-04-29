@@ -38,7 +38,7 @@ export async function POST({ request, locals }) {
                 'Content-Type': 'application/json',
                 'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
                 'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,rating,priceLevel,types,websiteUri',
-                'Referer': 'http://localhost:5174'
+                'Referer': process.env.APP_URL || 'http://localhost:5173'
             }
         });
         let data;

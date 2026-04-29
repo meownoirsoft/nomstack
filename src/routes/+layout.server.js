@@ -1,8 +1,31 @@
+import { redirect } from '@sveltejs/kit';
 import { getPool } from '$lib/server/sql.js';
 
+const AUTH_PAGES = new Set(['/login', '/signup', '/forgot-password']);
+const PUBLIC_PREFIXES = ['/shared/', '/verify-email/', '/reset-password/'];
+
+function isAuthPagePath(pathname) {
+	return AUTH_PAGES.has(pathname);
+}
+
+function isPublicPagePath(pathname) {
+	return PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 export async function load({ url, locals }) {
-	const isAuthPage = url.pathname === '/login' || url.pathname === '/signup';
-	const isSharedPage = url.pathname.startsWith('/shared/');
+	const pathname = url.pathname;
+	const isAuthPage = isAuthPagePath(pathname);
+	const isSharedPage = pathname.startsWith('/shared/');
+	const isPublicPage = isPublicPagePath(pathname);
+
+	// Server-side auth gating. Avoids a client-side flash + ensures `goto` never
+	// runs during SSR.
+	if (locals.userId && isAuthPage) {
+		throw redirect(303, '/');
+	}
+	if (!locals.userId && !isAuthPage && !isPublicPage) {
+		throw redirect(303, '/login');
+	}
 
 	let title = 'nomStack';
 	let pageTitle = '';

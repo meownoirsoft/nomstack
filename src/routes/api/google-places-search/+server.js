@@ -51,7 +51,7 @@ export async function POST({ request, locals }) {
                     'Content-Type': 'application/json',
                     'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
                     'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.types,places.location',
-                    'Referer': 'http://localhost:5174'
+                    'Referer': process.env.APP_URL || 'http://localhost:5173'
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -122,7 +122,7 @@ export async function POST({ request, locals }) {
                 'Content-Type': 'application/json',
                 'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
                 'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.rating,places.priceLevel,places.types,places.location',
-                'Referer': 'http://localhost:5174'
+                'Referer': process.env.APP_URL || 'http://localhost:5173'
             },
             body: JSON.stringify(requestBody)
         });

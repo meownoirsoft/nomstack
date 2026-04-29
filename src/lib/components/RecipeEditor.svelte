@@ -116,23 +116,45 @@
       } else {
         // Create new recipe
         let targetMealId = mealId || selectedMealId;
-        
-        // If creating a new meal, create it first with the recipe title
+
+        // If the user picked "new meal" but a meal with the same name already
+        // exists, attach to that meal instead of creating a duplicate.
         if (selectedMealId === 'new') {
-          const mealData = {
-            name: title.trim(),
-            source: '',
-            cats: [],
-            notes: ''
-          };
-          const mealResult = await api.addMeal(mealData);
-          if (mealResult.success) {
-            targetMealId = mealResult.data.id;
+          const normalized = title.trim().toLowerCase();
+          const existingMeal = allMeals.find(
+            (m) => m.name && m.name.trim().toLowerCase() === normalized
+          );
+
+          if (existingMeal) {
+            // Make sure the existing meal doesn't already have a recipe — the
+            // recipes table enforces one-recipe-per-meal so a blind insert
+            // would 500 with a unique-constraint error.
+            const existingRecipe = await api.getRecipe(existingMeal.id).catch(() => null);
+            if (existingRecipe && existingRecipe.id) {
+              loading = false;
+              notifyError(
+                `"${existingMeal.name}" already has a recipe. Edit it from the meal list instead of importing again.`
+              );
+              return;
+            }
+            targetMealId = existingMeal.id;
+            notifySuccess(`Adding recipe to existing meal "${existingMeal.name}"`);
           } else {
-            throw new Error(mealResult.error || 'Failed to create meal');
+            const mealData = {
+              name: title.trim(),
+              source: '',
+              cats: [],
+              notes: ''
+            };
+            const mealResult = await api.addMeal(mealData);
+            if (mealResult.success) {
+              targetMealId = mealResult.data.id;
+            } else {
+              throw new Error(mealResult.error || 'Failed to create meal');
+            }
           }
         }
-        
+
         result = await api.addRecipe(targetMealId, recipeData);
       }
 

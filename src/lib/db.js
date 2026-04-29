@@ -175,8 +175,6 @@ export async function getAllMeals(userId) {
   }
 
   const meals = data ?? [];
-  console.log('getAllMeals: Loaded meals:', meals.length, 'meals');
-  console.log('getAllMeals: First meal:', meals[0]);
   
   // Check for meals with undefined IDs
   const mealsWithUndefinedIds = meals.filter(meal => meal.id == null);
@@ -185,7 +183,6 @@ export async function getAllMeals(userId) {
   }
   
   const mealIds = meals.map((meal) => meal.id).filter(id => id != null);
-  console.log('getAllMeals: Meal IDs:', mealIds);
   
   const [categoryMap, flagsMap, sourceMap] = await Promise.all([
     loadCategoriesMap(mealIds),
@@ -777,37 +774,31 @@ export async function updateRecipe(recipeId, recipe, userId) {
 
   // After updating the recipe, refresh shopping list ingredients for any active meal plans
   try {
-    console.log('Recipe updated, checking for active meal plans with this recipe...');
     // Get all active meal plans that have ingredients from this recipe
     const { data: ingredients } = await supabaseAdmin
       .from('ingredients')
       .select('plan_id, user_id')
       .eq('source_recipe_id', recipeId);
 
-    console.log('Found existing ingredients for recipe:', ingredients?.length || 0);
     
     if (ingredients && ingredients.length > 0) {
       // Get unique plan IDs and user IDs
       const planIds = [...new Set(ingredients.map(ing => ing.plan_id))];
       const userIds = [...new Set(ingredients.map(ing => ing.user_id))];
 
-      console.log('Refreshing ingredients for plans:', planIds);
 
       // Refresh ingredients for each plan
       for (let i = 0; i < planIds.length; i++) {
         const planId = planIds[i];
         const userId = userIds[i];
         try {
-          console.log(`Refreshing ingredients for plan ${planId}...`);
           await generateIngredientsFromRecipe(userId, planId, recipeId);
-          console.log(`Successfully refreshed ingredients for plan ${planId}`);
         } catch (refreshError) {
           console.error(`Error refreshing ingredients for plan ${planId}:`, refreshError);
           // Continue with other plans even if one fails
         }
       }
     } else {
-      console.log('No existing ingredients found for this recipe in any meal plans');
     }
   } catch (refreshError) {
     console.error('Error refreshing shopping list ingredients:', refreshError);
@@ -1671,7 +1662,6 @@ export async function refreshIngredientsFromRecipes(userId, planId) {
 
 // New function to regenerate all ingredients for a meal plan with proper merging
 export async function regenerateIngredientsForMealPlan(userId, planId) {
-  console.log('regenerateIngredientsForMealPlan called with:', { userId, planId });
   
   // First, delete all non-custom ingredients for this plan
   const { error: deleteError } = await supabaseAdmin
@@ -1684,7 +1674,6 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     throw new Error(`Failed to delete existing ingredients: ${deleteError.message}`);
   }
   
-  console.log('Deleted existing ingredients for plan:', planId);
 
   // Get all selected meals for this plan
   const { data: selections, error: selectionsError } = await supabaseAdmin
@@ -1694,19 +1683,14 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     .eq('plan_id', planId)
     .order('position', { ascending: true });
 
-  console.log('Selections query result:', { selections, selectionsError });
-  console.log('Plan ID being queried:', planId);
 
   if (selectionsError || !selections) {
-    console.log('No selections found or error:', selectionsError);
     return { success: true, data: [] };
   }
 
   const selectedMealIds = selections.map(s => s.meal_id);
-  console.log('Selected meal IDs for plan', planId, ':', selectedMealIds);
   
   if (selectedMealIds.length === 0) {
-    console.log('No meals selected');
     return { success: true, data: [] };
   }
 
@@ -1716,9 +1700,6 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     .select('id, ingredients, meal_id')
     .in('meal_id', selectedMealIds);
 
-  console.log('Recipes query result:', { recipes, recipesError });
-  console.log('Number of recipes found for selected meals:', recipes?.length || 0);
-  console.log('Selected meal IDs being queried:', selectedMealIds);
   
   // Debug: Let's also check all recipes for this user to see what exists
   const { data: allRecipes, error: allRecipesError } = await supabaseAdmin
@@ -1726,32 +1707,27 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     .select('id, ingredients, meal_id')
     .eq('meal_id', selectedMealIds[0]); // Check first meal ID specifically
     
-  console.log('Debug - All recipes for first meal ID:', { allRecipes, allRecipesError });
 
   if (recipesError) {
     throw new Error(`Failed to get recipes: ${recipesError.message}`);
   }
 
   if (!recipes || recipes.length === 0) {
-    console.log('No recipes found for selected meals');
     return { success: true, data: [] };
   }
   
-  console.log('Found recipes:', recipes.length, 'for meals:', selectedMealIds);
 
   // Collect all ingredients from all recipes
   const allIngredients = [];
   for (const recipe of recipes) {
     if (!recipe.ingredients) continue;
 
-    console.log('Processing recipe:', recipe.id, 'ingredients:', recipe.ingredients);
     
     const ingredientLines = recipe.ingredients
       .split('\n')
       .map(line => line.trim())
       .filter(line => line && line.startsWith('*'));
       
-    console.log('Filtered ingredient lines:', ingredientLines);
 
     for (let i = 0; i < ingredientLines.length; i++) {
       const line = ingredientLines[i].substring(1).trim(); // Remove the * prefix
@@ -1871,7 +1847,6 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     .filter(ingredient => {
       const isInPantry = pantryItemNames.includes(ingredient.name.toLowerCase());
       if (isInPantry) {
-        console.log('Filtering out pantry item:', ingredient.name);
       }
       return !isInPantry;
     })
@@ -1889,8 +1864,6 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
     }));
 
   if (ingredientsToInsert.length > 0) {
-    console.log('Inserting ingredients:', ingredientsToInsert.length, 'items');
-    console.log('First ingredient sample:', ingredientsToInsert[0]);
     
     const { data, error } = await supabaseAdmin
       .from('ingredients')
@@ -1902,7 +1875,6 @@ export async function regenerateIngredientsForMealPlan(userId, planId) {
       throw new Error(`Failed to insert merged ingredients: ${error.message}`);
     }
 
-    console.log('Successfully inserted ingredients:', data?.length || 0, 'items');
     return { success: true, data };
   }
 

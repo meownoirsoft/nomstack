@@ -47,7 +47,7 @@
     }
   </script>
 
-<div class="min-h-screen flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
+<div class="h-full min-h-0 flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
   <div class="card w-full max-w-md bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title text-2xl font-bold text-center mb-6">Welcome to nomStack</h2>

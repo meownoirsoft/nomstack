@@ -56,10 +56,10 @@
 
       try {
         await signUp(emailValue, passwordValue, displayNameValue);
-        successMessage = 'Account created successfully! Please check your email to verify your account.';
+        successMessage = "You're in. We sent a verification link to your email — confirm any time from the banner inside the app.";
         setTimeout(() => {
-          goto('/login');
-        }, 3000);
+          goto('/');
+        }, 1500);
       } catch (error) {
         console.error('Signup error:', error);
         errorMessage = error.message || 'Signup failed. Please try again.';
@@ -76,7 +76,7 @@
     }
   </script>
 
-<div class="min-h-screen flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
+<div class="h-full min-h-0 flex items-center justify-center" style="background-color: var(--app-background, #ffffff);">
   <div class="card w-full max-w-md bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title text-2xl font-bold text-center mb-6">Create Account</h2>

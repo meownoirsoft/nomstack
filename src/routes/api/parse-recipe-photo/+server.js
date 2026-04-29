@@ -147,22 +147,25 @@ Other Rules:
               }
             ],
             temperature: 0.1,
-            max_tokens: 1500
+            max_tokens: 1500,
+            response_format: { type: 'json_object' }
           })
         });
 
         if (openaiResponse.ok) {
           const openaiData = await openaiResponse.json();
           aiResponse = openaiData.choices[0]?.message?.content;
-          console.log('Successfully parsed recipe with OpenAI GPT-4o');
         } else {
           const errorData = await openaiResponse.text();
           console.error('OpenAI Vision API error:', openaiResponse.status, errorData);
-          throw new Error('OpenAI API failed');
+          throw new Error(`OpenAI API failed: ${openaiResponse.status} ${errorData.slice(0, 200)}`);
         }
       } catch (openaiError) {
         console.error('OpenAI parsing also failed:', openaiError.message);
-        return json({ error: 'Failed to parse recipe from photo with both AI services' }, { status: 500 });
+        return json(
+          { error: 'Failed to parse recipe from photo', details: openaiError.message },
+          { status: 500 }
+        );
       }
     }
 

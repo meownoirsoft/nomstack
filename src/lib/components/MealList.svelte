@@ -406,17 +406,20 @@
       </div>
     {/if}
     
+    <!-- Action row pinned above the scroller so its buttons don't overlap the
+         first meal card's edit/checkbox click targets. -->
+    <div class="flex items-center justify-between px-2 pb-2">
+      <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={clearAll}>
+        Clear
+        <Check class="h-4 w-4" />
+      </button>
+      <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={handleAddMealClick}>
+        <Plus class="h-4 w-4" />
+        <span>Meal</span>
+      </button>
+    </div>
+
     <div class="scroller flex-grow overflow-y-auto px-0 min-h-[15rem]">
-      <div class="flex items-center justify-between mb-1">
-        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 ml-2 flex items-center gap-1" on:click={clearAll}>
-          Clear
-          <Check class="h-4 w-4" />
-        </button>
-        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 mr-2 flex items-center gap-1" on:click={handleAddMealClick}>
-          <Plus class="h-4 w-4" />
-          <span class="sm:hidden">Meal</span>
-        </button>
-      </div>
       <ul class="space-y-1">
         {#each displayMeals as meal}
           <li class="w-full">

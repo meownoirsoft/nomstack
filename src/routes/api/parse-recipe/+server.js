@@ -76,22 +76,26 @@ Other Rules:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.1, // Low temperature for consistent parsing
-        max_tokens: 1000
+        temperature: 0.1,
+        max_tokens: 2000,
+        response_format: { type: 'json_object' }
       })
     });
 
     if (!response.ok) {
       const errorData = await response.text();
       console.error('OpenAI API error:', response.status, errorData);
-      return json({ error: 'Failed to parse recipe with AI' }, { status: 500 });
+      return json(
+        { error: 'Failed to parse recipe with AI', details: errorData },
+        { status: response.status === 401 || response.status === 429 ? response.status : 500 }
+      );
     }
 
     const data = await response.json();

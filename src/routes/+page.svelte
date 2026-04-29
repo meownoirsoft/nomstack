@@ -173,17 +173,18 @@
     </div>
   </div>
 {:else if error}
-  <div class="alert alert-error">
-    <span>Error loading data: {error}</span>
+  <div class="rounded-lg border border-error/50 bg-error/10 p-4 shadow-sm">
+    <span class="font-semibold">Error loading data:</span>
+    <span class="opacity-80">{error}</span>
   </div>
 {:else}
   <!-- Debug section for seed data -->
-  {#if $user && (!hasSeedData || meals.length === 0)}
-    <div class="alert alert-warning mb-4">
+  {#if $user && $user.email_verified && (!hasSeedData || meals.length === 0)}
+    <div class="rounded-lg border border-warning/50 bg-warning/10 p-4 mb-4 shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
         <div class="min-w-0">
-          <span class="font-bold">No data found!</span>
-          <p class="text-sm">You don't have any meals, categories, or sources yet.</p>
+          <span class="font-semibold">No data found.</span>
+          <span class="text-sm opacity-80">You don't have any meals, categories, or sources yet.</span>
         </div>
         <button
           class="btn btn-primary btn-sm shrink-0"
@@ -201,10 +202,16 @@
     </div>
     
     {#if seedDataResult}
-      <div class="alert {seedDataResult.success ? 'alert-success' : 'alert-error'} mb-4">
-        <span>{seedDataResult.success ? '✅ Setup complete!' : '❌ Setup failed'}</span>
+      <div
+        class="rounded-lg border p-4 mb-4 shadow-sm {seedDataResult.success
+          ? 'border-success/50 bg-success/10'
+          : 'border-error/50 bg-error/10'}"
+      >
+        <span class="font-semibold">
+          {seedDataResult.success ? 'Setup complete.' : 'Setup failed.'}
+        </span>
         {#if seedDataResult.error}
-          <p class="text-sm">{seedDataResult.error}</p>
+          <p class="text-sm opacity-80">{seedDataResult.error}</p>
         {/if}
       </div>
     {/if}
