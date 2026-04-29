@@ -13,7 +13,7 @@ export async function POST({ request, locals }) {
       return json({ error: 'Recipe ID is required' }, { status: 400 });
     }
 
-    await deleteRecipe(parseInt(recipeId), locals.userId);
+    await deleteRecipe(recipeId, locals.userId);
 
     return json({
       success: true

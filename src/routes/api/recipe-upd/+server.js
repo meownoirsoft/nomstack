@@ -17,7 +17,7 @@ export async function POST({ request, locals }) {
       return json({ error: 'Recipe data is required' }, { status: 400 });
     }
 
-    const updatedRecipe = await updateRecipe(parseInt(recipeId), recipe, locals.userId);
+    const updatedRecipe = await updateRecipe(recipeId, recipe, locals.userId);
 
     return json({
       success: true,
