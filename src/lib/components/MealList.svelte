@@ -313,6 +313,15 @@
       showRecipeEditor = true;
     }
 
+    function handleImportRecipeClick() {
+      // Top-level "Import Recipe" — no meal pre-selected. The RecipeEditor
+      // shows its meal picker and lets the user create new or attach to an
+      // existing meal in one flow.
+      currentMeal = null;
+      currentRecipe = null;
+      showRecipeEditor = true;
+    }
+
     function closeRecipeEditor() {
       showRecipeEditor = false;
       currentMeal = null;
@@ -325,10 +334,19 @@
       currentRecipe = null;
     }
 
-    function handleRecipeSaved(event) {
+    async function handleRecipeSaved(event) {
       currentRecipe = event.detail.recipe;
       closeRecipeEditor();
       notifySuccess('Recipe saved!');
+      // Refresh markers so the chef-hat icon appears next to the meal that
+      // just got a recipe. If the import created a new meal, that requires a
+      // full data reload — leave that to the parent's own data invalidation
+      // (top-level page) on next interaction.
+      try {
+        await checkRecipesForMeals();
+      } catch (err) {
+        console.error('Failed to refresh recipe markers:', err);
+      }
     }
 
     function handleRecipeDeleted(event) {
@@ -413,10 +431,16 @@
         Clear
         <Check class="h-4 w-4" />
       </button>
-      <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={handleAddMealClick}>
-        <Plus class="h-4 w-4" />
-        <span>Meal</span>
-      </button>
+      <div class="flex items-center gap-3">
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={handleImportRecipeClick}>
+          <ChefHat class="h-4 w-4" />
+          <span>Import Recipe</span>
+        </button>
+        <button class="text-sm text-primary hover:text-primary-focus underline-offset-4 hover:underline py-0 m-0 flex items-center gap-1" on:click={handleAddMealClick}>
+          <Plus class="h-4 w-4" />
+          <span>Meal</span>
+        </button>
+      </div>
     </div>
 
     <div class="scroller flex-grow overflow-y-auto px-0 min-h-[15rem]">
@@ -488,11 +512,12 @@
       />
     {/if}
 
-    <!-- Recipe Components -->
-    {#if showRecipeEditor && currentMeal}
+    <!-- Recipe Components. When opened from the top-level "Import Recipe"
+         button, currentMeal is null and the editor shows its own meal picker. -->
+    {#if showRecipeEditor}
       <RecipeEditor
-        mealId={currentMeal.id}
-        mealName={currentMeal.name}
+        mealId={currentMeal?.id ?? null}
+        mealName={currentMeal?.name ?? ''}
         recipe={currentRecipe}
         on:close={closeRecipeEditor}
         on:saved={handleRecipeSaved}
