@@ -4,7 +4,6 @@
     import { createEventDispatcher } from 'svelte';
     import { notifyError, notifySuccess } from '$lib/stores/notifications.js';
     import { api } from '$lib/api.js';
-    import { settings } from '$lib/stores/settings.js';
     import RecipeEditor from './RecipeEditor.svelte';
     import RecipeViewer from './RecipeViewer.svelte';
     import PayGate from './PayGate.svelte';
@@ -444,9 +443,9 @@
                   class="btn btn-xs btn-ghost text-error underline"
                   on:click={confirmDelete}
                 >Delete meal</button>
-                {#if $settings.recipesEnabled && meal && meal.id}
-                    <PayGate 
-                        resource="maxRecipes" 
+                {#if meal && meal.id}
+                    <PayGate
+                        resource="maxRecipes"
                         currentCount={totalRecipes}
                         showUpgradeButton={true}
                     >

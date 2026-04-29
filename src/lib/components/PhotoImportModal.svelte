@@ -217,28 +217,34 @@
               Take photos of recipes or select from your gallery. Works with cookbooks, screenshots, handwritten recipes, and more!
             </p>
             
-            <!-- Import Mode Selection -->
-            <div class="space-y-3">
-              <h3 class="font-medium text-primary">Add recipes to:</h3>
-              <div class="space-y-2">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    bind:group={importMode} 
-                    value="new" 
-                    class="radio radio-primary radio-sm"
-                  />
-                  <span class="text-sm text-primary">Create new meals</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    bind:group={importMode} 
-                    value="existing" 
-                    class="radio radio-primary radio-sm"
-                  />
-                  <span class="text-sm text-primary">Add to existing meal</span>
-                </label>
+            <!-- Import Mode Selection — card-style so it's not missed -->
+            <div class="space-y-2">
+              <h3 class="font-semibold text-primary">Where should this recipe go?</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg border-2 p-3 text-left transition-colors {importMode === 'new' ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary/50'}"
+                  on:click={() => (importMode = 'new')}
+                >
+                  <div class="flex items-center gap-2">
+                    <ChefHat class="h-5 w-5 {importMode === 'new' ? 'text-primary' : 'text-primary/60'}" />
+                    <span class="font-medium {importMode === 'new' ? 'text-primary' : 'text-primary/80'}">Create new meal</span>
+                    {#if importMode === 'new'}<Check class="h-4 w-4 text-primary ml-auto" />{/if}
+                  </div>
+                  <p class="text-xs text-primary/60 mt-1">Adds a brand-new meal to your list with this recipe.</p>
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border-2 p-3 text-left transition-colors {importMode === 'existing' ? 'border-primary bg-primary/10' : 'border-base-300 hover:border-primary/50'}"
+                  on:click={() => (importMode = 'existing')}
+                >
+                  <div class="flex items-center gap-2">
+                    <Search class="h-5 w-5 {importMode === 'existing' ? 'text-primary' : 'text-primary/60'}" />
+                    <span class="font-medium {importMode === 'existing' ? 'text-primary' : 'text-primary/80'}">Add to existing</span>
+                    {#if importMode === 'existing'}<Check class="h-4 w-4 text-primary ml-auto" />{/if}
+                  </div>
+                  <p class="text-xs text-primary/60 mt-1">Attach this recipe to a meal you already have.</p>
+                </button>
               </div>
             </div>
 

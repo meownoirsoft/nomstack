@@ -58,11 +58,37 @@
   // Filter meals based on search term
   $: {
     if (searchTerm.trim()) {
-      filteredMeals = allMeals.filter(meal => 
+      filteredMeals = allMeals.filter(meal =>
         meal.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } else {
       filteredMeals = allMeals;
+    }
+  }
+
+  // When the user picks an existing meal — explicitly via the dropdown or
+  // implicitly via a name match in "Create new" mode — check whether that
+  // meal already has a recipe. If it does, surface an inline notice so the
+  // save action becomes "Replace recipe" instead of erroring out.
+  let existingRecipeForTarget = null;
+  $: targetMealId = mealId || (selectedMealId && selectedMealId !== 'new' ? selectedMealId : null);
+  $: titleMatchedMeal = !mealId && selectedMealId === 'new' && title.trim()
+    ? allMeals.find((m) => m.name && m.name.trim().toLowerCase() === title.trim().toLowerCase())
+    : null;
+  $: effectiveExistingMealId = targetMealId || titleMatchedMeal?.id || null;
+
+  $: if (effectiveExistingMealId && !recipe) {
+    checkExistingRecipeFor(effectiveExistingMealId);
+  } else {
+    existingRecipeForTarget = null;
+  }
+
+  async function checkExistingRecipeFor(id) {
+    try {
+      const result = await api.getRecipe(id);
+      existingRecipeForTarget = result?.recipe || null;
+    } catch {
+      existingRecipeForTarget = null;
     }
   }
 
@@ -111,14 +137,18 @@
 
       let result;
       if (recipe) {
-        // Update existing recipe
+        // Update the recipe we were explicitly opened to edit.
         result = await api.updateRecipe(recipe.id, recipeData);
+      } else if (existingRecipeForTarget?.id) {
+        // The target meal (explicit or matched-by-name) already has a recipe.
+        // Treat save-with-an-overwrite-banner-shown as an intentional update.
+        result = await api.updateRecipe(existingRecipeForTarget.id, recipeData);
+        notifySuccess('Replaced existing recipe.');
       } else {
-        // Create new recipe
-        let targetMealId = mealId || selectedMealId;
+        // Create new recipe path. Resolve target meal: explicit selection,
+        // name-matched existing meal, or a brand-new meal.
+        let targetMealIdLocal = mealId || selectedMealId;
 
-        // If the user picked "new meal" but a meal with the same name already
-        // exists, attach to that meal instead of creating a duplicate.
         if (selectedMealId === 'new') {
           const normalized = title.trim().toLowerCase();
           const matches = allMeals.filter(
@@ -126,8 +156,7 @@
           );
 
           if (matches.length > 1) {
-            // Ambiguous: multiple meals share this exact name. Refuse to guess
-            // — make the user pick explicitly from the meal selector above.
+            // Ambiguous — refuse to guess.
             loading = false;
             notifyError(
               `${matches.length} meals are named "${title.trim()}". Pick the one you want from the meal selector above instead of "Create new".`
@@ -136,20 +165,8 @@
           }
 
           if (matches.length === 1) {
-            const existingMeal = matches[0];
-            // Make sure the existing meal doesn't already have a recipe — the
-            // recipes table enforces one-recipe-per-meal so a blind insert
-            // would 500 with a unique-constraint error.
-            const existingResponse = await api.getRecipe(existingMeal.id).catch(() => null);
-            if (existingResponse?.recipe?.id) {
-              loading = false;
-              notifyError(
-                `"${existingMeal.name}" already has a recipe. Edit it from the meal list instead of importing again.`
-              );
-              return;
-            }
-            targetMealId = existingMeal.id;
-            notifySuccess(`Adding recipe to existing meal "${existingMeal.name}"`);
+            targetMealIdLocal = matches[0].id;
+            notifySuccess(`Adding recipe to existing meal "${matches[0].name}"`);
           } else {
             const mealData = {
               name: title.trim(),
@@ -159,14 +176,14 @@
             };
             const mealResult = await api.addMeal(mealData);
             if (mealResult.success) {
-              targetMealId = mealResult.data.id;
+              targetMealIdLocal = mealResult.data.id;
             } else {
               throw new Error(mealResult.error || 'Failed to create meal');
             }
           }
         }
 
-        result = await api.addRecipe(targetMealId, recipeData);
+        result = await api.addRecipe(targetMealIdLocal, recipeData);
       }
 
       if (result.success) {
@@ -471,16 +488,28 @@
         </div>
 
         {#if !recipe}
-          <!-- Add Recipe button (only for new recipes) -->
+          {#if existingRecipeForTarget}
+            <!-- Inline overwrite warning -->
+            <div class="mt-4 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
+              <span class="font-semibold">Heads up:</span>
+              {#if titleMatchedMeal}
+                "{titleMatchedMeal.name}" already has a recipe.
+              {:else}
+                This meal already has a recipe.
+              {/if}
+              Saving will <strong>replace</strong> the existing recipe with this one.
+            </div>
+          {/if}
+          <!-- Add/Replace Recipe button -->
           <div class="flex gap-3 mt-6 pt-4 border-t border-base-200">
-            <button 
-              class="btn btn-ghost text-primary underline flex-1 py-2" 
+            <button
+              class="btn btn-ghost text-primary underline flex-1 py-2"
               on:click={cancel}
               disabled={loading}
             >
               Cancel
             </button>
-            <button 
+            <button
               class="btn flex-1 py-2"
               style="background-color: #e9d5ff; border-color: #e9d5ff; color: #7c3aed;"
               on:click={saveRecipe}
@@ -489,6 +518,8 @@
               {#if loading}
                 <span class="loading loading-spinner loading-sm"></span>
                 Saving...
+              {:else if existingRecipeForTarget}
+                Replace Recipe
               {:else}
                 Add Recipe
               {/if}
