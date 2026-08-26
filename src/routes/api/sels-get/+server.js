@@ -8,16 +8,17 @@ export async function GET({ url, locals }) {
 
     const searchParams = url.searchParams;
     const type = searchParams.get('type');
+    const planId = searchParams.get('plan_id') || null;
     if (!type) {
-        const sels = await getAllSels(locals.userId);
+        const sels = await getAllSels(locals.userId, planId);
         return json(sels);
     }
     if (type === 'lunch') {
-        const sels = await getLunchSels(locals.userId);
+        const sels = await getLunchSels(locals.userId, planId);
         return json(sels);
     }
     if (type === 'dinner') {
-        const sels = await getDinnerSels(locals.userId);
+        const sels = await getDinnerSels(locals.userId, planId);
         return json(sels);
     }
     return json([]);

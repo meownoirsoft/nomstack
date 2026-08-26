@@ -135,12 +135,13 @@
       const filter = $mealFilters.find(f => f.id === selectedFilter);
       
       if (filter) {
-        if (filter.category_id) {
-          // Handle category filters by checking if the meal's categories include this category_id
-          displayMeals = meals.filter(meal => {
-            // meal.cats is an array of category IDs
-            return Array.isArray(meal.cats) && meal.cats.includes(filter.category_id);
-          });
+        if ('category_id' in filter) {
+          // Handle category filters by checking if the meal's categories include this category_id.
+          // If the filter's category_id never resolved (e.g. no matching category exists yet),
+          // show no meals rather than falling back to showing everything.
+          displayMeals = filter.category_id
+            ? meals.filter(meal => Array.isArray(meal.cats) && meal.cats.includes(filter.category_id))
+            : [];
         } else if (filter.flag) {
           // Handle flag filters (lunch, dinner) by checking if the meal has this flag
           displayMeals = meals.filter(meal => {

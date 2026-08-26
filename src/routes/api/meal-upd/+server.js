@@ -10,8 +10,8 @@ export async function POST({ request, locals }) {
     // Parse the request body
     const updRow = await request.json();
 
-    const updatedData = await updMeal(updRow.id, updRow.name, updRow.source, updRow.cats, updRow.notes, locals.userId);
-    return json({ success: true, data: updatedData });
+    const updatedMeal = await updMeal(updRow.id, updRow.name, updRow.source, updRow.cats, updRow.notes, locals.userId);
+    return json({ success: true, data: updatedMeal, meal: updatedMeal });
   } catch (error) {
     return json({ success: false, error: error.message }, { status: 500 });
   }

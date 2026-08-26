@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
   import { handleNewUserSetup, checkUserOnboarding } from '$lib/auth.js';
+  import { addMissingCategoriesToUser } from '$lib/seedData.js';
   import { user } from '$lib/stores/auth.js';
   import { CheckCircle, Loader, AlertCircle, Sparkles } from 'lucide-svelte';
   import WelcomeMessage from './WelcomeMessage.svelte';
@@ -30,6 +31,12 @@
       if (onboarding.needsOnboarding) {
         isOpen = true;
         startOnboarding();
+      } else {
+        // Existing user: backfill any categories added to the default set after they signed up
+        // (e.g. Dessert/Side), so category-based meal filters can resolve correctly.
+        addMissingCategoriesToUser().catch(err => {
+          console.error('Failed to backfill missing categories:', err);
+        });
       }
     }
   });

@@ -41,12 +41,20 @@ export async function POST({ locals, getClientAddress }) {
 
 	const token = await createEmailVerification(locals.userId, row.email);
 	const link = `${appBaseUrl()}/verify-email/${token}`;
-	await sendEmail({
+	const result = await sendEmail({
 		to: row.email,
 		subject: 'Verify your nomStack email',
 		text: `Confirm your email by visiting:\n\n${link}\n\nThis link expires in 24 hours.`,
 		html: `<p>Confirm your email: <a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`
 	});
+
+	if (!result.delivered) {
+		console.error('request-verification: email not delivered', result);
+		return json(
+			{ error: 'Unable to send verification email right now. Please try again later.' },
+			{ status: 502 }
+		);
+	}
 
 	return json({ success: true });
 }

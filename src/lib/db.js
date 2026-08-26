@@ -243,7 +243,15 @@ export async function addMeal(name, sourceAbbrev, cats = [], notes = '', userId)
     }
   }
 
-  return mealId;
+  return {
+    id: mealId,
+    name,
+    notes: notes ?? '',
+    source: sourceAbbrev ?? '',
+    source_name: null,
+    cats: categories,
+    flags
+  };
 }
 
 export async function updMeal(id, name, sourceAbbrev, cats = [], notes = '', userId) {
@@ -283,7 +291,15 @@ export async function updMeal(id, name, sourceAbbrev, cats = [], notes = '', use
     }
   }
 
-  return true;
+  return {
+    id,
+    name,
+    notes: notes ?? '',
+    source: sourceAbbrev ?? '',
+    source_name: null,
+    cats: categories,
+    flags
+  };
 }
 
 export async function delMeal(id, userId) {
@@ -454,6 +470,13 @@ export async function updSels(type, meals = [], userId, planId = null) {
   }
 
   if (!meals.length) {
+    if (planId) {
+      try {
+        await regenerateIngredientsForMealPlan(userId, planId);
+      } catch (refreshError) {
+        console.error(`Error regenerating ingredients after clearing selections for plan ${planId}:`, refreshError);
+      }
+    }
     return true;
   }
 
@@ -468,6 +491,15 @@ export async function updSels(type, meals = [], userId, planId = null) {
   const { error: insertError } = await supabaseAdmin.from('meal_plan_selections').insert(inserts);
   if (insertError) {
     throw new Error(`Failed to save selections (${type}): ${insertError.message}`);
+  }
+
+  // Keep the shopping list ingredients in sync with the meals now selected for this plan
+  if (planId) {
+    try {
+      await regenerateIngredientsForMealPlan(userId, planId);
+    } catch (refreshError) {
+      console.error(`Error regenerating ingredients after updating selections for plan ${planId}:`, refreshError);
+    }
   }
 
   return true;

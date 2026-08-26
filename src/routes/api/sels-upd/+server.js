@@ -8,7 +8,7 @@ export async function POST({ request, locals }) {
     }
 
     const updRow = await request.json();
-    const updatedData = await updSels(updRow.type, updRow.meals, locals.userId);
+    const updatedData = await updSels(updRow.type, updRow.meals, locals.userId, updRow.plan_id ?? null);
     return json({ success: true, data: updatedData });
   } catch (error) {
     return json({ success: false, error: error.message }, { status: 500 });
